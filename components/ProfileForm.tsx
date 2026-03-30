@@ -20,9 +20,20 @@ const GENRE_EMOJI: Record<MusicGenre, string> = {
   reggae: "🌴", latin: "💃", folk: "🪕", blues: "🎺", soul: "🕯️",
 };
 
+const GENRE_HEBREW: Record<MusicGenre, string> = {
+  pop: "פופ", rock: "רוק", "hip-hop": "היפ הופ", electronic: "אלקטרוני", jazz: "ג׳אז",
+  classical: "קלאסי", "r&b": "R&B", country: "קאנטרי", metal: "מטאל", indie: "אינדי",
+  reggae: "רגאי", latin: "לטיני", folk: "פולק", blues: "בלוז", soul: "סול",
+};
+
 const VIBE_EMOJI: Record<VibeType, string> = {
   chill: "😌", energetic: "⚡", romantic: "💕", melancholic: "🌧️",
   party: "🎉", focus: "🎯", spiritual: "🌌", nostalgic: "📻",
+};
+
+const VIBE_HEBREW: Record<VibeType, string> = {
+  chill: "צ׳יל", energetic: "אנרגטי", romantic: "רומנטי", melancholic: "מלנכולי",
+  party: "מסיבה", focus: "פוקוס", spiritual: "רוחני", nostalgic: "נוסטלגי",
 };
 
 interface ProfileFormProps {
@@ -104,48 +115,46 @@ export default function ProfileForm({ initialProfile, userId }: ProfileFormProps
 
   return (
     <form onSubmit={handleSave} className="space-y-8">
-      {/* Basic info */}
       <div className="card space-y-4">
-        <h2 className="text-lg font-bold text-white">Basic Info</h2>
+        <h2 className="text-lg font-bold text-white">פרטים בסיסיים</h2>
         <div>
-          <label className="block text-sm text-white/70 mb-1">Display name</label>
+          <label className="block text-sm text-white/70 mb-1">שם תצוגה</label>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
+            placeholder="השם שלך"
             className="input-field"
             maxLength={50}
           />
         </div>
         <div>
-          <label className="block text-sm text-white/70 mb-1">Bio</label>
+          <label className="block text-sm text-white/70 mb-1">ביו</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="Tell others about your music taste…"
+            placeholder="ספר על הטעם המוזיקלי שלך..."
             className="input-field resize-none h-24"
             maxLength={200}
           />
         </div>
         <div>
-          <label className="block text-sm text-white/70 mb-1">Location</label>
+          <label className="block text-sm text-white/70 mb-1">מיקום</label>
           <input
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="City, Country"
+            placeholder="עיר, מדינה"
             className="input-field"
             maxLength={100}
           />
         </div>
       </div>
 
-      {/* Genres */}
       <div className="card">
         <h2 className="text-lg font-bold text-white mb-4">
-          Genres{" "}
-          <span className="text-white/30 text-sm font-normal">({genres.length} selected)</span>
+          ז׳אנרים{" "}
+          <span className="text-white/30 text-sm font-normal">({genres.length} נבחרו)</span>
         </h2>
         <div className="flex flex-wrap gap-2">
           {ALL_GENRES.map((g) => (
@@ -159,17 +168,16 @@ export default function ProfileForm({ initialProfile, userId }: ProfileFormProps
                   : "glass glass-hover text-white/60"
               }`}
             >
-              {GENRE_EMOJI[g]} {g}
+              {GENRE_EMOJI[g]} {GENRE_HEBREW[g]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Vibes */}
       <div className="card">
         <h2 className="text-lg font-bold text-white mb-4">
-          Vibes{" "}
-          <span className="text-white/30 text-sm font-normal">({vibes.length} selected)</span>
+          ויבים{" "}
+          <span className="text-white/30 text-sm font-normal">({vibes.length} נבחרו)</span>
         </h2>
         <div className="flex flex-wrap gap-2">
           {ALL_VIBES.map((v) => (
@@ -183,16 +191,15 @@ export default function ProfileForm({ initialProfile, userId }: ProfileFormProps
                   : "glass glass-hover text-white/60"
               }`}
             >
-              {VIBE_EMOJI[v]} {v}
+              {VIBE_EMOJI[v]} {VIBE_HEBREW[v]}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Artists */}
       <div className="card">
         <h2 className="text-lg font-bold text-white mb-4">
-          Favorite Artists{" "}
+          אמנים אהובים{" "}
           <span className="text-white/30 text-sm font-normal">({artists.length}/10)</span>
         </h2>
         <div className="flex gap-2 mb-4">
@@ -201,16 +208,12 @@ export default function ProfileForm({ initialProfile, userId }: ProfileFormProps
             value={artistInput}
             onChange={(e) => setArtistInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addArtist())}
-            placeholder="Type artist name and press Enter"
+            placeholder="שם אמן ולחץ Enter"
             className="input-field flex-1"
             maxLength={100}
           />
-          <button
-            type="button"
-            onClick={addArtist}
-            className="btn-secondary px-4"
-          >
-            Add
+          <button type="button" onClick={addArtist} className="btn-secondary px-4">
+            הוסף
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -243,7 +246,7 @@ export default function ProfileForm({ initialProfile, userId }: ProfileFormProps
         disabled={saving}
         className="btn-primary w-full py-3 disabled:opacity-50"
       >
-        {saving ? "Saving…" : saved ? "✓ Saved!" : "Save profile"}
+        {saving ? "שומר..." : saved ? "✓ נשמר!" : "שמור פרופיל"}
       </button>
     </form>
   );

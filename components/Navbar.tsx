@@ -16,9 +16,9 @@ export default function Navbar() {
   }
 
   const links = [
-    { href: "/dashboard", label: "Home" },
-    { href: "/discover", label: "Discover" },
-    { href: "/profile", label: "My Profile" },
+    { href: "/dashboard", label: "בית" },
+    { href: "/discover", label: "גלה" },
+    { href: "/profile", label: "הפרופיל שלי" },
   ];
 
   return (
@@ -44,9 +44,9 @@ export default function Navbar() {
           ))}
           <button
             onClick={handleLogout}
-            className="ml-2 text-sm text-white/40 hover:text-white/70 transition-colors"
+            className="mr-2 text-sm text-white/40 hover:text-white/70 transition-colors"
           >
-            Log out
+            יציאה
           </button>
         </div>
       </div>

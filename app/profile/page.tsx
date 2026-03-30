@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
 import ProfileForm from "@/components/ProfileForm";
@@ -24,8 +25,8 @@ export default async function ProfilePage() {
       <Navbar />
       <main className="max-w-2xl mx-auto px-6 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">My Profile</h1>
-          <p className="text-white/50 mt-1">Tell us what music moves you.</p>
+          <h1 className="text-3xl font-bold text-white">הפרופיל שלי</h1>
+          <p className="text-white/50 mt-1">ספר לנו איזו מוזיקה מזיזה אותך.</p>
         </div>
         <ProfileForm initialProfile={profile} userId={user.id} />
       </main>

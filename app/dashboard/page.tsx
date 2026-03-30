@@ -20,11 +20,8 @@ export default async function DashboardPage() {
     .maybeSingle<Profile>();
 
   const profileComplete =
-    profile &&
-    profile.genres.length > 0 &&
-    profile.vibes.length > 0;
+    profile && profile.genres.length > 0 && profile.vibes.length > 0;
 
-  // Recent matches
   const { data: matches } = await supabase
     .from("matches")
     .select("*, profile_b:profiles!matches_user_b_fkey(username, display_name, genres, vibes)")
@@ -36,38 +33,35 @@ export default async function DashboardPage() {
     <>
       <Navbar />
       <main className="max-w-6xl mx-auto px-6 py-10">
-        {/* Welcome */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-white">
-            Hey, {profile?.display_name ?? profile?.username ?? "there"} 👋
+            היי, {profile?.display_name ?? profile?.username ?? "חבר"} 👋
           </h1>
-          <p className="text-white/50 mt-1">Here&apos;s your vibe overview.</p>
+          <p className="text-white/50 mt-1">הנה סיכום הויב שלך.</p>
         </div>
 
-        {/* Profile incomplete banner */}
         {!profileComplete && (
           <div className="card mb-8 bg-purple-600/10 border border-purple-500/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white font-semibold">Complete your profile</p>
+                <p className="text-white font-semibold">השלם את הפרופיל שלך</p>
                 <p className="text-white/50 text-sm mt-1">
-                  Add your genres and vibes to start getting matches.
+                  הוסף ז׳אנרים וויבים כדי להתחיל לקבל התאמות.
                 </p>
               </div>
               <Link href="/profile" className="btn-primary text-sm">
-                Set up →
+                הגדרה ←
               </Link>
             </div>
           </div>
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
-            { label: "Genres", value: profile?.genres.length ?? 0 },
-            { label: "Vibes", value: profile?.vibes.length ?? 0 },
-            { label: "Artists", value: profile?.favorite_artists.length ?? 0 },
-            { label: "Matches", value: matches?.length ?? 0 },
+            { label: "ז׳אנרים", value: profile?.genres.length ?? 0 },
+            { label: "ויבים", value: profile?.vibes.length ?? 0 },
+            { label: "אמנים", value: profile?.favorite_artists.length ?? 0 },
+            { label: "התאמות", value: matches?.length ?? 0 },
           ].map((s) => (
             <div key={s.label} className="card text-center">
               <div className="text-3xl font-extrabold text-gradient">{s.value}</div>
@@ -76,12 +70,11 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        {/* Matches */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-white">Top Matches</h2>
+            <h2 className="text-lg font-bold text-white">ההתאמות הטובות ביותר</h2>
             <Link href="/discover" className="text-purple-400 text-sm hover:text-purple-300">
-              See all →
+              ראה הכל ←
             </Link>
           </div>
 
@@ -114,7 +107,7 @@ export default async function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-purple-400 font-bold">{m.score}%</div>
-                      <div className="text-white/30 text-xs">match</div>
+                      <div className="text-white/30 text-xs">התאמה</div>
                     </div>
                   </div>
                 );
@@ -123,7 +116,7 @@ export default async function DashboardPage() {
           ) : (
             <div className="text-center py-12 text-white/30">
               <div className="text-4xl mb-3">🎵</div>
-              <p>No matches yet. Complete your profile and discover people!</p>
+              <p>אין התאמות עדיין. השלם את הפרופיל וגלה אנשים!</p>
             </div>
           )}
         </div>

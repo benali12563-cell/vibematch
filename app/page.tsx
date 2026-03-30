@@ -8,10 +8,10 @@ export default function HomePage() {
         <div className="text-2xl font-bold text-gradient">VibeMatch</div>
         <div className="flex gap-4">
           <Link href="/auth/login" className="btn-secondary text-sm">
-            Log in
+            התחברות
           </Link>
           <Link href="/auth/signup" className="btn-primary text-sm">
-            Get started
+            הצטרף חינם
           </Link>
         </div>
       </nav>
@@ -20,22 +20,21 @@ export default function HomePage() {
       <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20">
         <div className="max-w-3xl mx-auto">
           <div className="mb-6 inline-block glass rounded-full px-4 py-2 text-sm text-purple-300">
-            🎵 Find your musical soulmate
+            🎵 מצא את שותף המוזיקה שלך
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold mb-6">
-            <span className="text-gradient">Match</span> by{" "}
-            <span className="text-white">Vibe.</span>
+            <span className="text-gradient">התאמה</span>{" "}
+            <span className="text-white">לפי ויב.</span>
           </h1>
           <p className="text-xl text-white/60 mb-10 max-w-xl mx-auto">
-            Connect with people who feel the same music you do. Share genres,
-            discover new artists, and find friends who vibe on your frequency.
+            התחבר עם אנשים שמרגישים את אותה מוזיקה שאתה מרגיש. שתף ז׳אנרים, גלה אמנים חדשים ומצא חברים שעל אותה תדר.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/signup" className="btn-primary text-base px-8 py-3">
-              Start matching free
+              התחל להתאים חינם
             </Link>
             <Link href="/auth/login" className="btn-secondary text-base px-8 py-3">
-              I have an account
+              כבר יש לי חשבון
             </Link>
           </div>
         </div>
@@ -47,18 +46,18 @@ export default function HomePage() {
           {[
             {
               icon: "🎸",
-              title: "Genre Matching",
-              desc: "Select your favorite genres and get matched with people who share your taste.",
+              title: "התאמת ז׳אנרים",
+              desc: "בחר את הז׳אנרים האהובים עליך וקבל התאמות עם אנשים שחולקים את הטעם שלך.",
             },
             {
               icon: "✨",
-              title: "Vibe Scoring",
-              desc: "Our algorithm scores compatibility based on shared vibes — chill, energetic, romantic and more.",
+              title: "ציון ויב",
+              desc: "האלגוריתם שלנו מחשב תאימות לפי ויבים משותפים — צ׳יל, אנרגטי, רומנטי ועוד.",
             },
             {
               icon: "🎤",
-              title: "Artist Affinity",
-              desc: "Add your favorite artists and find fans who love the same music.",
+              title: "אמנים משותפים",
+              desc: "הוסף את האמנים האהובים עליך ומצא מעריצים שאוהבים את אותה מוזיקה.",
             },
           ].map((f) => (
             <div key={f.title} className="card text-center">
@@ -70,9 +69,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="text-center py-8 text-white/30 text-sm">
-        © 2026 VibeMatch. Feel the music together.
+        © 2026 VibeMatch. תרגיש את המוזיקה ביחד.
       </footer>
     </main>
   );

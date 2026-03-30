@@ -4,8 +4,18 @@ import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
 import type { Profile } from "@/types";
 
+const GENRE_HEBREW: Record<string, string> = {
+  pop: "פופ", rock: "רוק", "hip-hop": "היפ הופ", electronic: "אלקטרוני", jazz: "ג׳אז",
+  classical: "קלאסי", "r&b": "R&B", country: "קאנטרי", metal: "מטאל", indie: "אינדי",
+  reggae: "רגאי", latin: "לטיני", folk: "פולק", blues: "בלוז", soul: "סול",
+};
+
+const VIBE_HEBREW: Record<string, string> = {
+  chill: "צ׳יל", energetic: "אנרגטי", romantic: "רומנטי", melancholic: "מלנכולי",
+  party: "מסיבה", focus: "פוקוס", spiritual: "רוחני", nostalgic: "נוסטלגי",
+};
+
 function computeScore(a: Profile, b: Profile): number {
-  if (!a || !b) return 0;
   const sharedGenres = a.genres.filter((g) => b.genres.includes(g)).length;
   const sharedVibes = a.vibes.filter((v) => b.vibes.includes(v)).length;
   const sharedArtists = a.favorite_artists.filter((ar) =>
@@ -16,12 +26,11 @@ function computeScore(a: Profile, b: Profile): number {
   const maxVibes = Math.max(a.vibes.length + b.vibes.length, 1);
   const maxArtists = Math.max(a.favorite_artists.length + b.favorite_artists.length, 1);
 
-  const score =
+  return Math.round(
     (sharedGenres / maxGenres) * 50 +
     (sharedVibes / maxVibes) * 30 +
-    (sharedArtists / maxArtists) * 20;
-
-  return Math.round(score * 100);
+    (sharedArtists / maxArtists) * 20
+  ) * 100;
 }
 
 export default async function DiscoverPage() {
@@ -39,7 +48,6 @@ export default async function DiscoverPage() {
     .eq("user_id", user.id)
     .maybeSingle<Profile>();
 
-  // Get all other profiles
   const { data: others } = await supabase
     .from("profiles")
     .select("*")
@@ -61,18 +69,18 @@ export default async function DiscoverPage() {
       <Navbar />
       <main className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Discover</h1>
-          <p className="text-white/50 mt-1">People ranked by your vibe compatibility.</p>
+          <h1 className="text-3xl font-bold text-white">גלה</h1>
+          <p className="text-white/50 mt-1">אנשים מדורגים לפי תאימות הויב שלך.</p>
         </div>
 
         {!profileComplete && (
           <div className="card mb-8 bg-purple-600/10 border border-purple-500/30">
             <div className="flex items-center justify-between">
               <p className="text-white/70 text-sm">
-                Set up your profile to see accurate match scores.
+                השלם את הפרופיל שלך כדי לראות ציוני התאמה מדויקים.
               </p>
               <Link href="/profile" className="btn-primary text-sm">
-                Set up →
+                הגדרה ←
               </Link>
             </div>
           </div>
@@ -81,7 +89,7 @@ export default async function DiscoverPage() {
         {scored.length === 0 ? (
           <div className="card text-center py-20 text-white/30">
             <div className="text-5xl mb-4">🌍</div>
-            <p>No one else has joined yet. Share VibeMatch with friends!</p>
+            <p>אף אחד אחר עדיין לא הצטרף. שתף את VibeMatch עם חברים!</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -99,7 +107,7 @@ export default async function DiscoverPage() {
                       <div className="text-white/40 text-xs">@{profile.username}</div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left">
                     <div
                       className={`text-lg font-extrabold ${
                         score >= 60
@@ -111,7 +119,7 @@ export default async function DiscoverPage() {
                     >
                       {score}%
                     </div>
-                    <div className="text-white/30 text-xs">match</div>
+                    <div className="text-white/30 text-xs">התאמה</div>
                   </div>
                 </div>
 
@@ -126,7 +134,7 @@ export default async function DiscoverPage() {
                         key={g}
                         className="px-2 py-0.5 rounded-full bg-purple-600/20 text-purple-300 text-xs"
                       >
-                        {g}
+                        {GENRE_HEBREW[g] ?? g}
                       </span>
                     ))}
                     {profile.genres.length > 4 && (
@@ -144,7 +152,7 @@ export default async function DiscoverPage() {
                         key={v}
                         className="px-2 py-0.5 rounded-full bg-pink-600/20 text-pink-300 text-xs"
                       >
-                        {v}
+                        {VIBE_HEBREW[v] ?? v}
                       </span>
                     ))}
                   </div>
