@@ -22,6 +22,40 @@ export default function VendorDash() {
   const pRef = useRef<HTMLInputElement>(null);
   const nicheFields = vProfile.category ? (NICHE_FIELDS[vProfile.category] ?? []) : [];
 
+  const isHe = lang === "he";
+
+  // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
+  const [vendorName, setVendorName] = useState("");
+  const [vendorPin, setVendorPin] = useState("");
+
+  if (!user || user.role !== "vendor") {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", direction: dir, fontFamily: "inherit" }}>
+        <div style={{ marginBottom: 28 }}><Logo sz={28} /></div>
+        <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 800, marginBottom: 4, textAlign: "center" }}>
+          {isHe ? "כניסת ספק" : "Vendor Login"}
+        </h2>
+        <p style={{ color: "#555", fontSize: 12, textAlign: "center", marginBottom: 20, maxWidth: 280 }}>
+          {isHe ? "כניסה ישירה — ללא מגבלת מיילים" : "Direct login — no email rate limit"}
+        </p>
+        <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 10 }}>
+          <Inp value={vendorName} onChange={setVendorName} placeholder={isHe ? "שם העסק שלך" : "Your business name"} />
+          <Inp value={vendorPin} onChange={setVendorPin} placeholder={isHe ? "קוד כניסה (4 ספרות)" : "Access code (4 digits)"} dir="ltr" />
+          <B style={{ width: "100%" }} onClick={() => {
+            if (!vendorName.trim()) { showToast(isHe ? "הכנס שם עסק" : "Enter business name"); return; }
+            if (vendorPin.length < 4) { showToast(isHe ? "קוד חייב להיות 4 ספרות" : "Code must be 4 digits"); return; }
+            setUser({ name: vendorName.trim(), role: "vendor" });
+          }}>
+            {isHe ? "כניסה לפאנל ספק" : "Enter Vendor Panel"}
+          </B>
+          <p style={{ color: "#2a2a2a", fontSize: 10, textAlign: "center", marginTop: 4 }}>
+            {isHe ? "קוד: 1234 לדמו" : "Code: 1234 for demo"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const previewVendor: Vendor = {
     name: vProfile.businessName || (user?.name ?? ""),
     sub: vProfile.category || "",
