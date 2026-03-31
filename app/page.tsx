@@ -6,14 +6,9 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-6">
         <div className="text-2xl font-bold text-gradient">VibeMatch</div>
-        <div className="flex gap-4">
-          <Link href="/auth/login" className="btn-secondary text-sm">
-            התחברות
-          </Link>
-          <Link href="/auth/signup" className="btn-primary text-sm">
-            הצטרף חינם
-          </Link>
-        </div>
+        <Link href="/auth/login" className="btn-primary text-sm">
+          כניסה / הרשמה
+        </Link>
       </nav>
 
       {/* Hero */}
@@ -29,14 +24,9 @@ export default function HomePage() {
           <p className="text-xl text-white/60 mb-10 max-w-xl mx-auto">
             התחבר עם אנשים שמרגישים את אותה מוזיקה שאתה מרגיש. שתף ז׳אנרים, גלה אמנים חדשים ומצא חברים שעל אותה תדר.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/signup" className="btn-primary text-base px-8 py-3">
-              התחל להתאים חינם
-            </Link>
-            <Link href="/auth/login" className="btn-secondary text-base px-8 py-3">
-              כבר יש לי חשבון
-            </Link>
-          </div>
+          <Link href="/auth/login" className="btn-primary text-base px-10 py-4">
+            התחל עכשיו — חינם ✉️
+          </Link>
         </div>
       </section>
 
@@ -44,21 +34,9 @@ export default function HomePage() {
       <section className="px-8 py-20 max-w-5xl mx-auto w-full">
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            {
-              icon: "🎸",
-              title: "התאמת ז׳אנרים",
-              desc: "בחר את הז׳אנרים האהובים עליך וקבל התאמות עם אנשים שחולקים את הטעם שלך.",
-            },
-            {
-              icon: "✨",
-              title: "ציון ויב",
-              desc: "האלגוריתם שלנו מחשב תאימות לפי ויבים משותפים — צ׳יל, אנרגטי, רומנטי ועוד.",
-            },
-            {
-              icon: "🎤",
-              title: "אמנים משותפים",
-              desc: "הוסף את האמנים האהובים עליך ומצא מעריצים שאוהבים את אותה מוזיקה.",
-            },
+            { icon: "🎸", title: "התאמת ז׳אנרים", desc: "בחר ז׳אנרים אהובים וקבל התאמות עם אנשים שחולקים את הטעם שלך." },
+            { icon: "✨", title: "ציון ויב", desc: "האלגוריתם מחשב תאימות לפי ויבים משותפים — צ׳יל, אנרגטי, רומנטי ועוד." },
+            { icon: "🎤", title: "אמנים משותפים", desc: "הוסף אמנים אהובים ומצא מעריצים שאוהבים את אותה מוזיקה." },
           ].map((f) => (
             <div key={f.title} className="card text-center">
               <div className="text-4xl mb-4">{f.icon}</div>
