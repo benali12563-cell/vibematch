@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -10,28 +9,23 @@ export default function CallbackPage() {
   useEffect(() => {
     const supabase = createClient();
 
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
-        router.push("/dashboard");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session) {
+        router.replace("/");
         router.refresh();
       }
     });
 
-    // Handle hash tokens (magic link)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.push("/dashboard");
-        router.refresh();
-      }
+      if (session) { router.replace("/"); router.refresh(); }
     });
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="card text-center">
-        <div className="text-4xl mb-4 animate-pulse">🎵</div>
-        <p className="text-white/60">מתחבר...</p>
-      </div>
-    </main>
+    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 32, height: 32, border: "2px solid rgba(0,206,209,.3)", borderTopColor: "#00CED1", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+    </div>
   );
 }

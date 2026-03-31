@@ -1,100 +1,61 @@
 "use client";
-
 import { useState } from "react";
-import Link from "next/link";
+import { useApp } from "@/lib/context";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "@/components/Logo";
+import B from "@/components/B";
+import Inp from "@/components/Inp";
 
 export default function LoginPage() {
+  const { lang, showToast } = useApp();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const isHe = lang === "he";
 
-  async function handleMagicLink(e: React.FormEvent) {
-    e.preventDefault();
+  async function send() {
+    if (!email || loading) return;
     setLoading(true);
-    setError(null);
-
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { emailRedirectTo: `${location.origin}/auth/callback` },
     });
-
-    if (error) {
-      setError("שגיאה בשליחת הלינק. נסה שוב.");
-    } else {
-      setSent(true);
-    }
-
     setLoading(false);
-  }
-
-  if (sent) {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-6">
-        <div className="card text-center max-w-md w-full">
-          <div className="text-5xl mb-4">📬</div>
-          <h2 className="text-xl font-bold text-white mb-2">בדוק את המייל שלך!</h2>
-          <p className="text-white/50 text-sm">
-            שלחנו לינק כניסה לכתובת <span className="text-purple-400">{email}</span>
-            <br />לחץ על הלינק כדי להיכנס.
-          </p>
-          <button
-            onClick={() => setSent(false)}
-            className="mt-6 text-white/40 text-sm hover:text-white/70 transition-colors"
-          >
-            שלח שוב
-          </button>
-        </div>
-      </main>
-    );
+    if (error) { showToast(error.message); return; }
+    setSent(true);
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <Link href="/" className="block text-2xl font-bold text-gradient text-center mb-10">
-          VibeMatch
-        </Link>
-
-        <div className="card">
-          <h1 className="text-2xl font-bold text-white mb-2">כניסה / הרשמה</h1>
-          <p className="text-white/50 text-sm mb-8">
-            הכנס את האימייל שלך ונשלח לך לינק כניסה — ללא סיסמה.
+    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", direction: isHe ? "rtl" : "ltr" }}>
+      <div style={{ marginBottom: 32 }}><Logo sz={32} /></div>
+      {sent ? (
+        <div style={{ textAlign: "center", animation: "scaleIn .4s" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📨</div>
+          <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 800, marginBottom: 8 }}>
+            {isHe ? "בדוק את המייל שלך" : "Check your email"}
+          </h2>
+          <p style={{ color: "#666", fontSize: 14 }}>
+            {isHe ? "שלחנו לינק כניסה ל-" : "We sent a magic link to"} <span style={{ color: "#00CED1" }}>{email}</span>
           </p>
-
-          <form onSubmit={handleMagicLink} className="space-y-4">
-            <div>
-              <label className="block text-sm text-white/70 mb-1">אימייל</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="input-field"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full py-3 disabled:opacity-50"
-            >
-              {loading ? "שולח..." : "שלח לינק כניסה ✉️"}
-            </button>
-          </form>
+          <button onClick={() => setSent(false)} style={{ marginTop: 24, background: "none", border: "none", color: "#555", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+            {isHe ? "שינוי מייל" : "Change email"}
+          </button>
         </div>
-      </div>
-    </main>
+      ) : (
+        <div style={{ width: "100%", maxWidth: 360 }}>
+          <h2 style={{ color: "#fff", fontSize: 24, fontWeight: 800, marginBottom: 6, textAlign: "center" }}>
+            {isHe ? "כניסה ל-VibeMatch" : "Sign in to VibeMatch"}
+          </h2>
+          <p style={{ color: "#555", fontSize: 13, textAlign: "center", marginBottom: 28 }}>
+            {isHe ? "ללא סיסמה — כניסה דרך מייל בלבד" : "No password — email magic link only"}
+          </p>
+          <Inp value={email} onChange={setEmail} placeholder={isHe ? "אימייל" : "Email"} dir="ltr" style={{ marginBottom: 12 }} />
+          <B style={{ width: "100%" }} onClick={send}>
+            {loading ? (isHe ? "שולח..." : "Sending...") : (isHe ? "שלח לינק כניסה ✉️" : "Send Magic Link ✉️")}
+          </B>
+        </div>
+      )}
+    </div>
   );
 }
