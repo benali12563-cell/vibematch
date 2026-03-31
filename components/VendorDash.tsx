@@ -56,6 +56,11 @@ export default function VendorDash() {
     );
   }
 
+  const [published, setPublished] = useState(false);
+  const publicLink = typeof window !== "undefined"
+    ? `${window.location.origin}/v/${encodeURIComponent((vProfile.businessName || user?.name || "").replace(/\s+/g, "-"))}`
+    : "";
+
   const previewVendor: Vendor = {
     name: vProfile.businessName || (user?.name ?? ""),
     sub: vProfile.category || "",
@@ -76,9 +81,18 @@ export default function VendorDash() {
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "#000", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
-        <button onClick={() => { setUser(null); router.push("/"); }} style={{ background: "none", border: "none", color: "#555", fontSize: 12, cursor: "pointer" }}>{t.logout}</button>
+        <button onClick={() => router.push("/")} style={{ background: "none", border: "none", color: "#555", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>home</span>
+          {isHe ? "בית" : "Home"}
+        </button>
         <Logo sz={18} />
-        <span style={{ color: "#888", fontSize: 11 }}>{user?.name}</span>
+        <button onClick={() => {
+          setPublished(true);
+          showToast(isHe ? "✅ הפרופיל פורסם! לקוחות רואים אותך" : "✅ Published! Clients can see you");
+          if (publicLink) setTimeout(() => { navigator.clipboard?.writeText(publicLink); }, 500);
+        }} style={{ background: published ? "rgba(0,206,209,.15)" : "#00CED1", border: published ? "1px solid #00CED1" : "none", color: published ? "#00CED1" : "#000", borderRadius: 10, padding: "5px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+          {published ? (isHe ? "✓ פורסם" : "✓ Live") : (isHe ? "פרסם" : "Publish")}
+        </button>
       </div>
 
       <input ref={fRef} type="file" accept="image/*,video/*" multiple onChange={(e) => {
@@ -110,7 +124,20 @@ export default function VendorDash() {
 
         {tab === "preview" && (
           <div style={{ animation: "fadeIn .3s" }}>
-            <p style={{ color: "#555", fontSize: 12, padding: "10px 16px 0" }}>{lang === "he" ? "ככה הלקוחות רואים אותך:" : "How clients see you:"}</p>
+            {/* Publish bar */}
+            <div style={{ padding: "10px 14px 0", display: "flex", gap: 8, direction: dir }}>
+              <B s="sm" v="ghost" style={{ flex: 1 }} onClick={() => router.push("/")}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
+                {isHe ? "דפדף כלקוח" : "Browse as client"}
+              </B>
+              {publicLink && (
+                <B s="sm" v="accent" style={{ flex: 1 }} onClick={() => { navigator.clipboard?.writeText(publicLink); showToast(isHe ? "🔗 לינק הועתק!" : "🔗 Link copied!"); }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 14 }}>link</span>
+                  {isHe ? "העתק לינק" : "Copy link"}
+                </B>
+              )}
+            </div>
+            <p style={{ color: "#555", fontSize: 12, padding: "8px 16px 0" }}>{isHe ? "ככה הלקוחות רואים אותך:" : "How clients see you:"}</p>
             <div style={{ margin: "8px 14px", height: 400, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.04)", position: "relative", background: "#0a0a0a" }}>
               {vGallery.length > 0 ? (
                 <>

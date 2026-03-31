@@ -2,55 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
   background: #000;
   color: #fff;
-  font-family: 'Heebo', 'Outfit', sans-serif;
+  font-family: 'Heebo', 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ── Animations ── */
+@keyframes fadeIn    { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes scaleIn   { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
+@keyframes slideUp   { from{transform:translateY(100%)} to{transform:translateY(0)} }
+@keyframes toast     { 0%{opacity:0;transform:translateY(20px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(20px)} }
+@keyframes glow      { 0%,100%{box-shadow:0 0 10px rgba(0,206,209,.3)} 50%{box-shadow:0 0 28px rgba(0,206,209,.7)} }
+@keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.5} }
+@keyframes spin      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes likeFlash { 0%{transform:scale(1)} 30%{transform:scale(1.4)} 60%{transform:scale(.95)} 100%{transform:scale(1)} }
+@keyframes nopeFlash { 0%{transform:scale(1) rotate(0)} 30%{transform:scale(1.2) rotate(-8deg)} 60%{transform:scale(.95) rotate(3deg)} 100%{transform:scale(1) rotate(0)} }
+@keyframes swipeRight{ 0%{transform:translateX(0) rotate(0)} 100%{transform:translateX(120vw) rotate(25deg);opacity:0} }
+@keyframes swipeLeft { 0%{transform:translateX(0) rotate(0)} 100%{transform:translateX(-120vw) rotate(-25deg);opacity:0} }
+@keyframes badgePop  { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+/* ── Glass ── */
+.glass {
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.glass-dark {
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.06);
 }
 
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
+/* ── Story gradient ── */
+.story-gradient {
+  background: linear-gradient(0deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.4) 55%, rgba(0,0,0,.05) 100%);
 }
 
-@keyframes toast {
-  0% { opacity: 0; transform: translateY(20px); }
-  15% { opacity: 1; transform: translateY(0); }
-  85% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(20px); }
-}
-
-@keyframes glow {
-  0%, 100% { box-shadow: 0 0 10px rgba(0,206,209,.3); }
-  50% { box-shadow: 0 0 28px rgba(0,206,209,.7); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-select option { background: #111; color: #fff; }
-
-input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-
-::-webkit-scrollbar { width: 0; height: 0; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width:0; height:0; }
+select option { background:#111; color:#fff; }
+input[type="time"]::-webkit-calendar-picker-indicator { filter:invert(1); }
