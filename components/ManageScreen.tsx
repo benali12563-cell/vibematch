@@ -8,6 +8,9 @@ import Nav from "./Nav";
 import AuthBanner from "./AuthBanner";
 import VendorCard from "./VendorCard";
 import QuoteSheet from "./QuoteSheet";
+import ReadinessScore from "./ReadinessScore";
+import CountdownBanner from "./CountdownBanner";
+import ShareCard from "./ShareCard";
 import B from "./B";
 import Inp from "./Inp";
 
@@ -36,6 +39,13 @@ export default function ManageScreen() {
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.manage}</span>
       </div>
       <AuthBanner />
+
+      {/* Marketing widgets */}
+      <div style={{ paddingTop: 8 }}>
+        <CountdownBanner />
+        <ReadinessScore />
+        <ShareCard />
+      </div>
 
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
         {(["checklist", "budget"] as const).map((tb) => (
