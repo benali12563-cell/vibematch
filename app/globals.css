@@ -4,7 +4,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body {
+html, body {
   background: #000;
   color: #fff;
   font-family: 'Heebo', 'Manrope', sans-serif;
@@ -12,40 +12,120 @@ body {
   overscroll-behavior: none;
 }
 
-/* ── Animations ── */
-@keyframes fadeIn    { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-@keyframes scaleIn   { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
-@keyframes slideUp   { from{transform:translateY(100%)} to{transform:translateY(0)} }
-@keyframes toast     { 0%{opacity:0;transform:translateY(20px)} 15%{opacity:1;transform:translateY(0)} 85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(20px)} }
-@keyframes glow      { 0%,100%{box-shadow:0 0 10px rgba(0,206,209,.3)} 50%{box-shadow:0 0 28px rgba(0,206,209,.7)} }
-@keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.5} }
-@keyframes spin      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-@keyframes likeFlash { 0%{transform:scale(1)} 30%{transform:scale(1.4)} 60%{transform:scale(.95)} 100%{transform:scale(1)} }
-@keyframes nopeFlash { 0%{transform:scale(1) rotate(0)} 30%{transform:scale(1.2) rotate(-8deg)} 60%{transform:scale(.95) rotate(3deg)} 100%{transform:scale(1) rotate(0)} }
-@keyframes swipeRight{ 0%{transform:translateX(0) rotate(0)} 100%{transform:translateX(120vw) rotate(25deg);opacity:0} }
-@keyframes swipeLeft { 0%{transform:translateX(0) rotate(0)} 100%{transform:translateX(-120vw) rotate(-25deg);opacity:0} }
-@keyframes badgePop  { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+/* ══════════════════════════════════════════
+   KEYFRAMES
+══════════════════════════════════════════ */
+@keyframes fadeIn      { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeInUp    { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes scaleIn     { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+@keyframes slideUp     { from{transform:translateY(100%)} to{transform:translateY(0)} }
+@keyframes slideDown   { from{transform:translateY(-100%)} to{transform:translateY(0)} }
+@keyframes toast       { 0%{opacity:0;transform:translateY(20px)} 15%,85%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(20px)} }
+@keyframes spin        { to{transform:rotate(360deg)} }
+@keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:.45} }
+@keyframes float       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+@keyframes glow        { 0%,100%{box-shadow:0 0 12px rgba(0,206,209,.25)} 50%{box-shadow:0 0 32px rgba(0,206,209,.65),0 0 60px rgba(0,206,209,.2)} }
+@keyframes glowText    { 0%,100%{text-shadow:0 0 20px rgba(0,206,209,.4)} 50%{text-shadow:0 0 50px rgba(0,206,209,.9),0 0 80px rgba(0,206,209,.3)} }
+@keyframes shimmer     { 0%{background-position:200% center} 100%{background-position:-200% center} }
+@keyframes bgPan       { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes likeFlash   { 0%{transform:scale(1)} 30%{transform:scale(1.45)} 60%{transform:scale(.92)} 100%{transform:scale(1)} }
+@keyframes nopeFlash   { 0%{transform:scale(1) rotate(0)} 30%{transform:scale(1.2) rotate(-8deg)} 60%{transform:scale(.95) rotate(3deg)} 100%{transform:scale(1) rotate(0)} }
+@keyframes swipeRight  { to{transform:translateX(120vw) rotate(20deg);opacity:0} }
+@keyframes swipeLeft   { to{transform:translateX(-120vw) rotate(-20deg);opacity:0} }
+@keyframes badgePop    { 0%{transform:scale(0) rotate(-10deg)} 70%{transform:scale(1.15) rotate(3deg)} 100%{transform:scale(1) rotate(0)} }
+@keyframes countUp     { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes orb1        { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-20px) scale(1.1)} 66%{transform:translate(-20px,25px) scale(.95)} }
+@keyframes orb2        { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-25px,20px) scale(.9)} 66%{transform:translate(20px,-30px) scale(1.05)} }
+@keyframes borderPulse { 0%,100%{border-color:rgba(0,206,209,.2)} 50%{border-color:rgba(0,206,209,.5)} }
 
-/* ── Glass ── */
+/* ══════════════════════════════════════════
+   GLASS SYSTEM
+══════════════════════════════════════════ */
 .glass {
-  background: rgba(255,255,255,.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid rgba(255,255,255,.08);
 }
+.glass-sm {
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.07);
+}
 .glass-dark {
-  background: rgba(0,0,0,.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255,255,255,.06);
 }
-
-/* ── Story gradient ── */
-.story-gradient {
-  background: linear-gradient(0deg, rgba(0,0,0,.95) 0%, rgba(0,0,0,.4) 55%, rgba(0,0,0,.05) 100%);
+.glass-teal {
+  background: rgba(0,206,209,.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0,206,209,.18);
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width:0; height:0; }
-select option { background:#111; color:#fff; }
-input[type="time"]::-webkit-calendar-picker-indicator { filter:invert(1); }
+/* ══════════════════════════════════════════
+   GRADIENT TEXT
+══════════════════════════════════════════ */
+.text-gradient {
+  background: linear-gradient(135deg, #00CED1 0%, #00ffff 50%, #0099aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-warm {
+  background: linear-gradient(135deg, #FF6B35, #FFD700, #FF4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ══════════════════════════════════════════
+   SHIMMER BUTTON
+══════════════════════════════════════════ */
+.btn-shimmer {
+  background: linear-gradient(90deg, #00CED1 0%, #00ffff 25%, #00CED1 50%, #0099aa 75%, #00CED1 100%);
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+  color: #000;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform .15s, box-shadow .15s;
+}
+.btn-shimmer:hover  { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,206,209,.35); }
+.btn-shimmer:active { transform: scale(.97); }
+
+/* ══════════════════════════════════════════
+   STORY GRADIENT
+══════════════════════════════════════════ */
+.story-gradient {
+  background: linear-gradient(0deg,
+    rgba(0,0,0,.97) 0%,
+    rgba(0,0,0,.6)  45%,
+    rgba(0,0,0,.05) 100%
+  );
+}
+
+/* ══════════════════════════════════════════
+   HIDE SCROLLBAR
+══════════════════════════════════════════ */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ══════════════════════════════════════════
+   MISC
+══════════════════════════════════════════ */
+select option                               { background: #111; color: #fff; }
+input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+input::placeholder                          { color: rgba(255,255,255,.25); }
+
+/* Card hover (desktop) */
+@media (hover: hover) {
+  .card-hover { transition: transform .2s, box-shadow .2s; }
+  .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(0,206,209,.1); }
+}
