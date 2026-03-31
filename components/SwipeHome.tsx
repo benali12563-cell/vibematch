@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useApp } from "@/lib/context";
 import { T, CATS, AREAS, DV } from "@/lib/constants";
 import type { Vendor } from "@/types";
@@ -84,6 +85,19 @@ export default function SwipeHome() {
             <p style={{ color: "#555", fontSize: 12, marginTop: 6 }}>{t.pickCat}</p>
           </div>
         )}
+      </div>
+
+      {/* Legal footer */}
+      <div style={{ textAlign: "center", padding: "8px 0 80px", display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+        {[
+          { href: "/legal/terms", label: lang === "he" ? "תנאי שימוש" : "Terms" },
+          { href: "/legal/privacy", label: lang === "he" ? "פרטיות" : "Privacy" },
+          { href: "/legal/vendor-terms", label: lang === "he" ? "תנאי ספקים" : "Vendor Terms" },
+        ].map((l) => (
+          <Link key={l.href} href={l.href} style={{ color: "#2a2a2a", fontSize: 10, textDecoration: "none", letterSpacing: 0.5 }}>
+            {l.label}
+          </Link>
+        ))}
       </div>
 
       <Nav />
