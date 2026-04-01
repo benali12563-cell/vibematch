@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 import { T, CATS, NICHE_FIELDS } from "@/lib/constants";
@@ -8,6 +8,7 @@ import Inp from "./Inp";
 import Logo from "./Logo";
 import VLinks from "./VLinks";
 import AvailabilityCalendar from "./AvailabilityCalendar";
+import { saveVendorProfile, loadVendorBySlug, makeSlug } from "@/lib/supabase/vendors";
 import type { Vendor } from "@/types";
 
 function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean }) {
@@ -46,9 +47,23 @@ export default function VendorDash() {
 
   const isHe = lang === "he";
   const nicheFields = vProfile.category ? (NICHE_FIELDS[vProfile.category] ?? []) : [];
-  const publicLink = typeof window !== "undefined"
-    ? `${window.location.origin}/v/${encodeURIComponent((vProfile.businessName || user?.name || "").replace(/\s+/g, "-"))}`
+  const vendorSlug = makeSlug(vProfile.businessName || user?.name || "");
+  const publicLink = typeof window !== "undefined" && vendorSlug
+    ? `${window.location.origin}/v/${vendorSlug}`
     : "";
+
+  // Load existing profile from Supabase on mount
+  useEffect(() => {
+    if (!user || user.role !== "vendor" || !vendorSlug) return;
+    loadVendorBySlug(vendorSlug).then((v) => {
+      if (!v) return;
+      if (v.desc && !vAbout) setVAbout(v.desc);
+      if (v.price && !vProfile.businessPrice) setVProfile((p) => ({ ...p, businessPrice: v.price }));
+      if (v.imgs?.length && !vGallery.length) setVGallery(v.imgs.map((src, i) => ({ id: i, src })));
+      if (v.coupon) setCoupon(v.coupon);
+      if (v.isPublished) setPublished(true);
+    }).catch(() => {});
+  }, [vendorSlug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
   if (!user || user.role !== "vendor") {
@@ -105,39 +120,38 @@ export default function VendorDash() {
         </button>
         <Logo sz={18} />
         <button onClick={() => {
-          setPublished(true);
-          // Build a real Vendor object and add to browseable deck
           const catLabel = CATS.find((c) => c.k === vProfile.category)?.[isHe ? "he" : "en"] ?? vProfile.category;
-          const vendorName = vProfile.businessName || user?.name || "";
-          if (vendorName && vProfile.category) {
-            const newVendor = {
-              name: vendorName,
+          const bizName = vProfile.businessName || user?.name || "";
+          if (bizName && vProfile.category) {
+            const newVendor: Vendor = {
+              name: bizName,
               sub: catLabel,
               price: vProfile.businessPrice || "",
-              rating: 5,
-              city: "",
-              reviews: 0,
+              rating: 5, city: "", reviews: 0,
               desc: vAbout,
               coupon: coupon,
               area: "center" as import("@/types").Area,
               imgs: vGallery.map((g) => g.src),
               niche: {},
-              deal: null,
-              recommends: [],
-              vendorReviews: [],
-              whatsapp: vProfile.whatsapp,
-              phone: vProfile.phone,
-              instagram: vProfile.instagram,
-              tiktok: vProfile.tiktok,
-              website: vProfile.website,
-              google: vProfile.google,
-              waze: vProfile.waze,
+              deal: null, recommends: [], vendorReviews: [],
+              whatsapp: vProfile.whatsapp, phone: vProfile.phone,
+              instagram: vProfile.instagram, tiktok: vProfile.tiktok,
+              website: vProfile.website, google: vProfile.google, waze: vProfile.waze,
               catKey: vProfile.category as import("@/types").CatKey,
               isPublished: true,
             };
-            setPublishedVendors((p) => [...p.filter((v) => v.name !== vendorName), newVendor]);
+            // Add to context deck immediately (in-session)
+            setPublishedVendors((p) => [...p.filter((v) => v.name !== bizName), newVendor]);
+            // Persist to Supabase (async, fire-and-forget with toast feedback)
+            saveVendorProfile(newVendor).then(({ error }) => {
+              if (!error) {
+                showToast(isHe ? "✅ הפרופיל פורסם! לקוחות רואים אותך" : "✅ Published! Clients can see you");
+              } else {
+                showToast(isHe ? "✅ פורסם (מצב מקומי)" : "✅ Published (local mode)");
+              }
+            });
           }
-          showToast(isHe ? "✅ הפרופיל פורסם! לקוחות רואים אותך" : "✅ Published! Clients can see you");
+          setPublished(true);
           if (publicLink) setTimeout(() => { navigator.clipboard?.writeText(publicLink); }, 500);
         }} style={{ background: published ? "rgba(0,206,209,.14)" : "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: published ? "1.5px solid rgba(0,229,232,.55)" : "1px solid rgba(0,255,255,.3)", color: published ? "#00e5e8" : "#000", borderRadius: 20, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: published ? "0 2px 10px rgba(0,206,209,.2)" : "0 4px 16px rgba(0,206,209,.45), inset 0 1px 0 rgba(255,255,255,.3)", transition: "all .12s", letterSpacing: 0.2 }}>
           {published ? (isHe ? "✓ פורסם" : "✓ Live") : (isHe ? "פרסם" : "Publish")}

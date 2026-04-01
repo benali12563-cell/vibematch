@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
@@ -15,6 +15,7 @@ import ConfettiEffect from "./ConfettiEffect";
 import SwipeTogetherModal from "./SwipeTogetherModal";
 import VendorCard from "./VendorCard";
 import B from "./B";
+import { loadPublishedVendors } from "@/lib/supabase/vendors";
 
 const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   venues: [
@@ -61,8 +62,23 @@ export default function SwipeHome() {
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showHotSheet, setShowHotSheet] = useState(false);
+  const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
 
-  const liveVendors = publishedVendors.filter((v) => v.catKey === activeCat);
+  // Load live published vendors from Supabase once on mount
+  useEffect(() => {
+    loadPublishedVendors().then(setDbVendors).catch(() => {});
+  }, []);
+
+  // Merge: DV hardcoded + context (just published) + Supabase DB
+  // Deduplicate by name so a vendor who just published doesn't appear twice
+  const seenNames = new Set<string>();
+  const liveVendors: Vendor[] = [];
+  for (const v of [
+    ...publishedVendors.filter((v) => v.catKey === activeCat),
+    ...dbVendors.filter((v) => v.catKey === activeCat),
+  ]) {
+    if (!seenNames.has(v.name)) { seenNames.add(v.name); liveVendors.push(v); }
+  }
   const rawVs = [...(DV[activeCat] ?? []), ...liveVendors];
   const areaFiltered = areaFilter === "allAreas" ? rawVs : rawVs.filter((v) => v.area === areaFilter);
   const vs = selectedDate
