@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
@@ -16,7 +16,6 @@ import SwipeTogetherModal from "./SwipeTogetherModal";
 import VendorCard from "./VendorCard";
 import B from "./B";
 
-// Sub-categories per category
 const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   venues: [
     { he: "אולמות", en: "Halls" }, { he: "ווילות", en: "Villas" },
@@ -55,12 +54,13 @@ export default function SwipeHome() {
   const [confetti, setConfetti] = useState(false);
   const [showTogether, setShowTogether] = useState(false);
   const [hotView, setHotView] = useState<Vendor | null>(null);
-  const [showHot, setShowHot] = useState(true);
   const [likeCount, setLikeCount] = useState(0);
   const [likeAnim, setLikeAnim] = useState(false);
   const [nopeAnim, setNopeAnim] = useState(false);
   const [cardAnim, setCardAnim] = useState<"like" | "nope" | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showHotSheet, setShowHotSheet] = useState(false);
 
   const rawVs = DV[activeCat] ?? [];
   const areaFiltered = areaFilter === "allAreas" ? rawVs : rawVs.filter((v) => v.area === areaFilter);
@@ -98,16 +98,58 @@ export default function SwipeHome() {
   }
 
   const subs = SUB[activeCat] ?? [];
+  const hasActiveFilters = areaFilter !== "allAreas" || !!selectedDate || !!activeSub;
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#000", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo'", direction: isHe ? "rtl" : "ltr" }}>
+    <div style={{ height: "100dvh", overflow: "hidden", background: "#000", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo'", direction: isHe ? "rtl" : "ltr" }}>
       <ConfettiEffect trigger={confetti} />
 
-      {/* ── Floating glass header ── */}
-      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, maxWidth: 480, margin: "0 auto", pointerEvents: "none" }}>
-        {/* Top row */}
+      {/* ── FULL-SCREEN CARD ── */}
+      <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto" }}>
+        {cur ? (
+          <>
+            <div style={{
+              position: "absolute", inset: 0,
+              animation: cardAnim === "like" ? "swipeRight .45s ease forwards" : cardAnim === "nope" ? "swipeLeft .45s ease forwards" : undefined,
+            }}>
+              <SwipeCardView vendor={cur} imgIdx={imgIdx} setImgIdx={setImgIdx}
+                actions={
+                  <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
+                    {/* Nope */}
+                    <button onClick={doNope} style={{ width: 68, height: 68, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.3)" : "rgba(20,0,0,.65)", border: "2px solid rgba(255,68,68,.5)", color: "#FF5555", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: nopeAnim ? "nopeFlash .4s" : undefined, boxShadow: "0 4px 20px rgba(255,68,68,.25), inset 0 1px 0 rgba(255,255,255,.1)" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: "'FILL' 0" }}>close</span>
+                    </button>
+                    {/* Like */}
+                    <button onClick={doLike} style={{ width: 68, height: 68, borderRadius: "50%", background: likeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : likes.includes(cur.name) ? "linear-gradient(160deg,rgba(0,229,232,.25),rgba(0,206,209,.15))" : "rgba(0,20,20,.65)", border: `2px solid ${likes.includes(cur.name) ? "rgba(0,229,232,.7)" : "rgba(0,206,209,.45)"}`, color: likeAnim ? "#000" : "#00e5e8", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: likeAnim ? "likeFlash .45s" : undefined, boxShadow: likes.includes(cur.name) ? "0 4px 20px rgba(0,206,209,.4), inset 0 1px 0 rgba(255,255,255,.15)" : "0 4px 20px rgba(0,206,209,.2), inset 0 1px 0 rgba(255,255,255,.08)" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: likes.includes(cur.name) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    </button>
+                  </div>
+                }
+              />
+            </div>
+
+            {/* Social proof badges — float above action area */}
+            <div style={{ position: "absolute", bottom: 148, left: 14, right: 14, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>👁 {looked}</span>
+              {liveNow > 4 && <span style={{ fontSize: 10, color: "#FF4444", fontWeight: 600, background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "pulse 2s infinite" }}>🔴 {liveNow} {isHe ? "עכשיו" : "now"}</span>}
+              {isHot && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>}
+              <span style={{ marginInlineStart: "auto", color: "rgba(255,255,255,.35)", fontSize: 10, background: "rgba(0,0,0,.4)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{ci + 1}/{vs.length}</span>
+            </div>
+          </>
+        ) : (
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
+            <div style={{ fontSize: 48 }}>🎉</div>
+            <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
+            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
+            <B s="sm" v="accent" onClick={() => { setCi(0); }}>{isHe ? "הצג מחדש" : "Show again"}</B>
+          </div>
+        )}
+      </div>
+
+      {/* ── GLASS HEADER OVERLAY ── */}
+      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, maxWidth: 480, margin: "0 auto", pointerEvents: "none", background: "linear-gradient(to bottom, rgba(0,0,0,.82) 0%, rgba(0,0,0,.55) 55%, transparent 100%)" }}>
+        {/* Row 1: vendor btn + logo + login/profile */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 8px", pointerEvents: "auto" }}>
-          {/* Right: vendor + lang */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => { setLoginMode("vendor"); setShowLogin(true); }}
               style={{ padding: "8px 16px", borderRadius: 22, background: "rgba(255,255,255,.12)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(255,255,255,.22)", color: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18)", letterSpacing: 0.2, transition: "all .12s" }}>
@@ -116,28 +158,23 @@ export default function SwipeHome() {
             <LangToggle />
           </div>
 
-          {/* Center: Logo (long-press = admin) */}
           <button onClick={() => setShowTogether(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             <Logo sz={20} />
           </button>
 
-          {/* Left: login / name */}
           {user
-            ? <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(0,206,209,.15)", border: "1.5px solid rgba(0,206,209,.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 13 }}>👤</span>
-                </div>
+            ? <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,206,209,.15)", border: "1.5px solid rgba(0,206,209,.35)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,206,209,.2)" }}>
+                <span style={{ fontSize: 14 }}>👤</span>
               </div>
             : <button onClick={() => { setLoginMode("owner"); setShowLogin(true); }}
-                style={{ padding: "8px 16px", borderRadius: 22, background: "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: "1px solid rgba(0,255,255,.35)", color: "#000", fontSize: 11, fontWeight: 900, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,206,209,.5), 0 1px 4px rgba(0,206,209,.3), inset 0 1px 0 rgba(255,255,255,.3)", letterSpacing: 0.2, transition: "all .12s" }}>
+                style={{ padding: "8px 16px", borderRadius: 22, background: "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: "1px solid rgba(0,255,255,.35)", color: "#000", fontSize: 11, fontWeight: 900, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,206,209,.5), inset 0 1px 0 rgba(255,255,255,.3)", letterSpacing: 0.2, transition: "all .12s" }}>
                 {t.login}
               </button>
           }
         </div>
 
-        {/* Category chips */}
-        <div style={{ display: "flex", gap: 6, padding: "0 12px 6px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }}
-          className="hide-scrollbar">
+        {/* Row 2: Category chips + filter + hot buttons */}
+        <div style={{ display: "flex", gap: 7, padding: "0 12px 14px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }} className="hide-scrollbar">
           {CATS.map((c) => {
             const active = activeCat === c.k;
             return (
@@ -147,126 +184,99 @@ export default function SwipeHome() {
               </button>
             );
           })}
-        </div>
 
-        {/* Sub-category chips */}
-        {subs.length > 0 && (
-          <div style={{ display: "flex", gap: 5, padding: "0 12px 6px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }}
-            className="hide-scrollbar">
-            {subs.map((s) => {
-              const active = activeSub === s.he;
-              return (
-                <button key={s.he} onClick={() => setActiveSub(active ? null : s.he)}
-                  style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: active ? "1px solid rgba(0,206,209,.55)" : "1px solid rgba(255,255,255,.12)", background: active ? "rgba(0,206,209,.16)" : "rgba(255,255,255,.08)", backdropFilter: "blur(16px) saturate(160%)", WebkitBackdropFilter: "blur(16px) saturate(160%)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.65)", fontSize: 11, fontWeight: active ? 700 : 600, fontFamily: "inherit", transition: "all .15s", boxShadow: active ? "0 3px 12px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "0 2px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08)" }}>
-                  {isHe ? s.he : s.en}
-                </button>
-              );
-            })}
-          </div>
-        )}
+          {/* Divider */}
+          <div style={{ width: 1, height: 28, background: "rgba(255,255,255,.1)", alignSelf: "center", flexShrink: 0 }} />
 
-        {/* Area filter */}
-        <div style={{ display: "flex", gap: 5, padding: "0 12px 4px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }}
-          className="hide-scrollbar">
-          {AREAS.map((a) => (
-            <button key={a} onClick={() => { setAreaFilter(a); setCi(0); }}
-              style={{ flexShrink: 0, padding: "6px 13px", borderRadius: 16, border: areaFilter === a ? "1px solid rgba(0,206,209,.5)" : "1px solid rgba(255,255,255,.12)", background: areaFilter === a ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.07)", backdropFilter: "blur(14px) saturate(150%)", WebkitBackdropFilter: "blur(14px) saturate(150%)", color: areaFilter === a ? "#00e5e8" : "rgba(255,255,255,.62)", fontSize: 11, fontWeight: areaFilter === a ? 700 : 600, cursor: "pointer", fontFamily: "inherit", transition: "all .15s", boxShadow: areaFilter === a ? "0 3px 12px rgba(0,206,209,.22), inset 0 1px 0 rgba(0,255,255,.12)" : "0 2px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.07)" }}>
-              {t[a]}
-            </button>
-          ))}
-          {/* Swipe Together */}
-          <button onClick={() => setShowTogether(true)}
-            style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 16, border: "1px solid rgba(0,229,232,.45)", background: "linear-gradient(160deg,rgba(0,229,232,.18),rgba(0,206,209,.1))", backdropFilter: "blur(14px) saturate(150%)", WebkitBackdropFilter: "blur(14px) saturate(150%)", color: "#00e5e8", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 3px 14px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)", letterSpacing: 0.1, transition: "all .12s" }}>
-            💑 {isHe ? "יחד" : "Together"}
+          {/* Filter button */}
+          <button onClick={() => setShowFilters(true)}
+            style={{ flexShrink: 0, width: 38, height: 38, borderRadius: "50%", background: hasActiveFilters ? "rgba(0,206,209,.18)" : "rgba(255,255,255,.09)", border: hasActiveFilters ? "1.5px solid rgba(0,229,232,.6)" : "1.5px solid rgba(255,255,255,.15)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", color: hasActiveFilters ? "#00e5e8" : "rgba(255,255,255,.7)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: hasActiveFilters ? "0 3px 14px rgba(0,206,209,.3), inset 0 1px 0 rgba(0,255,255,.15)" : "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1)", transition: "all .12s", position: "relative" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>tune</span>
+            {hasActiveFilters && <div style={{ position: "absolute", top: 5, right: 5, width: 7, height: 7, borderRadius: "50%", background: "#00e5e8", boxShadow: "0 0 6px rgba(0,229,232,.8)" }} />}
           </button>
-        </div>
 
-        {/* Date filter */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px 8px", pointerEvents: "auto" }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 14, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.25)", flexShrink: 0 }}>calendar_month</span>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => { setSelectedDate(e.target.value); setCi(0); }}
-            style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.3)" : "rgba(255,255,255,.07)"}`, borderRadius: 10, padding: "4px 10px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.35)", fontSize: 11, fontFamily: "inherit", outline: "none", backdropFilter: "blur(8px)" }}
-          />
-          {selectedDate && (
-            <button onClick={() => { setSelectedDate(""); setCi(0); }}
-              style={{ background: "none", border: "none", color: "rgba(255,255,255,.3)", fontSize: 13, cursor: "pointer", padding: "0 2px" }}>✕</button>
-          )}
+          {/* Hot button */}
+          <button onClick={() => setShowHotSheet(true)}
+            style={{ flexShrink: 0, width: 38, height: 38, borderRadius: "50%", background: "rgba(255,68,68,.12)", border: "1.5px solid rgba(255,68,68,.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 12px rgba(255,68,68,.2), inset 0 1px 0 rgba(255,255,255,.08)", transition: "all .12s", fontSize: 17 }}>
+            🔥
+          </button>
         </div>
       </header>
 
-      {/* ── Main card area ── */}
-      <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto" }}>
+      {/* ── FILTER DRAWER ── */}
+      {showFilters && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,.65)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} onClick={() => setShowFilters(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: "rgba(14,14,14,.98)", borderRadius: "22px 22px 0 0", padding: "18px 18px 32px", border: "1px solid rgba(255,255,255,.08)", borderBottom: "none", boxShadow: "0 -12px 50px rgba(0,0,0,.7)", animation: "slideUp .3s ease" }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(255,255,255,.1)", margin: "0 auto 20px" }} />
 
-        {/* Hot strip (floats above, collapsible) */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10 }}>
-          {showHot ? (
-            <div className="glass-dark" style={{ paddingTop: 150 }}>
-              <HotStrip onSelect={(v) => setHotView(v)} />
-              <button onClick={() => setShowHot(false)} style={{ display: "block", width: "100%", background: "none", border: "none", color: "#333", fontSize: 10, cursor: "pointer", paddingBottom: 6, fontFamily: "inherit" }}>
-                {isHe ? "הסתר ↑" : "hide ↑"}
-              </button>
-            </div>
-          ) : (
-            <div style={{ paddingTop: 148 }}>
-              <button onClick={() => setShowHot(true)} style={{ display: "block", width: "100%", background: "rgba(0,0,0,.3)", backdropFilter: "blur(8px)", border: "none", borderBottom: "1px solid rgba(255,255,255,.04)", color: "#333", fontSize: 10, cursor: "pointer", padding: "5px 0", fontFamily: "inherit" }}>
-                🔥 {isHe ? "חם השבוע ↓" : "Trending ↓"}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Card */}
-        <div style={{ position: "absolute", inset: 0, top: showHot ? 340 : 168 }}>
-          {cur ? (
-            <>
-              {/* Social proof */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 14px", direction: isHe ? "rtl" : "ltr" }}>
-                <span style={{ fontSize: 10, color: "rgba(255,255,255,.25)" }}>👁 {looked}</span>
-                {liveNow > 4 && <span style={{ fontSize: 10, color: "#FF4444", fontWeight: 600, animation: "pulse 2s infinite" }}>🔴 {liveNow} {isHe ? "עכשיו" : "now"}</span>}
-                {isHot && <span style={{ fontSize: 9, padding: "1px 7px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>}
-                <span style={{ marginRight: isHe ? "auto" : 0, marginLeft: isHe ? 0 : "auto", color: "rgba(255,255,255,.2)", fontSize: 10 }}>{ci + 1}/{vs.length}</span>
-              </div>
-
-              {/* Card with swipe animation */}
-              <div style={{
-                position: "absolute", top: 28, left: 0, right: 0, bottom: 0,
-                animation: cardAnim === "like" ? "swipeRight .45s ease forwards" : cardAnim === "nope" ? "swipeLeft .45s ease forwards" : undefined,
-                borderRadius: "0 0 0 0"
-              }}>
-                <SwipeCardView vendor={cur} imgIdx={imgIdx} setImgIdx={setImgIdx}
-                  actions={
-                    <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
-                      {/* Nope */}
-                      <button onClick={doNope} style={{ width: 68, height: 68, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.3)" : "rgba(20,0,0,.65)", border: "2px solid rgba(255,68,68,.5)", color: "#FF5555", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: nopeAnim ? "nopeFlash .4s" : undefined, boxShadow: "0 4px 20px rgba(255,68,68,.25), inset 0 1px 0 rgba(255,255,255,.1)" }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: "'FILL' 0" }}>close</span>
+            {subs.length > 0 && (
+              <>
+                <p style={{ color: "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1.2 }}>{isHe ? "סוג" : "Type"}</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+                  {subs.map((s) => {
+                    const active = activeSub === s.he;
+                    return (
+                      <button key={s.he} onClick={() => setActiveSub(active ? null : s.he)}
+                        style={{ padding: "7px 16px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1.5px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.16)" : "rgba(255,255,255,.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s", boxShadow: active ? "0 3px 12px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06)" }}>
+                        {isHe ? s.he : s.en}
                       </button>
-                      {/* Like */}
-                      <button onClick={doLike} style={{ width: 68, height: 68, borderRadius: "50%", background: likeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : likes.includes(cur.name) ? "linear-gradient(160deg,rgba(0,229,232,.25),rgba(0,206,209,.15))" : "rgba(0,20,20,.65)", border: `2px solid ${likes.includes(cur.name) ? "rgba(0,229,232,.7)" : "rgba(0,206,209,.45)"}`, color: likeAnim ? "#000" : "#00e5e8", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: likeAnim ? "likeFlash .45s" : undefined, boxShadow: likes.includes(cur.name) ? "0 4px 20px rgba(0,206,209,.4), inset 0 1px 0 rgba(255,255,255,.15)" : "0 4px 20px rgba(0,206,209,.2), inset 0 1px 0 rgba(255,255,255,.08)" }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: likes.includes(cur.name) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                      </button>
-                    </div>
-                  }
-                />
-              </div>
-            </>
-          ) : (
-            <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-              <div style={{ fontSize: 48 }}>🎉</div>
-              <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
-              <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
-              <B s="sm" v="accent" onClick={() => { setCi(0); }}>{isHe ? "הצג מחדש" : "Show again"}</B>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1.2 }}>{isHe ? "אזור" : "Area"}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
+              {AREAS.map((a) => (
+                <button key={a} onClick={() => { setAreaFilter(a); setCi(0); }}
+                  style={{ padding: "7px 16px", borderRadius: 20, border: areaFilter === a ? "1.5px solid rgba(0,229,232,.6)" : "1.5px solid rgba(255,255,255,.1)", background: areaFilter === a ? "rgba(0,206,209,.16)" : "rgba(255,255,255,.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: areaFilter === a ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: areaFilter === a ? 700 : 500, cursor: "pointer", fontFamily: "inherit", transition: "all .12s", boxShadow: areaFilter === a ? "0 3px 12px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06)" }}>
+                  {t[a]}
+                </button>
+              ))}
             </div>
-          )}
+
+            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1.2 }}>{isHe ? "תאריך" : "Date"}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 16, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.2)" }}>calendar_month</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => { setSelectedDate(e.target.value); setCi(0); }}
+                style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.35)" : "rgba(255,255,255,.08)"}`, borderRadius: 12, padding: "9px 14px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 13, fontFamily: "inherit", outline: "none", backdropFilter: "blur(8px)" }}
+              />
+              {selectedDate && (
+                <button onClick={() => { setSelectedDate(""); setCi(0); }}
+                  style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.12)", borderRadius: "50%", color: "rgba(255,255,255,.5)", fontSize: 12, cursor: "pointer", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <B v="accent" style={{ flex: 1 }} onClick={() => { setShowFilters(false); setShowTogether(true); }}>
+                💑 {isHe ? "יחד" : "Together"}
+              </B>
+              <B v="ghost" style={{ flex: 1 }} onClick={() => setShowFilters(false)}>
+                {isHe ? "סגור" : "Close"}
+              </B>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── HOT TRENDING SHEET ── */}
+      {showHotSheet && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} onClick={() => setShowHotSheet(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: "rgba(10,10,10,.98)", borderRadius: "22px 22px 0 0", paddingTop: 18, border: "1px solid rgba(255,255,255,.07)", borderBottom: "none", boxShadow: "0 -12px 50px rgba(0,0,0,.7)", animation: "slideUp .3s ease", maxHeight: "72dvh", overflowY: "auto" }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(255,255,255,.1)", margin: "0 auto 4px" }} />
+            <HotStrip onSelect={(v) => { setHotView(v); setShowHotSheet(false); }} />
+          </div>
+        </div>
+      )}
 
       {/* Legal footer */}
-      <div style={{ position: "fixed", bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", display: "flex", justifyContent: "center", gap: 16, padding: "3px 0", background: "rgba(0,0,0,.7)" }}>
+      <div style={{ position: "fixed", bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", display: "flex", justifyContent: "center", gap: 16, padding: "3px 0", zIndex: 50 }}>
         {[["terms", isHe ? "תנאי שימוש" : "Terms"], ["privacy", isHe ? "פרטיות" : "Privacy"], ["vendor-terms", isHe ? "ספקים" : "Vendors"]].map(([k, l]) => (
-          <Link key={k} href={`/legal/${k}`} style={{ color: "#222", fontSize: 9, textDecoration: "none" }}>{l}</Link>
+          <Link key={k} href={`/legal/${k}`} style={{ color: "#1a1a1a", fontSize: 9, textDecoration: "none" }}>{l}</Link>
         ))}
       </div>
 
@@ -274,7 +284,7 @@ export default function SwipeHome() {
 
       {/* ── Match overlay ── */}
       {matchVendor && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.92)", backdropFilter: "blur(20px)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setMatchVendor(null)}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.92)", backdropFilter: "blur(20px)", zIndex: 350, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setMatchVendor(null)}>
           <div style={{ animation: "scaleIn .4s", textAlign: "center", padding: "0 28px" }}>
             <div style={{ fontSize: 64, marginBottom: 10, animation: "glow 1.2s ease infinite" }}>♥</div>
             <h2 style={{ color: "#00CED1", fontSize: 28, fontWeight: 900, marginBottom: 6, fontFamily: "'Manrope','Heebo',sans-serif", letterSpacing: -0.5 }}>
