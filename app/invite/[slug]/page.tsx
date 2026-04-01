@@ -37,7 +37,7 @@ export default function InvitePage({ params }: { params: Promise<{ slug: string 
       invite_slug: slug,
       guest_name: name || "אורח",
       guest_count: count === "5+" ? 5 : parseInt(count),
-      status: choice,
+      status: choice === "yes" ? "coming" : "not_coming",
     }).catch(() => {});
 
     setStep("done");
@@ -55,12 +55,12 @@ export default function InvitePage({ params }: { params: Promise<{ slug: string 
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
       // Track conversion
-      await sb.from("referral_visits").insert({
+      void sb.from("referral_visits").insert({
         referrer_slug: slug,
         referrer_type: "invite",
         page_visited: `/invite/${slug}`,
         registered: true,
-      }).catch(() => {});
+      });
       setEmailSent(true);
     } finally {
       setEmailLoading(false);
