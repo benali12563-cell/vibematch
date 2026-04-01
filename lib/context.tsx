@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area } from "@/types";
+import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry } from "@/types";
 
 const AppCtx = createContext<AppContextType | null>(null);
 
@@ -41,6 +41,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   const [vendorAvailability, setVendorAvailability] = useState<Record<string, string[]>>({});
   const [selectedDate, setSelectedDate] = useState("");
+  const [publishedVendors, setPublishedVendors] = useState<Vendor[]>([]);
+  const [guests, setGuests] = useState<GuestEntry[]>([]);
+  const addGuest = useCallback((g: GuestEntry) => setGuests((p) => [...p, g]), []);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -69,6 +72,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       onboardingDone, setOnboardingDone,
       vendorAvailability, setVendorAvailability,
       selectedDate, setSelectedDate,
+      publishedVendors, setPublishedVendors,
+      guests, addGuest,
     }}>
       {children}
     </AppCtx.Provider>

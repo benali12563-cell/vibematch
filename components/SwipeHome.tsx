@@ -43,7 +43,7 @@ function sp(name: string, min: number, max: number) {
 }
 
 export default function SwipeHome() {
-  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showLogin, setShowLogin, loginMode, setLoginMode, showToast, vendorAvailability, selectedDate, setSelectedDate } = useApp();
+  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showLogin, setShowLogin, loginMode, setLoginMode, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors } = useApp();
   const t = T[lang];
   const router = useRouter();
   const isHe = lang === "he";
@@ -62,7 +62,8 @@ export default function SwipeHome() {
   const [showFilters, setShowFilters] = useState(false);
   const [showHotSheet, setShowHotSheet] = useState(false);
 
-  const rawVs = DV[activeCat] ?? [];
+  const liveVendors = publishedVendors.filter((v) => v.catKey === activeCat);
+  const rawVs = [...(DV[activeCat] ?? []), ...liveVendors];
   const areaFiltered = areaFilter === "allAreas" ? rawVs : rawVs.filter((v) => v.area === areaFilter);
   const vs = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))

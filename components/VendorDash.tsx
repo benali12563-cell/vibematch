@@ -28,7 +28,7 @@ function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean
 }
 
 export default function VendorDash() {
-  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast } = useApp();
+  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
@@ -106,6 +106,37 @@ export default function VendorDash() {
         <Logo sz={18} />
         <button onClick={() => {
           setPublished(true);
+          // Build a real Vendor object and add to browseable deck
+          const catLabel = CATS.find((c) => c.k === vProfile.category)?.[isHe ? "he" : "en"] ?? vProfile.category;
+          const vendorName = vProfile.businessName || user?.name || "";
+          if (vendorName && vProfile.category) {
+            const newVendor = {
+              name: vendorName,
+              sub: catLabel,
+              price: vProfile.businessPrice || "",
+              rating: 5,
+              city: "",
+              reviews: 0,
+              desc: vAbout,
+              coupon: coupon,
+              area: "center" as import("@/types").Area,
+              imgs: vGallery.map((g) => g.src),
+              niche: {},
+              deal: null,
+              recommends: [],
+              vendorReviews: [],
+              whatsapp: vProfile.whatsapp,
+              phone: vProfile.phone,
+              instagram: vProfile.instagram,
+              tiktok: vProfile.tiktok,
+              website: vProfile.website,
+              google: vProfile.google,
+              waze: vProfile.waze,
+              catKey: vProfile.category as import("@/types").CatKey,
+              isPublished: true,
+            };
+            setPublishedVendors((p) => [...p.filter((v) => v.name !== vendorName), newVendor]);
+          }
           showToast(isHe ? "✅ הפרופיל פורסם! לקוחות רואים אותך" : "✅ Published! Clients can see you");
           if (publicLink) setTimeout(() => { navigator.clipboard?.writeText(publicLink); }, 500);
         }} style={{ background: published ? "rgba(0,206,209,.14)" : "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: published ? "1.5px solid rgba(0,229,232,.55)" : "1px solid rgba(0,255,255,.3)", color: published ? "#00e5e8" : "#000", borderRadius: 20, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: published ? "0 2px 10px rgba(0,206,209,.2)" : "0 4px 16px rgba(0,206,209,.45), inset 0 1px 0 rgba(255,255,255,.3)", transition: "all .12s", letterSpacing: 0.2 }}>

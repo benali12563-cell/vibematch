@@ -10,7 +10,7 @@ import Inp from "./Inp";
 import Logo from "./Logo";
 
 export default function GuestsScreen() {
-  const { lang, user, likes, eventInfo, setEventInfo } = useApp();
+  const { lang, user, likes, eventInfo, setEventInfo, guests, addGuest } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function GuestsScreen() {
                   ))}
                 </div>
               </div>
-              <B style={{ width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 12 }} onClick={() => setAns("yes")}>{t.coming} ({gC})</B>
+              <B style={{ width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 12 }} onClick={() => { setAns("yes"); addGuest({ name: gN || "אורח", count: gC === "5+" ? 5 : parseInt(gC), ts: Date.now() }); }}>{t.coming} ({gC})</B>
               <button onClick={() => setAns("no")} style={{ display: "block", width: "100%", marginTop: 10, background: "none", border: "none", color: "#555", fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "10px 0" }}>{t.notComing}</button>
             </div>
           ) : (
@@ -90,7 +90,7 @@ export default function GuestsScreen() {
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 14px 64px" }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "#000", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
-        <button onClick={() => router.push("/")} style={{ position: "absolute", right: lang === "he" ? 14 : "auto", left: lang === "en" ? 14 : "auto", background: "none", border: "none", color: "#666", fontSize: 16, cursor: "pointer" }}>
+        <button onClick={() => router.push("/")} style={{ position: "absolute", right: lang === "he" ? 12 : "auto", left: lang === "en" ? 12 : "auto", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,.09)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.16)", color: "rgba(255,255,255,.75)", fontSize: 17, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12)" }}>
           {lang === "he" ? "→" : "←"}
         </button>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.hosting}</span>
@@ -128,9 +128,21 @@ export default function GuestsScreen() {
         <B v="ghost" style={{ flex: 1 }} onClick={() => setShowPreview(true)}>{t.previewGuest}</B>
       </div>
 
-      <div style={{ padding: 18, background: "rgba(255,255,255,.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,.04)" }}>
-        <div style={{ color: "#fff", fontSize: 22, fontWeight: 700 }}>0</div>
-        <div style={{ color: "#555", fontSize: 11 }}>{t.confirmed}</div>
+      <div style={{ padding: 18, background: "rgba(255,255,255,.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,.04)", display: "flex", gap: 20, alignItems: "center" }}>
+        <div>
+          <div style={{ color: "#00CED1", fontSize: 28, fontWeight: 800 }}>{guests.reduce((s, g) => s + g.count, 0)}</div>
+          <div style={{ color: "#555", fontSize: 11 }}>{t.confirmed}</div>
+        </div>
+        {guests.length > 0 && (
+          <div style={{ flex: 1 }}>
+            {guests.slice(-3).map((g, i) => (
+              <div key={i} style={{ color: "rgba(255,255,255,.5)", fontSize: 11, marginBottom: 2 }}>
+                {g.name} — {g.count} {lang === "he" ? "אנשים" : "people"}
+              </div>
+            ))}
+            {guests.length > 3 && <div style={{ color: "rgba(255,255,255,.3)", fontSize: 10 }}>+{guests.length - 3} {lang === "he" ? "נוספים" : "more"}</div>}
+          </div>
+        )}
       </div>
 
       <Nav />

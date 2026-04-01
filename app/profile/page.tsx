@@ -9,11 +9,18 @@ import B from "@/components/B";
 import Inp from "@/components/Inp";
 
 export default function ProfilePage() {
-  const { lang, user, setUser, likes, showToast } = useApp();
+  const { lang, user, setUser, likes, budget, tlItems, showToast } = useApp();
   const router = useRouter();
   const isHe = lang === "he";
   const dir = isHe ? "rtl" : "ltr";
   const [editName, setEditName] = useState(user?.name ?? "");
+  const points = likes.length * 10 + (budget.total ? 50 : 0) + (tlItems.length > 0 ? 30 : 0);
+  const earnedBadges = [
+    likes.length >= 1 && (isHe ? "❤️ ראשון" : "❤️ First Like"),
+    likes.length >= 5 && (isHe ? "🔥 חמישה" : "🔥 Five Likes"),
+    budget.total ? (isHe ? "💰 תקציב" : "💰 Budget Set") : false,
+    tlItems.length > 0 && (isHe ? "📅 לוח זמנים" : "📅 Timeline"),
+  ].filter(Boolean) as string[];
   const [saved, setSaved] = useState(false);
 
   async function logout() {
@@ -61,11 +68,11 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: earnedBadges.length > 0 ? 12 : 24 }}>
           {[
             { icon: "❤️", label: isHe ? "לייקים" : "Likes", val: likes.length },
-            { icon: "⭐", label: isHe ? "נקודות" : "Points", val: (user?.points ?? 0) },
-            { icon: "🏅", label: isHe ? "תגים" : "Badges", val: (user?.badges?.length ?? 0) },
+            { icon: "⭐", label: isHe ? "נקודות" : "Points", val: points },
+            { icon: "🏅", label: isHe ? "תגים" : "Badges", val: earnedBadges.length },
           ].map((s) => (
             <div key={s.label} className="glass" style={{ borderRadius: 14, padding: "14px 10px", textAlign: "center" }}>
               <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
@@ -74,6 +81,13 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+        {earnedBadges.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, justifyContent: "center", marginBottom: 20 }}>
+            {earnedBadges.map((b) => (
+              <span key={b} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(0,206,209,.08)", border: "1px solid rgba(0,206,209,.2)", color: "#00CED1", fontSize: 11, fontWeight: 600 }}>{b}</span>
+            ))}
+          </div>
+        )}
 
         {/* Edit profile */}
         {user && (

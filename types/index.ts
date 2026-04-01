@@ -34,6 +34,14 @@ export interface Vendor {
   website?: string;
   google?: string;
   waze?: string;
+  catKey?: CatKey; // set when vendor publishes via VendorDash
+  isPublished?: boolean;
+}
+
+export interface GuestEntry {
+  name: string;
+  count: number;
+  ts: number;
 }
 
 export interface VendorReview {
@@ -137,4 +145,8 @@ export interface AppContextType {
   setVendorAvailability: Setter<Record<string, string[]>>;
   selectedDate: string;
   setSelectedDate: Setter<string>;
+  publishedVendors: Vendor[];
+  setPublishedVendors: Setter<Vendor[]>;
+  guests: GuestEntry[];
+  addGuest: (g: GuestEntry) => void;
 }
