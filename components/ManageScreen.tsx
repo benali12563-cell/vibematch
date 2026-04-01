@@ -33,7 +33,7 @@ export default function ManageScreen() {
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 0 64px" }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "#000", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
-        <button onClick={() => router.push("/")} style={{ position: "absolute", right: lang === "he" ? 14 : "auto", left: lang === "en" ? 14 : "auto", background: "none", border: "none", color: "#666", fontSize: 16, cursor: "pointer" }}>
+        <button onClick={() => router.push("/")} style={{ position: "absolute", right: lang === "he" ? 12 : "auto", left: lang === "en" ? 12 : "auto", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,.09)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.16)", color: "rgba(255,255,255,.75)", fontSize: 17, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12)", transition: "all .12s" }}>
           {lang === "he" ? "→" : "←"}
         </button>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.manage}</span>
@@ -49,7 +49,7 @@ export default function ManageScreen() {
 
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
         {(["checklist", "budget"] as const).map((tb) => (
-          <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "11px 0", background: "none", border: "none", color: tab === tb ? "#00CED1" : "#555", fontSize: 14, fontWeight: 600, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid transparent" }}>
+          <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "12px 0", background: tab === tb ? "rgba(0,206,209,.06)" : "none", border: "none", color: tab === tb ? "#00e5e8" : "rgba(255,255,255,.4)", fontSize: 14, fontWeight: tab === tb ? 700 : 500, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid rgba(255,255,255,.05)", transition: "all .15s", letterSpacing: tab === tb ? 0.1 : 0 }}>
             {tb === "checklist" ? t.checklist : t.budget}
           </button>
         ))}

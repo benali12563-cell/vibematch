@@ -25,7 +25,7 @@ export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Pr
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 200, overflowY: "auto", direction: lang === "he" ? "rtl" : "ltr", fontFamily: "inherit" }}>
-      <button onClick={onClose} style={{ position: "fixed", top: 14, right: lang === "he" ? 14 : "auto", left: lang === "en" ? 14 : "auto", background: "rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,.1)", color: "#fff", fontSize: 16, cursor: "pointer", zIndex: 210, width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <button onClick={onClose} style={{ position: "fixed", top: 14, right: lang === "he" ? 14 : "auto", left: lang === "en" ? 14 : "auto", background: "rgba(20,20,20,.75)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(255,255,255,.2)", color: "rgba(255,255,255,.9)", fontSize: 14, cursor: "pointer", zIndex: 210, width: 38, height: 38, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.14)", transition: "all .12s" }}>
         ✕
       </button>
       <div style={{ height: "75dvh" }}>

@@ -99,8 +99,8 @@ export default function VendorDash() {
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "#000", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
-        <button onClick={() => router.push("/")} style={{ background: "none", border: "none", color: "#555", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>home</span>
+        <button onClick={() => router.push("/")} style={{ background: "rgba(255,255,255,.09)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.16)", color: "rgba(255,255,255,.72)", borderRadius: 20, padding: "5px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12)", transition: "all .12s" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>home</span>
           {isHe ? "בית" : "Home"}
         </button>
         <Logo sz={18} />
@@ -108,7 +108,7 @@ export default function VendorDash() {
           setPublished(true);
           showToast(isHe ? "✅ הפרופיל פורסם! לקוחות רואים אותך" : "✅ Published! Clients can see you");
           if (publicLink) setTimeout(() => { navigator.clipboard?.writeText(publicLink); }, 500);
-        }} style={{ background: published ? "rgba(0,206,209,.15)" : "#00CED1", border: published ? "1px solid #00CED1" : "none", color: published ? "#00CED1" : "#000", borderRadius: 10, padding: "5px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+        }} style={{ background: published ? "rgba(0,206,209,.14)" : "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: published ? "1.5px solid rgba(0,229,232,.55)" : "1px solid rgba(0,255,255,.3)", color: published ? "#00e5e8" : "#000", borderRadius: 20, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: published ? "0 2px 10px rgba(0,206,209,.2)" : "0 4px 16px rgba(0,206,209,.45), inset 0 1px 0 rgba(255,255,255,.3)", transition: "all .12s", letterSpacing: 0.2 }}>
           {published ? (isHe ? "✓ פורסם" : "✓ Live") : (isHe ? "פרסם" : "Publish")}
         </button>
       </div>
@@ -134,7 +134,7 @@ export default function VendorDash() {
       <div style={{ padding: "48px 0 0" }}>
         <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
           {(["preview", "edit", "calendar"] as const).map((tb) => (
-            <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", color: tab === tb ? "#00CED1" : "#555", fontSize: 13, fontWeight: 600, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid transparent" }}>
+            <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "12px 0", background: tab === tb ? "rgba(0,206,209,.06)" : "none", border: "none", color: tab === tb ? "#00e5e8" : "rgba(255,255,255,.4)", fontSize: 13, fontWeight: tab === tb ? 700 : 500, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid rgba(255,255,255,.05)", transition: "all .15s", letterSpacing: tab === tb ? 0.1 : 0 }}>
               {tb === "preview" ? t.preview : tb === "edit" ? t.editProfile : (isHe ? "יומן" : "Calendar")}
             </button>
           ))}
@@ -261,7 +261,7 @@ export default function VendorDash() {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                         {f.opts.map((o) => {
                           const sel = vProfile[f.k] === o;
-                          return <button key={o} onClick={() => setVProfile((p) => ({ ...p, [f.k]: o }))} style={{ padding: "5px 12px", borderRadius: 6, border: `1px solid ${sel ? "#00CED1" : "rgba(255,255,255,.06)"}`, background: sel ? "rgba(0,206,209,.08)" : "transparent", color: sel ? "#00CED1" : "#888", fontSize: 11, fontWeight: 500, cursor: "pointer" }}>{o}</button>;
+                          return <button key={o} onClick={() => setVProfile((p) => ({ ...p, [f.k]: o }))} style={{ padding: "6px 14px", borderRadius: 16, border: `1.5px solid ${sel ? "rgba(0,229,232,.55)" : "rgba(255,255,255,.12)"}`, background: sel ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.07)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", color: sel ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 11, fontWeight: sel ? 700 : 500, cursor: "pointer", boxShadow: sel ? "0 3px 10px rgba(0,206,209,.22), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.07)", transition: "all .12s" }}>{o}</button>;
                         })}
                       </div>
                     ) : (

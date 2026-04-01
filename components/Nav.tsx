@@ -19,11 +19,11 @@ export default function Nav() {
       {TABS.map((tab) => {
         const active = pathname === tab.path || (tab.path === "/manage" && ["/manage","/timeline","/guests"].includes(pathname));
         return (
-          <button key={tab.path} onClick={() => router.push(tab.path)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", padding: "8px 0" }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 22, color: active ? "#00CED1" : "#444", fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0" }}>
+          <button key={tab.path} onClick={() => router.push(tab.path)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: active ? "rgba(0,206,209,.08)" : "none", border: "none", cursor: "pointer", padding: "10px 0 8px", borderRadius: 12, margin: "4px 4px", transition: "all .15s" }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 23, color: active ? "#00e5e8" : "rgba(255,255,255,.32)", fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0", filter: active ? "drop-shadow(0 0 6px rgba(0,206,209,.6))" : "none", transition: "all .15s" }}>
               {tab.icon}
             </span>
-            <span style={{ fontSize: 10, fontWeight: 600, color: active ? "#00CED1" : "#444", fontFamily: "inherit" }}>
+            <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color: active ? "#00e5e8" : "rgba(255,255,255,.32)", fontFamily: "inherit", transition: "all .15s" }}>
               {isHe ? tab.labelHe : tab.labelEn}
             </span>
           </button>

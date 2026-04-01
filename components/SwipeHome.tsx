@@ -110,8 +110,7 @@ export default function SwipeHome() {
           {/* Right: vendor + lang */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => { setLoginMode("vendor"); setShowLogin(true); }}
-              className="glass"
-              style={{ padding: "5px 12px", borderRadius: 20, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.8)", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ padding: "8px 16px", borderRadius: 22, background: "rgba(255,255,255,.12)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(255,255,255,.22)", color: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18)", letterSpacing: 0.2, transition: "all .12s" }}>
               {t.vendor}
             </button>
             <LangToggle />
@@ -130,8 +129,7 @@ export default function SwipeHome() {
                 </div>
               </div>
             : <button onClick={() => { setLoginMode("owner"); setShowLogin(true); }}
-                className="glass"
-                style={{ padding: "5px 12px", borderRadius: 20, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.8)", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ padding: "8px 16px", borderRadius: 22, background: "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: "1px solid rgba(0,255,255,.35)", color: "#000", fontSize: 11, fontWeight: 900, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,206,209,.5), 0 1px 4px rgba(0,206,209,.3), inset 0 1px 0 rgba(255,255,255,.3)", letterSpacing: 0.2, transition: "all .12s" }}>
                 {t.login}
               </button>
           }
@@ -139,19 +137,19 @@ export default function SwipeHome() {
 
         {/* Category chips */}
         <div style={{ display: "flex", gap: 6, padding: "0 12px 6px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }}
-          className="hide-scrollbar" >
+          className="hide-scrollbar">
           {CATS.map((c) => {
             const active = activeCat === c.k;
             return (
               <button key={c.k} onClick={() => { setActiveCat(c.k); setCi(0); setImgIdx(0); setActiveSub(null); }}
-                style={{ flexShrink: 0, padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${active ? "#00CED1" : "rgba(255,255,255,.08)"}`, background: active ? "rgba(0,206,209,.1)" : "rgba(0,0,0,.5)", backdropFilter: "blur(10px)", cursor: "pointer", color: active ? "#00CED1" : "rgba(255,255,255,.5)", fontSize: 11, fontWeight: 700, fontFamily: "inherit", transition: "all .2s" }}>
+                style={{ flexShrink: 0, padding: "8px 18px", borderRadius: 24, border: active ? "1.5px solid rgba(0,229,232,.65)" : "1.5px solid rgba(255,255,255,.15)", background: active ? "linear-gradient(160deg,rgba(0,229,232,.22) 0%,rgba(0,206,209,.13) 100%)" : "rgba(255,255,255,.09)", backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.78)", fontSize: 12, fontWeight: active ? 800 : 700, fontFamily: "inherit", transition: "all .15s", boxShadow: active ? "0 4px 16px rgba(0,206,209,.3), inset 0 1px 0 rgba(0,255,255,.2)" : "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1)", letterSpacing: active ? 0.1 : 0 }}>
                 {isHe ? c.he : c.en}
               </button>
             );
           })}
         </div>
 
-        {/* Sub-category chips (if available) */}
+        {/* Sub-category chips */}
         {subs.length > 0 && (
           <div style={{ display: "flex", gap: 5, padding: "0 12px 6px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }}
             className="hide-scrollbar">
@@ -159,7 +157,7 @@ export default function SwipeHome() {
               const active = activeSub === s.he;
               return (
                 <button key={s.he} onClick={() => setActiveSub(active ? null : s.he)}
-                  style={{ flexShrink: 0, padding: "3px 11px", borderRadius: 20, border: `1px solid ${active ? "rgba(0,206,209,.4)" : "rgba(255,255,255,.05)"}`, background: active ? "rgba(0,206,209,.07)" : "rgba(0,0,0,.4)", backdropFilter: "blur(8px)", cursor: "pointer", color: active ? "#00CED1" : "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 600, fontFamily: "inherit" }}>
+                  style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 20, border: active ? "1px solid rgba(0,206,209,.55)" : "1px solid rgba(255,255,255,.12)", background: active ? "rgba(0,206,209,.16)" : "rgba(255,255,255,.08)", backdropFilter: "blur(16px) saturate(160%)", WebkitBackdropFilter: "blur(16px) saturate(160%)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.65)", fontSize: 11, fontWeight: active ? 700 : 600, fontFamily: "inherit", transition: "all .15s", boxShadow: active ? "0 3px 12px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "0 2px 8px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08)" }}>
                   {isHe ? s.he : s.en}
                 </button>
               );
@@ -172,13 +170,13 @@ export default function SwipeHome() {
           className="hide-scrollbar">
           {AREAS.map((a) => (
             <button key={a} onClick={() => { setAreaFilter(a); setCi(0); }}
-              style={{ flexShrink: 0, padding: "2px 10px", borderRadius: 12, border: "none", background: areaFilter === a ? "rgba(0,206,209,.08)" : "transparent", color: areaFilter === a ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+              style={{ flexShrink: 0, padding: "6px 13px", borderRadius: 16, border: areaFilter === a ? "1px solid rgba(0,206,209,.5)" : "1px solid rgba(255,255,255,.12)", background: areaFilter === a ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.07)", backdropFilter: "blur(14px) saturate(150%)", WebkitBackdropFilter: "blur(14px) saturate(150%)", color: areaFilter === a ? "#00e5e8" : "rgba(255,255,255,.62)", fontSize: 11, fontWeight: areaFilter === a ? 700 : 600, cursor: "pointer", fontFamily: "inherit", transition: "all .15s", boxShadow: areaFilter === a ? "0 3px 12px rgba(0,206,209,.22), inset 0 1px 0 rgba(0,255,255,.12)" : "0 2px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.07)" }}>
               {t[a]}
             </button>
           ))}
           {/* Swipe Together */}
           <button onClick={() => setShowTogether(true)}
-            style={{ flexShrink: 0, padding: "2px 10px", borderRadius: 12, border: "1px solid rgba(0,206,209,.15)", background: "rgba(0,206,209,.05)", color: "#00CED1", fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginRight: "auto" }}>
+            style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 16, border: "1px solid rgba(0,229,232,.45)", background: "linear-gradient(160deg,rgba(0,229,232,.18),rgba(0,206,209,.1))", backdropFilter: "blur(14px) saturate(150%)", WebkitBackdropFilter: "blur(14px) saturate(150%)", color: "#00e5e8", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 3px 14px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)", letterSpacing: 0.1, transition: "all .12s" }}>
             💑 {isHe ? "יחד" : "Together"}
           </button>
         </div>
@@ -240,14 +238,14 @@ export default function SwipeHome() {
               }}>
                 <SwipeCardView vendor={cur} imgIdx={imgIdx} setImgIdx={setImgIdx}
                   actions={
-                    <div style={{ display: "flex", justifyContent: "center", gap: 24 }}>
+                    <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
                       {/* Nope */}
-                      <button onClick={doNope} style={{ width: 64, height: 64, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.25)" : "rgba(0,0,0,.5)", border: "1.5px solid rgba(255,68,68,.3)", color: "#FF4444", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(10px)", transition: "all .15s", animation: nopeAnim ? "nopeFlash .4s" : undefined }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 28, fontVariationSettings: "'FILL' 0" }}>close</span>
+                      <button onClick={doNope} style={{ width: 68, height: 68, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.3)" : "rgba(20,0,0,.65)", border: "2px solid rgba(255,68,68,.5)", color: "#FF5555", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: nopeAnim ? "nopeFlash .4s" : undefined, boxShadow: "0 4px 20px rgba(255,68,68,.25), inset 0 1px 0 rgba(255,255,255,.1)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: "'FILL' 0" }}>close</span>
                       </button>
                       {/* Like */}
-                      <button onClick={doLike} style={{ width: 64, height: 64, borderRadius: "50%", background: likeAnim ? "rgba(0,206,209,.35)" : likes.includes(cur.name) ? "rgba(0,206,209,.2)" : "rgba(0,0,0,.5)", border: `1.5px solid ${likes.includes(cur.name) ? "#00CED1" : "rgba(0,206,209,.3)"}`, color: "#00CED1", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(10px)", transition: "all .15s", animation: likeAnim ? "likeFlash .45s" : undefined }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 28, fontVariationSettings: likes.includes(cur.name) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                      <button onClick={doLike} style={{ width: 68, height: 68, borderRadius: "50%", background: likeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : likes.includes(cur.name) ? "linear-gradient(160deg,rgba(0,229,232,.25),rgba(0,206,209,.15))" : "rgba(0,20,20,.65)", border: `2px solid ${likes.includes(cur.name) ? "rgba(0,229,232,.7)" : "rgba(0,206,209,.45)"}`, color: likeAnim ? "#000" : "#00e5e8", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: likeAnim ? "likeFlash .45s" : undefined, boxShadow: likes.includes(cur.name) ? "0 4px 20px rgba(0,206,209,.4), inset 0 1px 0 rgba(255,255,255,.15)" : "0 4px 20px rgba(0,206,209,.2), inset 0 1px 0 rgba(255,255,255,.08)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: likes.includes(cur.name) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
                       </button>
                     </div>
                   }
