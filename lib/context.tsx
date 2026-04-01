@@ -29,7 +29,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [vendorPrices, setVendorPrices] = useState<Record<string, number>>({});
   const [eventInfo, setEventInfo] = useState<EventInfo>({ address: "", wazeLink: "", date: "", notes: "" });
   const [toast, setToast] = useState("");
-  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [onboardingDone, setOnboardingDoneRaw] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem("vm_onboarded") === "1"
+  );
+  const setOnboardingDone = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
+    setOnboardingDoneRaw((prev) => {
+      const next = typeof v === "function" ? v(prev) : v;
+      if (typeof window !== "undefined") sessionStorage.setItem("vm_onboarded", next ? "1" : "0");
+      return next;
+    });
+  }, []);
   const [vendorAvailability, setVendorAvailability] = useState<Record<string, string[]>>({});
   const [selectedDate, setSelectedDate] = useState("");
 
