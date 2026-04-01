@@ -32,20 +32,25 @@ export default function VendorDash() {
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
+
+  // All hooks MUST come before any early return
   const [tab, setTab] = useState<"preview" | "edit" | "calendar">("preview");
   const [coupon, setCoupon] = useState("");
   const [pIdx, setPIdx] = useState(0);
   const [invC, setInvC] = useState(false);
-  const fRef = useRef<HTMLInputElement>(null);
-  const pRef = useRef<HTMLInputElement>(null);
-  const nicheFields = vProfile.category ? (NICHE_FIELDS[vProfile.category] ?? []) : [];
-
-  const isHe = lang === "he";
-
-  // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
+  const [published, setPublished] = useState(false);
   const [vendorName, setVendorName] = useState("");
   const [vendorPin, setVendorPin] = useState("");
+  const fRef = useRef<HTMLInputElement>(null);
+  const pRef = useRef<HTMLInputElement>(null);
 
+  const isHe = lang === "he";
+  const nicheFields = vProfile.category ? (NICHE_FIELDS[vProfile.category] ?? []) : [];
+  const publicLink = typeof window !== "undefined"
+    ? `${window.location.origin}/v/${encodeURIComponent((vProfile.businessName || user?.name || "").replace(/\s+/g, "-"))}`
+    : "";
+
+  // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
   if (!user || user.role !== "vendor") {
     return (
       <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", direction: dir, fontFamily: "inherit" }}>
@@ -73,11 +78,6 @@ export default function VendorDash() {
       </div>
     );
   }
-
-  const [published, setPublished] = useState(false);
-  const publicLink = typeof window !== "undefined"
-    ? `${window.location.origin}/v/${encodeURIComponent((vProfile.businessName || user?.name || "").replace(/\s+/g, "-"))}`
-    : "";
 
   const previewVendor: Vendor = {
     name: vProfile.businessName || (user?.name ?? ""),
@@ -142,7 +142,6 @@ export default function VendorDash() {
 
         {tab === "preview" && (
           <div style={{ animation: "fadeIn .3s" }}>
-            {/* Publish bar */}
             <div style={{ padding: "10px 14px 0", display: "flex", gap: 8, direction: dir }}>
               <B s="sm" v="ghost" style={{ flex: 1 }} onClick={() => router.push("/")}>
                 <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
@@ -202,7 +201,7 @@ export default function VendorDash() {
           <div style={{ padding: "16px 14px", animation: "fadeIn .3s" }}>
             <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 16, border: "1px solid rgba(255,255,255,.05)", padding: 16, marginBottom: 14 }}>
               <p style={{ color: "#00CED1", fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: "middle", marginLeft: isHe ? 0 : 0, marginRight: isHe ? 0 : 6 }}>calendar_month</span>
+                <span className="material-symbols-outlined" style={{ fontSize: 15, verticalAlign: "middle", marginRight: isHe ? 0 : 6, marginLeft: isHe ? 6 : 0 }}>calendar_month</span>
                 {isHe ? "זמינות — סמן תאריכים תפוסים" : "Availability — mark busy dates"}
               </p>
               <p style={{ color: "#444", fontSize: 11, marginBottom: 14 }}>
