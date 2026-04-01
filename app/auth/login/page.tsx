@@ -1,92 +1,61 @@
 "use client";
-
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useApp } from "@/lib/context";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "@/components/Logo";
+import B from "@/components/B";
+import Inp from "@/components/Inp";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const { lang, showToast } = useApp();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isHe = lang === "he";
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  async function send() {
+    if (!email || loading) return;
     setLoading(true);
-    setError(null);
-
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      router.push("/dashboard");
-      router.refresh();
-    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+    });
+    setLoading(false);
+    if (error) { showToast(error.message); return; }
+    setSent(true);
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <Link href="/" className="block text-2xl font-bold text-gradient text-center mb-10">
-          VibeMatch
-        </Link>
-
-        <div className="card">
-          <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-white/50 text-sm mb-8">Log in to find your vibe matches.</p>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm text-white/70 mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="input-field"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-white/70 mb-1">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="input-field"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 text-sm">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full py-3 mt-2 disabled:opacity-50"
-            >
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
-
-          <p className="text-center text-white/50 text-sm mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="text-purple-400 hover:text-purple-300">
-              Sign up free
-            </Link>
+    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", direction: isHe ? "rtl" : "ltr" }}>
+      <div style={{ marginBottom: 32 }}><Logo sz={32} /></div>
+      {sent ? (
+        <div style={{ textAlign: "center", animation: "scaleIn .4s" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>📨</div>
+          <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 800, marginBottom: 8 }}>
+            {isHe ? "בדוק את המייל שלך" : "Check your email"}
+          </h2>
+          <p style={{ color: "#666", fontSize: 14 }}>
+            {isHe ? "שלחנו לינק כניסה ל-" : "We sent a magic link to"} <span style={{ color: "#00CED1" }}>{email}</span>
           </p>
+          <button onClick={() => setSent(false)} style={{ marginTop: 24, background: "none", border: "none", color: "#555", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+            {isHe ? "שינוי מייל" : "Change email"}
+          </button>
         </div>
-      </div>
-    </main>
+      ) : (
+        <div style={{ width: "100%", maxWidth: 360 }}>
+          <h2 style={{ color: "#fff", fontSize: 24, fontWeight: 800, marginBottom: 6, textAlign: "center" }}>
+            {isHe ? "כניסה ל-VibeMatch" : "Sign in to VibeMatch"}
+          </h2>
+          <p style={{ color: "#555", fontSize: 13, textAlign: "center", marginBottom: 28 }}>
+            {isHe ? "ללא סיסמה — כניסה דרך מייל בלבד" : "No password — email magic link only"}
+          </p>
+          <Inp value={email} onChange={setEmail} placeholder={isHe ? "אימייל" : "Email"} dir="ltr" style={{ marginBottom: 12 }} />
+          <B style={{ width: "100%" }} onClick={send}>
+            {loading ? (isHe ? "שולח..." : "Sending...") : (isHe ? "שלח לינק כניסה ✉️" : "Send Magic Link ✉️")}
+          </B>
+        </div>
+      )}
+    </div>
   );
 }
