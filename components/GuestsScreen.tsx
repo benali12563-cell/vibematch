@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 import { T, allVendors } from "@/lib/constants";
@@ -8,142 +8,166 @@ import AuthBanner from "./AuthBanner";
 import B from "./B";
 import Inp from "./Inp";
 import Logo from "./Logo";
+import { saveEventPage } from "@/lib/supabase/events";
+import { loadRsvps } from "@/lib/supabase/rsvp";
 
 export default function GuestsScreen() {
   const { lang, user, likes, eventInfo, setEventInfo, guests, addGuest } = useApp();
   const t = T[lang];
-  const dir = lang === "he" ? "rtl" : "ltr";
+  const isHe = lang === "he";
+  const dir = isHe ? "rtl" : "ltr";
   const router = useRouter();
 
   const [copied, setCopied] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [ans, setAns] = useState<"yes" | "no" | null>(null);
-  const [gN, setGN] = useState("");
-  const [gC, setGC] = useState("2");
   const [editInfo, setEditInfo] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
   const team = allVendors().filter((v) => likes.includes(v.name));
 
-  if (showPreview) {
-    return (
-      <div style={{ minHeight: "100dvh", background: "linear-gradient(180deg,#000 0%,#040812 30%,#0a1020 60%,#000 100%)", fontFamily: "inherit", direction: dir, overflowY: "auto" }}>
-        <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", padding: "0 16px" }}>
-          <div style={{ textAlign: "center", paddingTop: 50, paddingBottom: 20 }}>
-            <div style={{ width: 60, height: 1, background: "linear-gradient(90deg,transparent,#00CED1,transparent)", margin: "0 auto 20px" }} />
-            <p style={{ color: "#555", fontSize: 11, letterSpacing: 4, textTransform: "uppercase", fontFamily: "'Outfit'", marginBottom: 12 }}>{lang === "he" ? "הוזמנתם לחגוג איתנו" : "YOU'RE INVITED"}</p>
-            <h1 style={{ color: "#fff", fontSize: 32, fontWeight: 900, lineHeight: 1.2, fontFamily: "'Outfit'" }}>{user?.name ?? "—"}</h1>
-            <div style={{ width: 40, height: 1, background: "linear-gradient(90deg,transparent,rgba(0,206,209,.4),transparent)", margin: "16px auto" }} />
-            {eventInfo.date && <p style={{ color: "#00CED1", fontSize: 16, fontWeight: 600, letterSpacing: 1 }}>{eventInfo.date}</p>}
-            {eventInfo.address && <p style={{ color: "#888", fontSize: 14, marginTop: 8 }}>{eventInfo.address}</p>}
-          </div>
+  const slug = encodeURIComponent((user?.name ?? "guest").replace(/\s+/g, "-"));
+  const inviteLink = `${typeof window !== "undefined" ? window.location.origin : "https://vibematch.co.il"}/invite/${slug}`;
 
-          {!ans ? (
-            <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 16, padding: 24, border: "1px solid rgba(255,255,255,.06)", marginBottom: 20, animation: "fadeIn .6s" }}>
-              <p style={{ color: "#888", fontSize: 13, textAlign: "center", marginBottom: 14 }}>{lang === "he" ? "נשמח לדעת שאתם מגיעים" : "Let us know you're coming"}</p>
-              <Inp value={gN} onChange={setGN} placeholder={t.yourName} style={{ marginBottom: 10, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.06)" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", marginBottom: 14 }}>
-                <span style={{ color: "#666", fontSize: 13 }}>{t.howMany}</span>
-                <div style={{ display: "flex", gap: 4 }}>
-                  {["1", "2", "3", "4", "5+"].map((n) => (
-                    <button key={n} onClick={() => setGC(n)} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${gC === n ? "#00CED1" : "rgba(255,255,255,.06)"}`, background: gC === n ? "rgba(0,206,209,.08)" : "transparent", color: gC === n ? "#00CED1" : "#555", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{n}</button>
-                  ))}
-                </div>
-              </div>
-              <B style={{ width: "100%", padding: "14px 0", fontSize: 16, borderRadius: 12 }} onClick={() => { setAns("yes"); addGuest({ name: gN || "אורח", count: gC === "5+" ? 5 : parseInt(gC), ts: Date.now() }); }}>{t.coming} ({gC})</B>
-              <button onClick={() => setAns("no")} style={{ display: "block", width: "100%", marginTop: 10, background: "none", border: "none", color: "#555", fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "10px 0" }}>{t.notComing}</button>
-            </div>
-          ) : (
-            <div style={{ textAlign: "center", padding: "30px 0", animation: "scaleIn .4s" }}>
-              <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 800 }}>{t.thanks}</h2>
-              <p style={{ color: "#666", fontSize: 13, marginTop: 4 }}>{ans === "yes" ? (lang === "he" ? "נתראה באירוע" : "See you there") : (lang === "he" ? "נשמח בפעם הבאה" : "Maybe next time")}</p>
-            </div>
-          )}
+  const copyLink = useCallback(() => {
+    navigator.clipboard?.writeText(inviteLink).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }, [inviteLink]);
 
-          {ans === "yes" && team.length > 0 && (
-            <div style={{ animation: "fadeIn .5s ease .2s both", marginBottom: 20 }}>
-              <p style={{ color: "#666", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", textAlign: "center", marginBottom: 12, fontFamily: "'Outfit'" }}>{t.meetTeam}</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {team.map((v) => (
-                  <div key={v.name} style={{ background: "rgba(255,255,255,.02)", borderRadius: 12, padding: "14px 12px", textAlign: "center", border: "1px solid rgba(255,255,255,.04)" }}>
-                    <p style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{v.name}</p>
-                    <p style={{ color: "#00CED1", fontSize: 10, marginTop: 2 }}>{v.sub}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+  const shareWhatsApp = useCallback(() => {
+    const text = isHe
+      ? `הוזמנתם לאירוע שלי 🎉\nאשרו הגעה כאן:\n${inviteLink}`
+      : `You're invited to my event 🎉\nRSVP here:\n${inviteLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }, [inviteLink, isHe]);
 
-          <div style={{ textAlign: "center", padding: "30px 0 40px" }}>
-            <p style={{ color: "#333", fontSize: 10, letterSpacing: 2, textTransform: "uppercase", marginBottom: 6, fontFamily: "'Outfit'" }}>Powered by</p>
-            <Logo sz={28} />
-          </div>
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    await saveEventPage({
+      slug,
+      host_name: user?.name ?? "אירוע",
+      event_date: eventInfo.date || undefined,
+      event_address: eventInfo.address || undefined,
+      waze_link: eventInfo.wazeLink || undefined,
+      event_notes: eventInfo.notes || undefined,
+      vendor_names: team.map((v) => v.name),
+    });
+    setSaving(false);
+    setSaved(true);
+    setEditInfo(false);
+    setTimeout(() => setSaved(false), 2500);
+  }, [slug, user, eventInfo, team]);
 
-          <div style={{ position: "fixed", top: 14, right: lang === "he" ? 14 : "auto", left: lang === "en" ? 14 : "auto" }}>
-            <button onClick={() => { setShowPreview(false); setAns(null); }} style={{ background: "rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,.1)", color: "#888", fontSize: 14, cursor: "pointer", width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {lang === "he" ? "→" : "←"}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const confirmedCount = guests.reduce((s, g) => s + g.count, 0);
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 14px 64px" }}>
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "#000", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
-        <button onClick={() => router.push("/")} style={{ position: "absolute", right: lang === "he" ? 12 : "auto", left: lang === "en" ? 12 : "auto", width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,.09)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,.16)", color: "rgba(255,255,255,.75)", fontSize: 17, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12)" }}>
-          {lang === "he" ? "→" : "←"}
-        </button>
-        <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.hosting}</span>
+    <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 14px 80px" }}>
+      {/* Header */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "rgba(0,0,0,.92)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
+        <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{isHe ? "ניהול אורחים" : "Guest Management"}</span>
       </div>
       <AuthBanner />
 
-      <div style={{ marginTop: 8, marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <p style={{ color: "#888", fontSize: 13, fontWeight: 600 }}>{t.eventDetails}</p>
-          <B s="sm" v="ghost" onClick={() => setEditInfo(!editInfo)} style={{ padding: "4px 12px", fontSize: 11 }}>{editInfo ? t.save : "✏️"}</B>
-        </div>
-        {editInfo ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <Inp value={eventInfo.address} onChange={(v) => setEventInfo((p) => ({ ...p, address: v }))} placeholder={t.eventAddress} />
-            <Inp value={eventInfo.wazeLink} onChange={(v) => setEventInfo((p) => ({ ...p, wazeLink: v }))} placeholder="Waze link" dir="ltr" />
-            <Inp value={eventInfo.date} onChange={(v) => setEventInfo((p) => ({ ...p, date: v }))} placeholder={t.eventDate} />
-            <Inp value={eventInfo.notes} onChange={(v) => setEventInfo((p) => ({ ...p, notes: v }))} placeholder={t.eventNotes} />
-          </div>
-        ) : (
-          <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 10, padding: 12, border: "1px solid rgba(255,255,255,.04)" }}>
-            {eventInfo.address ? <p style={{ color: "#aaa", fontSize: 12 }}>{eventInfo.address}</p> : <p style={{ color: "#444", fontSize: 12 }}>{lang === "he" ? "לחצו עריכה להוסיף פרטים" : "Click edit to add details"}</p>}
-            {eventInfo.date && <p style={{ color: "#666", fontSize: 11, marginTop: 2 }}>{eventInfo.date}</p>}
-          </div>
-        )}
+      {/* Invite link hero */}
+      <div style={{ background: "linear-gradient(135deg,rgba(0,206,209,.12) 0%,rgba(0,0,0,0) 60%)", borderRadius: 20, border: "1px solid rgba(0,206,209,.2)", padding: "22px 18px", marginBottom: 18 }}>
+        <p style={{ color: "#00CED1", fontSize: 11, letterSpacing: 3, textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
+          {isHe ? "הלינק שלך לאורחים" : "YOUR GUEST LINK"}
+        </p>
+        <p style={{ color: "rgba(255,255,255,.55)", fontSize: 12, marginBottom: 16, lineHeight: 1.5 }}>
+          {isHe ? "שלחו לאורחים שלכם — הם יקבלו דף אירוע מרשים עם כל הפרטים" : "Send to your guests — they get a stunning event page with all details"}
+        </p>
+
+        {/* WhatsApp share — primary CTA */}
+        <button onClick={shareWhatsApp} style={{ width: "100%", padding: "15px 0", borderRadius: 14, border: "none", background: "linear-gradient(135deg,#25D366,#128C7E)", color: "#fff", fontWeight: 900, fontSize: 16, cursor: "pointer", fontFamily: "inherit", marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 6px 20px rgba(37,211,102,.3)" }}>
+          <span style={{ fontSize: 20 }}>💬</span>
+          {isHe ? "שלחו בוואטסאפ לכל האורחים" : "Share via WhatsApp"}
+        </button>
+
+        {/* Copy link — secondary */}
+        <button onClick={copyLink} style={{ width: "100%", padding: "12px 0", borderRadius: 12, border: "1px solid rgba(0,206,209,.25)", background: copied ? "rgba(0,206,209,.1)" : "rgba(255,255,255,.03)", color: copied ? "#00e5e8" : "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit", transition: "all .2s" }}>
+          {copied ? (isHe ? "✓ הועתק!" : "✓ Copied!") : (isHe ? "📋 העתק לינק" : "📋 Copy Link")}
+        </button>
       </div>
 
-      <p style={{ color: "#555", fontSize: 13, marginBottom: 10 }}>{t.sendGuests}</p>
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <B style={{ flex: 1 }} onClick={() => {
-          const link = "https://vibematch.co.il/invite/" + (user?.name ?? "guest").replace(/\s/g, "-");
-          navigator.clipboard?.writeText(link);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }}>{copied ? t.copied : t.guestLink}</B>
-        <B v="ghost" style={{ flex: 1 }} onClick={() => setShowPreview(true)}>{t.previewGuest}</B>
+      {/* Confirmed count */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 18 }}>
+        <div style={{ flex: 1, background: "rgba(0,206,209,.06)", borderRadius: 14, padding: "16px 18px", border: "1px solid rgba(0,206,209,.15)", textAlign: "center" }}>
+          <div style={{ color: "#00CED1", fontSize: 36, fontWeight: 900, lineHeight: 1 }}>{confirmedCount}</div>
+          <div style={{ color: "#555", fontSize: 11, marginTop: 4 }}>{isHe ? "אורחים מאושרים" : "Confirmed Guests"}</div>
+        </div>
+        <div style={{ flex: 1, background: "rgba(255,255,255,.02)", borderRadius: 14, padding: "16px 18px", border: "1px solid rgba(255,255,255,.05)", textAlign: "center" }}>
+          <div style={{ color: "#fff", fontSize: 36, fontWeight: 900, lineHeight: 1 }}>{guests.length}</div>
+          <div style={{ color: "#555", fontSize: 11, marginTop: 4 }}>{isHe ? "תשובות" : "Responses"}</div>
+        </div>
       </div>
 
-      <div style={{ padding: 18, background: "rgba(255,255,255,.02)", borderRadius: 12, border: "1px solid rgba(255,255,255,.04)", display: "flex", gap: 20, alignItems: "center" }}>
-        <div>
-          <div style={{ color: "#00CED1", fontSize: 28, fontWeight: 800 }}>{guests.reduce((s, g) => s + g.count, 0)}</div>
-          <div style={{ color: "#555", fontSize: 11 }}>{t.confirmed}</div>
-        </div>
-        {guests.length > 0 && (
-          <div style={{ flex: 1 }}>
-            {guests.slice(-3).map((g, i) => (
-              <div key={i} style={{ color: "rgba(255,255,255,.5)", fontSize: 11, marginBottom: 2 }}>
-                {g.name} — {g.count} {lang === "he" ? "אנשים" : "people"}
+      {/* Guest list */}
+      {guests.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "אישורי הגעה" : "RSVPs"}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {guests.slice().reverse().map((g, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", border: "1px solid rgba(255,255,255,.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "rgba(255,255,255,.7)", fontSize: 13, fontWeight: 500 }}>{g.name}</span>
+                <span style={{ color: "#00CED1", fontSize: 12, fontWeight: 600 }}>{g.count} {isHe ? "אנשים" : "people"}</span>
               </div>
             ))}
-            {guests.length > 3 && <div style={{ color: "rgba(255,255,255,.3)", fontSize: 10 }}>+{guests.length - 3} {lang === "he" ? "נוספים" : "more"}</div>}
+          </div>
+        </div>
+      )}
+
+      {/* Event details */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <p style={{ color: "rgba(255,255,255,.45)", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: 600 }}>{isHe ? "פרטי האירוע" : "Event Details"}</p>
+          {!editInfo && (
+            <button onClick={() => setEditInfo(true)} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.5)", fontSize: 12, padding: "4px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "inherit" }}>
+              {isHe ? "✏️ עריכה" : "✏️ Edit"}
+            </button>
+          )}
+        </div>
+
+        {editInfo ? (
+          <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,.06)", display: "flex", flexDirection: "column", gap: 10 }}>
+            <Inp value={eventInfo.address} onChange={(v) => setEventInfo((p) => ({ ...p, address: v }))} placeholder={isHe ? "כתובת האירוע" : "Event Address"} />
+            <Inp value={eventInfo.wazeLink} onChange={(v) => setEventInfo((p) => ({ ...p, wazeLink: v }))} placeholder="Waze link" dir="ltr" />
+            <Inp value={eventInfo.date} onChange={(v) => setEventInfo((p) => ({ ...p, date: v }))} placeholder={isHe ? "תאריך האירוע" : "Event Date"} />
+            <Inp value={eventInfo.notes} onChange={(v) => setEventInfo((p) => ({ ...p, notes: v }))} placeholder={isHe ? "הערות לאורחים" : "Notes for guests"} />
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <B style={{ flex: 1 }} onClick={handleSave}>
+                {saving ? (isHe ? "שומר..." : "Saving...") : saved ? (isHe ? "✓ נשמר!" : "✓ Saved!") : (isHe ? "שמור ועדכן דף האירוע" : "Save & Update Event Page")}
+              </B>
+              <B v="ghost" style={{ flex: "0 0 auto", padding: "0 16px" }} onClick={() => setEditInfo(false)}>{isHe ? "ביטול" : "Cancel"}</B>
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 12, padding: "14px 16px", border: "1px solid rgba(255,255,255,.04)" }}>
+            {eventInfo.address
+              ? <p style={{ color: "rgba(255,255,255,.65)", fontSize: 13 }}>{eventInfo.address}</p>
+              : <p style={{ color: "#333", fontSize: 12 }}>{isHe ? "לחצו עריכה כדי להוסיף פרטים לדף האירוע" : "Click edit to add details to the event page"}</p>}
+            {eventInfo.date && <p style={{ color: "#00CED1", fontSize: 12, marginTop: 4 }}>{eventInfo.date}</p>}
+            {eventInfo.notes && <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>{eventInfo.notes}</p>}
           </div>
         )}
       </div>
+
+      {/* Vendor team */}
+      {team.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 11, letterSpacing: 2, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "צוות הספקים שלך" : "Your Vendor Team"}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {team.map((v) => (
+              <div key={v.name} style={{ background: "rgba(255,255,255,.02)", borderRadius: 12, padding: "12px 14px", border: "1px solid rgba(255,255,255,.04)", display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#00CED1" }}>verified</span>
+                <div>
+                  <p style={{ color: "rgba(255,255,255,.8)", fontSize: 12, fontWeight: 600 }}>{v.name}</p>
+                  <p style={{ color: "#00CED1", fontSize: 10, marginTop: 1 }}>{v.sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Nav />
     </div>
