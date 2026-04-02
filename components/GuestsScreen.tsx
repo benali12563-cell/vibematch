@@ -4,12 +4,10 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 import { T, allVendors } from "@/lib/constants";
 import Nav from "./Nav";
-import AuthBanner from "./AuthBanner";
 import B from "./B";
 import Inp from "./Inp";
 import Logo from "./Logo";
 import { saveEventPage } from "@/lib/supabase/events";
-import { loadRsvps } from "@/lib/supabase/rsvp";
 
 export default function GuestsScreen() {
   const { lang, user, likes, eventInfo, setEventInfo, guests, addGuest } = useApp();
@@ -66,7 +64,6 @@ export default function GuestsScreen() {
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "rgba(0,0,0,.92)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{isHe ? "ניהול אורחים" : "Guest Management"}</span>
       </div>
-      <AuthBanner />
 
       {/* Invite link hero */}
       <div style={{ background: "linear-gradient(135deg,rgba(0,206,209,.12) 0%,rgba(0,0,0,0) 60%)", borderRadius: 20, border: "1px solid rgba(0,206,209,.2)", padding: "22px 18px", marginBottom: 18 }}>

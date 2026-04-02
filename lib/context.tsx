@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry } from "@/types";
+import { createClient } from "@/lib/supabase/client";
 
 const AppCtx = createContext<AppContextType | null>(null);
 
@@ -44,6 +45,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [publishedVendors, setPublishedVendors] = useState<Vendor[]>([]);
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const addGuest = useCallback((g: GuestEntry) => setGuests((p) => [...p, g]), []);
+
+  // Restore Supabase session on mount + listen for auth changes
+  useEffect(() => {
+    const sb = createClient();
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser((prev) => prev ?? {
+          id: session.user.id,
+          name: session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User",
+          email: session.user.email,
+          role: "owner",
+        });
+      }
+    });
+    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user) {
+        setUser((prev) => ({
+          id: session.user.id,
+          name: prev?.name || session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "User",
+          email: session.user.email,
+          role: prev?.role ?? "owner",
+        }));
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);

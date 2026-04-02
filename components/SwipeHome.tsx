@@ -9,7 +9,6 @@ import SwipeCardView from "./SwipeCardView";
 import Nav from "./Nav";
 import Logo from "./Logo";
 import LangToggle from "./LangToggle";
-import LoginModal from "./LoginModal";
 import HotStrip from "./HotStrip";
 import ConfettiEffect from "./ConfettiEffect";
 import SwipeTogetherModal from "./SwipeTogetherModal";
@@ -44,7 +43,7 @@ function sp(name: string, min: number, max: number) {
 }
 
 export default function SwipeHome() {
-  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showLogin, setShowLogin, loginMode, setLoginMode, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors } = useApp();
+  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors } = useApp();
   const t = T[lang];
   const router = useRouter();
   const isHe = lang === "he";
@@ -165,29 +164,27 @@ export default function SwipeHome() {
 
       {/* ── GLASS HEADER OVERLAY ── */}
       <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, maxWidth: 480, margin: "0 auto", pointerEvents: "none", background: "linear-gradient(to bottom, rgba(0,0,0,.82) 0%, rgba(0,0,0,.55) 55%, transparent 100%)" }}>
-        {/* Row 1: vendor btn + logo + login/profile */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 8px", pointerEvents: "auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={() => { setLoginMode("vendor"); setShowLogin(true); }}
-              style={{ padding: "8px 16px", borderRadius: 22, background: "rgba(255,255,255,.12)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: "1px solid rgba(255,255,255,.22)", color: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.18)", letterSpacing: 0.2, transition: "all .12s" }}>
-              {t.vendor}
-            </button>
+        {/* Row 1: lang + logo (centered) + profile avatar */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center", padding: "14px 16px 8px", pointerEvents: "auto" }}>
+          {/* Left — lang toggle */}
+          <div style={{ flex: 1 }}>
             <LangToggle />
           </div>
 
-          <button onClick={() => setShowTogether(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            <Logo sz={20} />
-          </button>
+          {/* Center — logo absolutely centered */}
+          <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", pointerEvents: "auto" }}>
+            <button onClick={() => setShowTogether(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+              <Logo sz={20} />
+            </button>
+          </div>
 
-          {user
-            ? <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,206,209,.15)", border: "1.5px solid rgba(0,206,209,.35)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,206,209,.2)" }}>
-                <span style={{ fontSize: 14 }}>👤</span>
-              </div>
-            : <button onClick={() => { setLoginMode("owner"); setShowLogin(true); }}
-                style={{ padding: "8px 16px", borderRadius: 22, background: "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: "1px solid rgba(0,255,255,.35)", color: "#000", fontSize: 11, fontWeight: 900, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(0,206,209,.5), inset 0 1px 0 rgba(255,255,255,.3)", letterSpacing: 0.2, transition: "all .12s" }}>
-                {t.login}
-              </button>
-          }
+          {/* Right — profile */}
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+            <button onClick={() => router.push("/profile")}
+              style={{ width: 32, height: 32, borderRadius: "50%", background: user ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.1)", border: user ? "1.5px solid rgba(0,206,209,.4)" : "1.5px solid rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: user ? "0 2px 10px rgba(0,206,209,.2)" : "none" }}>
+              <span style={{ fontSize: 14 }}>{user ? "👤" : "🙂"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Row 2: Category chips + filter + hot buttons */}
@@ -321,7 +318,6 @@ export default function SwipeHome() {
 
       {showTogether && <SwipeTogetherModal onClose={() => setShowTogether(false)} />}
       {hotView && <VendorCard vendor={hotView} onClose={() => setHotView(null)} />}
-      {showLogin && <LoginModal mode={loginMode} onClose={() => setShowLogin(false)} onDone={(u) => { setUser(u); setShowLogin(false); if (u.role === "vendor") router.push("/vendor"); }} />}
     </div>
   );
 }

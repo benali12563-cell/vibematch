@@ -5,7 +5,6 @@ import { useApp } from "@/lib/context";
 import { T, CATS, DV, catName, findCat } from "@/lib/constants";
 import type { CatKey, Vendor } from "@/types";
 import Nav from "./Nav";
-import AuthBanner from "./AuthBanner";
 import VendorCard from "./VendorCard";
 import QuoteSheet from "./QuoteSheet";
 import ReadinessScore from "./ReadinessScore";
@@ -38,7 +37,6 @@ export default function ManageScreen() {
         </button>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.manage}</span>
       </div>
-      <AuthBanner />
 
       {/* Marketing widgets */}
       <div style={{ paddingTop: 8 }}>

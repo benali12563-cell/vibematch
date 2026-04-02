@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 import { T, TL_PRESETS, allVendors } from "@/lib/constants";
 import Nav from "./Nav";
-import AuthBanner from "./AuthBanner";
 import B from "./B";
 import Inp from "./Inp";
 
@@ -27,7 +26,6 @@ export default function TimelineScreen() {
         </button>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.timeline}</span>
       </div>
-      <AuthBanner />
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginBottom: 14 }}>
         {TL_PRESETS.filter((p) => !tlItems.some((x) => x.label === p)).map((p) => (
