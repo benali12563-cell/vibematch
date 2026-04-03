@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
@@ -13,6 +13,7 @@ import HotStrip from "./HotStrip";
 import ConfettiEffect from "./ConfettiEffect";
 import SwipeTogetherModal from "./SwipeTogetherModal";
 import VendorCard from "./VendorCard";
+import AuroraBg from "./AuroraBg";
 import B from "./B";
 import { loadPublishedVendors } from "@/lib/supabase/vendors";
 
@@ -62,6 +63,12 @@ export default function SwipeHome() {
   const [showFilters, setShowFilters] = useState(false);
   const [showHotSheet, setShowHotSheet] = useState(false);
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
+  const [swipeX, setSwipeX] = useState(0);
+
+  // Refs for gesture + shine
+  const cardWrapRef = useRef<HTMLDivElement>(null);
+  const shineRef = useRef<HTMLDivElement>(null);
+  const drag = useRef({ active: false, startX: 0, startY: 0, x: 0, y: 0 });
 
   // Load live published vendors from Supabase once on mount
   useEffect(() => {
@@ -90,27 +97,97 @@ export default function SwipeHome() {
 
   const next = useCallback(() => { setCi((i) => i + 1); setImgIdx(0); }, []);
 
-  function doLike() {
+  function doLike(gestured = false) {
     if (!cur) return;
-    setLikeAnim(true); setCardAnim("like");
-    setTimeout(() => { setLikeAnim(false); setCardAnim(null); }, 500);
+    if (!gestured) { setLikeAnim(true); setCardAnim("like"); }
+    setTimeout(() => { setLikeAnim(false); if (!gestured) setCardAnim(null); }, 500);
     setLikes((p) => (p.includes(cur.name) ? p : [...p, cur.name]));
     const nc = likeCount + 1;
     setLikeCount(nc);
     const isMatch = Math.random() < 0.2 || nc % 5 === 0;
     if (isMatch) {
-      setTimeout(() => { setMatchVendor(cur); setConfetti(true); setTimeout(() => setConfetti(false), 100); }, 450);
+      setTimeout(() => { setMatchVendor(cur); setConfetti(true); setTimeout(() => setConfetti(false), 100); }, gestured ? 120 : 450);
     } else {
       showToast("❤️ " + cur.name);
     }
     if (nc === 3) setTimeout(() => setShowTogether(true), 600);
-    setTimeout(next, 400);
+    if (gestured) {
+      setTimeout(() => {
+        if (cardWrapRef.current) { cardWrapRef.current.style.transition = ""; cardWrapRef.current.style.transform = ""; }
+        setSwipeX(0); next();
+      }, 300);
+    } else {
+      setTimeout(next, 400);
+    }
   }
 
-  function doNope() {
+  function doNope(gestured = false) {
     if (!cur) return;
-    setNopeAnim(true); setCardAnim("nope");
-    setTimeout(() => { setNopeAnim(false); setCardAnim(null); next(); }, 420);
+    if (!gestured) { setNopeAnim(true); setCardAnim("nope"); }
+    if (gestured) {
+      setTimeout(() => {
+        if (cardWrapRef.current) { cardWrapRef.current.style.transition = ""; cardWrapRef.current.style.transform = ""; }
+        setSwipeX(0); next();
+      }, 300);
+    } else {
+      setTimeout(() => { setNopeAnim(false); setCardAnim(null); next(); }, 420);
+    }
+  }
+
+  // ── Gesture handlers ──
+  function onCardTouchStart(e: React.TouchEvent) {
+    if (e.touches.length !== 1) return;
+    drag.current = { active: true, startX: e.touches[0].clientX, startY: e.touches[0].clientY, x: 0, y: 0 };
+  }
+
+  function onCardTouchMove(e: React.TouchEvent) {
+    if (!drag.current.active || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - drag.current.startX;
+    const dy = e.touches[0].clientY - drag.current.startY;
+    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+    drag.current.x = dx; drag.current.y = dy;
+
+    const card = cardWrapRef.current;
+    if (card) {
+      const rot = dx * 0.055;
+      const tiltY = dx * 0.018;
+      card.style.transition = "none";
+      card.style.transform = `translateX(${dx}px) translateY(${dy * 0.04}px) rotate(${rot}deg) perspective(900px) rotateY(${tiltY}deg)`;
+    }
+    // Moving specular shine
+    if (shineRef.current && cardWrapRef.current) {
+      const rect = cardWrapRef.current.getBoundingClientRect();
+      const sx = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
+      const sy = ((e.touches[0].clientY - rect.top) / rect.height) * 100;
+      shineRef.current.style.opacity = "1";
+      shineRef.current.style.background = `radial-gradient(circle at ${sx}% ${sy}%, rgba(255,255,255,.14) 0%, transparent 58%)`;
+    }
+    setSwipeX(dx);
+  }
+
+  function onCardTouchEnd() {
+    if (!drag.current.active) return;
+    drag.current.active = false;
+    const dx = drag.current.x;
+    if (shineRef.current) shineRef.current.style.opacity = "0";
+
+    if (Math.abs(dx) > 90) {
+      const card = cardWrapRef.current;
+      if (card) {
+        const tx = dx > 0 ? "135vw" : "-135vw";
+        const rot = dx > 0 ? 26 : -26;
+        card.style.transition = "transform .28s cubic-bezier(.4,0,1,1)";
+        card.style.transform = `translateX(${tx}) rotate(${rot}deg)`;
+      }
+      setSwipeX(0);
+      if (dx > 0) doLike(true); else doNope(true);
+    } else {
+      if (cardWrapRef.current) {
+        cardWrapRef.current.style.transition = "transform .45s cubic-bezier(.23,1,.32,1)";
+        cardWrapRef.current.style.transform = "";
+      }
+      setSwipeX(0);
+    }
   }
 
   const subs = SUB[activeCat] ?? [];
@@ -118,25 +195,52 @@ export default function SwipeHome() {
 
   return (
     <div style={{ height: "100dvh", overflow: "hidden", background: "#000", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo'", direction: isHe ? "rtl" : "ltr" }}>
+      <AuroraBg />
       <ConfettiEffect trigger={confetti} />
 
       {/* ── FULL-SCREEN CARD ── */}
       <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto" }}>
         {cur ? (
           <>
-            <div style={{
-              position: "absolute", inset: 0,
-              animation: cardAnim === "like" ? "swipeRight .45s ease forwards" : cardAnim === "nope" ? "swipeLeft .45s ease forwards" : undefined,
-            }}>
+            <div
+              ref={cardWrapRef}
+              onTouchStart={onCardTouchStart}
+              onTouchMove={onCardTouchMove}
+              onTouchEnd={onCardTouchEnd}
+              style={{
+                position: "absolute", inset: 0,
+                animation: cardAnim === "like" ? "swipeRight .45s ease forwards" : cardAnim === "nope" ? "swipeLeft .45s ease forwards" : undefined,
+                willChange: "transform",
+              }}
+            >
+              {/* Holographic ring border */}
+              <div className="holo-ring" style={{ opacity: Math.min(.45, Math.abs(swipeX) / 200 + .12) }} />
+
+              {/* Moving specular shine */}
+              <div ref={shineRef} style={{ position: "absolute", inset: 0, zIndex: 8, borderRadius: 20, opacity: 0, pointerEvents: "none", transition: "opacity .2s" }} />
+
+              {/* LIKE stamp */}
+              {swipeX > 28 && (
+                <div style={{ position: "absolute", top: 52, left: 22, zIndex: 10, opacity: Math.min(1, swipeX / 90), pointerEvents: "none" }}>
+                  <div className="stamp-like">LIKE ♥</div>
+                </div>
+              )}
+              {/* NOPE stamp */}
+              {swipeX < -28 && (
+                <div style={{ position: "absolute", top: 52, right: 22, zIndex: 10, opacity: Math.min(1, -swipeX / 90), pointerEvents: "none" }}>
+                  <div className="stamp-nope">NOPE ✕</div>
+                </div>
+              )}
+
               <SwipeCardView vendor={cur} imgIdx={imgIdx} setImgIdx={setImgIdx}
                 actions={
                   <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
                     {/* Nope */}
-                    <button onClick={doNope} style={{ width: 68, height: 68, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.3)" : "rgba(20,0,0,.65)", border: "2px solid rgba(255,68,68,.5)", color: "#FF5555", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: nopeAnim ? "nopeFlash .4s" : undefined, boxShadow: "0 4px 20px rgba(255,68,68,.25), inset 0 1px 0 rgba(255,255,255,.1)" }}>
+                    <button onClick={() => doNope()} style={{ width: 68, height: 68, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.3)" : "rgba(20,0,0,.65)", border: "2px solid rgba(255,68,68,.5)", color: "#FF5555", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: nopeAnim ? "nopeFlash .4s" : undefined, boxShadow: "0 4px 20px rgba(255,68,68,.25), inset 0 1px 0 rgba(255,255,255,.1)" }}>
                       <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: "'FILL' 0" }}>close</span>
                     </button>
                     {/* Like */}
-                    <button onClick={doLike} style={{ width: 68, height: 68, borderRadius: "50%", background: likeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : likes.includes(cur.name) ? "linear-gradient(160deg,rgba(0,229,232,.25),rgba(0,206,209,.15))" : "rgba(0,20,20,.65)", border: `2px solid ${likes.includes(cur.name) ? "rgba(0,229,232,.7)" : "rgba(0,206,209,.45)"}`, color: likeAnim ? "#000" : "#00e5e8", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: likeAnim ? "likeFlash .45s" : undefined, boxShadow: likes.includes(cur.name) ? "0 4px 20px rgba(0,206,209,.4), inset 0 1px 0 rgba(255,255,255,.15)" : "0 4px 20px rgba(0,206,209,.2), inset 0 1px 0 rgba(255,255,255,.08)" }}>
+                    <button onClick={() => doLike()} style={{ width: 68, height: 68, borderRadius: "50%", background: likeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : likes.includes(cur.name) ? "linear-gradient(160deg,rgba(0,229,232,.25),rgba(0,206,209,.15))" : "rgba(0,20,20,.65)", border: `2px solid ${likes.includes(cur.name) ? "rgba(0,229,232,.7)" : "rgba(0,206,209,.45)"}`, color: likeAnim ? "#000" : "#00e5e8", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: likeAnim ? "likeFlash .45s" : undefined, boxShadow: likes.includes(cur.name) ? "0 4px 20px rgba(0,206,209,.4), inset 0 1px 0 rgba(255,255,255,.15)" : "0 4px 20px rgba(0,206,209,.2), inset 0 1px 0 rgba(255,255,255,.08)" }}>
                       <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: likes.includes(cur.name) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
                     </button>
                   </div>

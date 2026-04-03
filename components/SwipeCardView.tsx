@@ -74,9 +74,14 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
 
       {/* Dots */}
       {imgs.length > 1 && (
-        <div style={{ position: "absolute", top: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 4, zIndex: 5 }}>
+        <div style={{ position: "absolute", top: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 5 }}>
           {imgs.map((_, idx) => (
-            <div key={idx} style={{ width: imgIdx === idx ? 22 : 5, height: 3, borderRadius: 2, background: imgIdx === idx ? "#00CED1" : "rgba(255,255,255,.25)", transition: "width .2s" }} />
+            <div key={idx} style={{
+              width: imgIdx === idx ? 24 : 5, height: 3, borderRadius: 3,
+              background: imgIdx === idx ? "#00e5e8" : "rgba(255,255,255,.22)",
+              boxShadow: imgIdx === idx ? "0 0 8px rgba(0,229,232,.8)" : "none",
+              transition: "all .25s cubic-bezier(.34,1.56,.64,1)",
+            }} />
           ))}
         </div>
       )}
@@ -103,29 +108,29 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
         <div className="story-gradient" style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "80px 18px 14px", zIndex: 5 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h3 style={{ color: "#fff", fontSize: 26, fontWeight: 900, margin: 0, lineHeight: 1.1, fontFamily: "'Manrope','Heebo',sans-serif", letterSpacing: -0.5 }}>{vendor.name}</h3>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                <span style={{ color: "#FFD700", fontSize: 12 }}>{"★".repeat(Math.floor(vendor.rating))}</span>
-                <span style={{ color: "rgba(255,255,255,.7)", fontSize: 12 }}>{vendor.rating}</span>
-                <span style={{ color: "rgba(255,255,255,.4)", fontSize: 11 }}>· {vendor.sub}</span>
-                {vendor.city && <span style={{ color: "rgba(255,255,255,.4)", fontSize: 11 }}>· {vendor.city}</span>}
+              <h3 className="tr" style={{ color: "#fff", fontSize: 26, fontWeight: 900, margin: 0, lineHeight: 1.1, fontFamily: "'Manrope','Heebo',sans-serif", letterSpacing: -0.5, textShadow: "0 2px 16px rgba(0,0,0,.6)" }}>{vendor.name}</h3>
+              <div className="tr-1" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5 }}>
+                <span style={{ color: "#FFD700", fontSize: 13, letterSpacing: -1 }}>{"★".repeat(Math.floor(vendor.rating))}</span>
+                <span style={{ color: "rgba(255,255,255,.8)", fontSize: 12, fontWeight: 700 }}>{vendor.rating}</span>
+                <span style={{ color: "rgba(255,255,255,.45)", fontSize: 11 }}>· {vendor.sub}</span>
+                {vendor.city && <span style={{ color: "rgba(255,255,255,.35)", fontSize: 11 }}>· {vendor.city}</span>}
               </div>
               {vendor.desc && (
-                <p style={{ color: "rgba(255,255,255,.75)", fontSize: 13, lineHeight: 1.45, marginTop: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{vendor.desc}</p>
+                <p className="tr-2" style={{ color: "rgba(255,255,255,.78)", fontSize: 13, lineHeight: 1.5, marginTop: 7, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{vendor.desc}</p>
               )}
               {Object.keys(ni).length > 0 && (
-                <div style={{ display: "flex", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
+                <div className="tr-3" style={{ display: "flex", gap: 5, marginTop: 8, flexWrap: "wrap" }}>
                   {Object.entries(ni).slice(0, 3).map(([k, v]) => (
-                    <span key={k} style={{ padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,.08)", color: "rgba(255,255,255,.7)", fontSize: 10, backdropFilter: "blur(4px)" }}>{v}</span>
+                    <span key={k} style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.09)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", fontSize: 10, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{v}</span>
                   ))}
                 </div>
               )}
             </div>
             {vendor.price && (
-              <span style={{ color: "#00CED1", fontWeight: 800, fontSize: 16, marginRight: 10, flexShrink: 0, fontFamily: "'Manrope',sans-serif" }}>{vendor.price}</span>
+              <span className="tr-1" style={{ color: "#00e5e8", fontWeight: 900, fontSize: 17, marginRight: 10, flexShrink: 0, fontFamily: "'Manrope',sans-serif", textShadow: "0 0 16px rgba(0,206,209,.5)" }}>{vendor.price}</span>
             )}
           </div>
-          {actions && <div style={{ marginTop: 14 }}>{actions}</div>}
+          {actions && <div className="tr-4" style={{ marginTop: 14 }}>{actions}</div>}
         </div>
       )}
     </div>
