@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
-import { T, CATS, AREAS, DV } from "@/lib/constants";
+import { T, CATS, AREAS, DV, EVENT_TYPES } from "@/lib/constants";
 import type { Vendor, CatKey } from "@/types";
 import SwipeCardView from "./SwipeCardView";
 import Nav from "./Nav";
@@ -60,10 +60,12 @@ export default function SwipeHome() {
   const [nopeAnim, setNopeAnim] = useState(false);
   const [cardAnim, setCardAnim] = useState<"like" | "nope" | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [showHotSheet, setShowHotSheet] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
   const [swipeX, setSwipeX] = useState(0);
+  const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
 
   // Refs for gesture + shine
   const cardWrapRef = useRef<HTMLDivElement>(null);
@@ -190,8 +192,16 @@ export default function SwipeHome() {
     }
   }
 
+  function parsePriceNum(p: string) { const m = p.replace(/,/g, "").match(/\d+/); return m ? parseInt(m[0]) : 0; }
+  if (sortBy === "rating") vs.sort((a, b) => b.rating - a.rating);
+  else if (sortBy === "price_asc") vs.sort((a, b) => parsePriceNum(a.price) - parsePriceNum(b.price));
+  else if (sortBy === "price_desc") vs.sort((a, b) => parsePriceNum(b.price) - parsePriceNum(a.price));
+
   const subs = SUB[activeCat] ?? [];
-  const hasActiveFilters = areaFilter !== "allAreas" || !!selectedDate || !!activeSub;
+  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0);
+  const activeCatLabel = CATS.find((c) => c.k === activeCat);
+
+  const CAT_ICONS: Record<string, string> = { venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
 
   return (
     <div style={{ height: "100dvh", overflow: "hidden", background: "#000", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo'", direction: isHe ? "rtl" : "ltr" }}>
@@ -267,119 +277,161 @@ export default function SwipeHome() {
       </div>
 
       {/* ── GLASS HEADER OVERLAY ── */}
-      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, maxWidth: 480, margin: "0 auto", pointerEvents: "none", background: "linear-gradient(to bottom, rgba(0,0,0,.82) 0%, rgba(0,0,0,.55) 55%, transparent 100%)" }}>
-        {/* Row 1: lang + logo (centered) + profile avatar */}
-        <div style={{ position: "relative", display: "flex", alignItems: "center", padding: "14px 16px 8px", pointerEvents: "auto" }}>
-          {/* Left — lang toggle */}
-          <div style={{ flex: 1 }}>
+      <header style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, maxWidth: 480, margin: "0 auto", pointerEvents: "none", background: "linear-gradient(to bottom, rgba(0,0,0,.85) 0%, rgba(0,0,0,.5) 60%, transparent 100%)" }}>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", padding: "14px 14px 14px", pointerEvents: "auto" }}>
+
+          {/* Left: sidebar trigger + lang */}
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => setShowSidebar(true)} style={{ position: "relative", width: 38, height: 38, borderRadius: 12, background: activeFilterCount > 0 ? "rgba(0,206,209,.18)" : "rgba(255,255,255,.1)", border: activeFilterCount > 0 ? "1.5px solid rgba(0,229,232,.5)" : "1.5px solid rgba(255,255,255,.18)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, boxShadow: activeFilterCount > 0 ? "0 4px 16px rgba(0,206,209,.3), inset 0 1px 0 rgba(0,255,255,.15)" : "0 2px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.1)", transition: "all .15s" }}>
+              {[0,1,2].map((i) => (
+                <div key={i} style={{ width: i === 1 ? 14 : 18, height: 1.5, borderRadius: 2, background: activeFilterCount > 0 ? "#00e5e8" : "rgba(255,255,255,.7)", transition: "all .2s" }} />
+              ))}
+              {activeFilterCount > 0 && <div style={{ position: "absolute", top: 5, right: 5, width: 14, height: 14, borderRadius: "50%", background: "#00CED1", color: "#000", fontSize: 8, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 8px rgba(0,206,209,.8)" }}>{activeFilterCount}</div>}
+            </button>
             <LangToggle />
           </div>
 
-          {/* Center — logo absolutely centered */}
-          <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", pointerEvents: "auto" }}>
+          {/* Center: logo + active cat label */}
+          <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
             <button onClick={() => setShowTogether(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <Logo sz={20} />
             </button>
+            <span style={{ color: "rgba(0,229,232,.7)", fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              {CAT_ICONS[activeCat]} {isHe ? activeCatLabel?.he : activeCatLabel?.en}
+            </span>
           </div>
 
-          {/* Right — profile */}
-          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
-            <button onClick={() => router.push("/profile")}
-              style={{ width: 32, height: 32, borderRadius: "50%", background: user ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.1)", border: user ? "1.5px solid rgba(0,206,209,.4)" : "1.5px solid rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: user ? "0 2px 10px rgba(0,206,209,.2)" : "none" }}>
-              <span style={{ fontSize: 14 }}>{user ? "👤" : "🙂"}</span>
+          {/* Right: hot + profile */}
+          <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
+            <button onClick={() => setShowHotSheet(true)} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,68,68,.12)", border: "1px solid rgba(255,68,68,.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 10px rgba(255,68,68,.2)" }}>🔥</button>
+            <button onClick={() => router.push("/profile")} style={{ width: 34, height: 34, borderRadius: 10, background: user ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.1)", border: user ? "1.5px solid rgba(0,206,209,.4)" : "1.5px solid rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: user ? "0 2px 10px rgba(0,206,209,.2)" : "none" }}>
+              {user ? "👤" : "🙂"}
             </button>
           </div>
         </div>
-
-        {/* Row 2: Category chips + filter + hot buttons */}
-        <div style={{ display: "flex", gap: 7, padding: "0 12px 14px", overflowX: "auto", direction: "ltr", pointerEvents: "auto" }} className="hide-scrollbar">
-          {CATS.map((c) => {
-            const active = activeCat === c.k;
-            return (
-              <button key={c.k} onClick={() => { setActiveCat(c.k); setCi(0); setImgIdx(0); setActiveSub(null); }}
-                style={{ flexShrink: 0, padding: "8px 18px", borderRadius: 24, border: active ? "1.5px solid rgba(0,229,232,.65)" : "1.5px solid rgba(255,255,255,.15)", background: active ? "linear-gradient(160deg,rgba(0,229,232,.22) 0%,rgba(0,206,209,.13) 100%)" : "rgba(255,255,255,.09)", backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.78)", fontSize: 12, fontWeight: active ? 800 : 700, fontFamily: "inherit", transition: "all .15s", boxShadow: active ? "0 4px 16px rgba(0,206,209,.3), inset 0 1px 0 rgba(0,255,255,.2)" : "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1)", letterSpacing: active ? 0.1 : 0 }}>
-                {isHe ? c.he : c.en}
-              </button>
-            );
-          })}
-
-          {/* Divider */}
-          <div style={{ width: 1, height: 28, background: "rgba(255,255,255,.1)", alignSelf: "center", flexShrink: 0 }} />
-
-          {/* Filter button */}
-          <button onClick={() => setShowFilters(true)}
-            style={{ flexShrink: 0, width: 38, height: 38, borderRadius: "50%", background: hasActiveFilters ? "rgba(0,206,209,.18)" : "rgba(255,255,255,.09)", border: hasActiveFilters ? "1.5px solid rgba(0,229,232,.6)" : "1.5px solid rgba(255,255,255,.15)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", color: hasActiveFilters ? "#00e5e8" : "rgba(255,255,255,.7)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: hasActiveFilters ? "0 3px 14px rgba(0,206,209,.3), inset 0 1px 0 rgba(0,255,255,.15)" : "0 2px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1)", transition: "all .12s", position: "relative" }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 17 }}>tune</span>
-            {hasActiveFilters && <div style={{ position: "absolute", top: 5, right: 5, width: 7, height: 7, borderRadius: "50%", background: "#00e5e8", boxShadow: "0 0 6px rgba(0,229,232,.8)" }} />}
-          </button>
-
-          {/* Hot button */}
-          <button onClick={() => setShowHotSheet(true)}
-            style={{ flexShrink: 0, width: 38, height: 38, borderRadius: "50%", background: "rgba(255,68,68,.12)", border: "1.5px solid rgba(255,68,68,.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 12px rgba(255,68,68,.2), inset 0 1px 0 rgba(255,255,255,.08)", transition: "all .12s", fontSize: 17 }}>
-            🔥
-          </button>
-        </div>
       </header>
 
-      {/* ── FILTER DRAWER ── */}
-      {showFilters && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,.65)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }} onClick={() => setShowFilters(false)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ position: "absolute", bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", background: "rgba(14,14,14,.98)", borderRadius: "22px 22px 0 0", padding: "18px 18px 32px", border: "1px solid rgba(255,255,255,.08)", borderBottom: "none", boxShadow: "0 -12px 50px rgba(0,0,0,.7)", animation: "slideUp .3s ease" }}>
-            <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(255,255,255,.1)", margin: "0 auto 20px" }} />
+      {/* ── SIDE PANEL BACKDROP ── */}
+      <div onClick={() => setShowSidebar(false)} style={{ position: "fixed", inset: 0, zIndex: 380, background: "rgba(0,0,0,.72)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? "auto" : "none", transition: "opacity .3s" }} />
 
-            {subs.length > 0 && (
-              <>
-                <p style={{ color: "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1.2 }}>{isHe ? "סוג" : "Type"}</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-                  {subs.map((s) => {
-                    const active = activeSub === s.he;
-                    return (
-                      <button key={s.he} onClick={() => setActiveSub(active ? null : s.he)}
-                        style={{ padding: "7px 16px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1.5px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.16)" : "rgba(255,255,255,.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s", boxShadow: active ? "0 3px 12px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06)" }}>
-                        {isHe ? s.he : s.en}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+      {/* ── SIDE PANEL ── */}
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 390, width: "min(90%, 380px)", background: "rgba(7,7,10,.97)", backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)", borderLeft: "1px solid rgba(255,255,255,.07)", transform: showSidebar ? "translateX(0)" : "translateX(100%)", transition: "transform .32s cubic-bezier(.32,0,.67,0)", overflowY: "auto", direction: isHe ? "rtl" : "ltr" }}>
 
-            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1.2 }}>{isHe ? "אזור" : "Area"}</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-              {AREAS.map((a) => (
+        {/* Panel header */}
+        <div style={{ position: "sticky", top: 0, background: "rgba(7,7,10,.95)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,.06)", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 1 }}>
+          <h2 style={{ color: "#fff", fontSize: 15, fontWeight: 800, margin: 0 }}>{isHe ? "חיפוש מתקדם" : "Advanced Search"}</h2>
+          <button onClick={() => setShowSidebar(false)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.6)", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+        </div>
+
+        <div style={{ padding: "20px 18px 100px" }}>
+
+          {/* ── 1. CATEGORIES ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 12 }}>{isHe ? "קטגוריה" : "Category"}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
+            {CATS.map((c) => {
+              const active = activeCat === c.k;
+              return (
+                <button key={c.k} onClick={() => { setActiveCat(c.k); setCi(0); setImgIdx(0); setActiveSub(null); }}
+                  style={{ padding: "10px 6px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.65)" : "1px solid rgba(255,255,255,.08)", background: active ? "linear-gradient(160deg,rgba(0,229,232,.18),rgba(0,206,209,.1))" : "rgba(255,255,255,.04)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s", boxShadow: active ? "0 4px 16px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "none", fontFamily: "inherit" }}>
+                  <span style={{ fontSize: 22 }}>{CAT_ICONS[c.k]}</span>
+                  <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 10, fontWeight: active ? 800 : 500, textAlign: "center", lineHeight: 1.2 }}>{isHe ? c.he : c.en}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── 2. SUB-TYPES ── */}
+          {subs.length > 0 && (
+            <>
+              <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "סוג ספציפי" : "Specific Type"}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
+                {subs.map((s) => {
+                  const a = activeSub === s.he;
+                  return (
+                    <button key={s.he} onClick={() => setActiveSub(a ? null : s.he)}
+                      style={{ padding: "7px 14px", borderRadius: 20, border: a ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: a ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: a ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: a ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
+                      {isHe ? s.he : s.en}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ── 3. AREA ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "אזור" : "Area"}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
+            {AREAS.map((a) => {
+              const active = areaFilter === a;
+              return (
                 <button key={a} onClick={() => { setAreaFilter(a); setCi(0); }}
-                  style={{ padding: "7px 16px", borderRadius: 20, border: areaFilter === a ? "1.5px solid rgba(0,229,232,.6)" : "1.5px solid rgba(255,255,255,.1)", background: areaFilter === a ? "rgba(0,206,209,.16)" : "rgba(255,255,255,.05)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", color: areaFilter === a ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: areaFilter === a ? 700 : 500, cursor: "pointer", fontFamily: "inherit", transition: "all .12s", boxShadow: areaFilter === a ? "0 3px 12px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06)" }}>
+                  style={{ padding: "8px 16px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
                   {t[a]}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
 
-            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1.2 }}>{isHe ? "תאריך" : "Date"}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 22 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 16, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.2)" }}>calendar_month</span>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => { setSelectedDate(e.target.value); setCi(0); }}
-                style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.35)" : "rgba(255,255,255,.08)"}`, borderRadius: 12, padding: "9px 14px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 13, fontFamily: "inherit", outline: "none", backdropFilter: "blur(8px)" }}
-              />
-              {selectedDate && (
-                <button onClick={() => { setSelectedDate(""); setCi(0); }}
-                  style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.12)", borderRadius: "50%", color: "rgba(255,255,255,.5)", fontSize: 12, cursor: "pointer", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-              )}
-            </div>
+          {/* ── 4. DATE ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "תאריך האירוע" : "Event Date"}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 18, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.2)" }}>calendar_month</span>
+            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setCi(0); }}
+              style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.35)" : "rgba(255,255,255,.08)"}`, borderRadius: 12, padding: "10px 14px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
+            {selectedDate && <button onClick={() => { setSelectedDate(""); setCi(0); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.07)", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", fontSize: 13 }}>✕</button>}
+          </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <B v="accent" style={{ flex: 1 }} onClick={() => { setShowFilters(false); setShowTogether(true); }}>
-                💑 {isHe ? "יחד" : "Together"}
-              </B>
-              <B v="ghost" style={{ flex: 1 }} onClick={() => setShowFilters(false)}>
-                {isHe ? "סגור" : "Close"}
-              </B>
-            </div>
+          {/* ── 5. EVENT TYPE ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "סוג האירוע" : "Event Type"}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginBottom: 24 }}>
+            {EVENT_TYPES.map((e) => {
+              const active = eventTypeFilter === e.k;
+              return (
+                <button key={e.k} onClick={() => setEventTypeFilter(active ? null : e.k)}
+                  style={{ padding: "10px 12px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.08)", background: active ? "rgba(0,206,209,.12)" : "rgba(255,255,255,.03)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all .12s", fontFamily: "inherit" }}>
+                  <span style={{ fontSize: 18 }}>{e.emoji}</span>
+                  <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500 }}>{e.he}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── 6. SORT ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מיון" : "Sort By"}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginBottom: 28 }}>
+            {[
+              { k: "default" as const, label: isHe ? "🎯 מומלץ" : "🎯 Recommended" },
+              { k: "rating" as const, label: isHe ? "⭐ דירוג" : "⭐ Rating" },
+              { k: "price_asc" as const, label: isHe ? "💰 מחיר ↑" : "💰 Price ↑" },
+              { k: "price_desc" as const, label: isHe ? "💎 מחיר ↓" : "💎 Price ↓" },
+            ].map((s) => {
+              const active = sortBy === s.k;
+              return (
+                <button key={s.k} onClick={() => setSortBy(s.k)}
+                  style={{ padding: "10px 14px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.08)", background: active ? "rgba(0,206,209,.12)" : "rgba(255,255,255,.03)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 800 : 500, fontFamily: "inherit", transition: "all .12s", textAlign: "center" }}>
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── CTAs ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <button onClick={() => { setCi(0); setShowSidebar(false); }}
+              style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
+              {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
+            </button>
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCi(0); }}
+              style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+              {isHe ? "אפס הכל" : "Reset All"}
+            </button>
+            <button onClick={() => { setShowSidebar(false); setShowTogether(true); }}
+              style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(0,206,209,.2)", background: "rgba(0,206,209,.06)", color: "#00CED1", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+              💑 {isHe ? "חפשו יחד" : "Search Together"}
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── HOT TRENDING SHEET ── */}
       {showHotSheet && (
