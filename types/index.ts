@@ -34,8 +34,30 @@ export interface Vendor {
   website?: string;
   google?: string;
   waze?: string;
-  catKey?: CatKey; // set when vendor publishes via VendorDash
+  catKey?: CatKey;
   isPublished?: boolean;
+  videoUrl?: string;   // Pro feature — 15-30s reel
+  isPro?: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  from: "client" | "vendor" | "system";
+  text: string;
+  ts: number;
+  senderName?: string;
+}
+
+export interface ChatThread {
+  id: string;
+  vendorName: string;
+  vendorCat?: string;
+  clientName?: string;
+  messages: ChatMessage[];
+  lead: { date?: string; guests?: string; budget?: string };
+  createdAt: number;
+  unreadClient: number;
+  unreadVendor: number;
 }
 
 export interface GuestEntry {
@@ -149,4 +171,8 @@ export interface AppContextType {
   setPublishedVendors: Setter<Vendor[]>;
   guests: GuestEntry[];
   addGuest: (g: GuestEntry) => void;
+  chatThreads: ChatThread[];
+  setChatThreads: Setter<ChatThread[]>;
+  vendorIsPro: boolean;
+  setVendorIsPro: Setter<boolean>;
 }

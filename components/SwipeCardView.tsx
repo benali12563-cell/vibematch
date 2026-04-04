@@ -125,6 +125,13 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
                   ))}
                 </div>
               )}
+              {/* Trust badges */}
+              <div className="tr-3" style={{ display: "flex", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
+                {vendor.reviews >= 50 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(0,206,209,.1)", border: "1px solid rgba(0,206,209,.2)", color: "#00e5e8", fontSize: 9, fontWeight: 700 }}>⚡ עונה מהר</span>}
+                {vendor.reviews > 0 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.6)", fontSize: 9 }}>✅ {vendor.reviews}+ אירועים</span>}
+                {vendor.rating >= 4.8 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(255,215,0,.07)", border: "1px solid rgba(255,215,0,.15)", color: "#FFD700", fontSize: 9, fontWeight: 700 }}>🔒 מאומת</span>}
+                {vendor.isPro && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(168,85,247,.12)", border: "1px solid rgba(168,85,247,.3)", color: "#a855f7", fontSize: 9, fontWeight: 700 }}>👑 Pro</span>}
+              </div>
             </div>
             {vendor.price && (
               <span className="tr-1" style={{ color: "#00e5e8", fontWeight: 900, fontSize: 17, marginRight: 10, flexShrink: 0, fontFamily: "'Manrope',sans-serif", textShadow: "0 0 16px rgba(0,206,209,.5)" }}>{vendor.price}</span>

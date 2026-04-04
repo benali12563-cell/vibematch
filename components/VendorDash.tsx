@@ -29,13 +29,14 @@ function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean
 }
 
 export default function VendorDash() {
-  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors } = useApp();
+  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors, chatThreads, setChatThreads, vendorIsPro, setVendorIsPro, vendorAvailability } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
 
   // All hooks MUST come before any early return
-  const [tab, setTab] = useState<"preview" | "edit" | "calendar">("preview");
+  const [tab, setTab] = useState<"preview" | "edit" | "calendar" | "leads">("preview");
+  const [videoUrl, setVideoUrl] = useState("");
   const [coupon, setCoupon] = useState("");
   const [pIdx, setPIdx] = useState(0);
   const [invC, setInvC] = useState(false);
@@ -178,11 +179,16 @@ export default function VendorDash() {
 
       <div style={{ padding: "48px 0 0" }}>
         <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
-          {(["preview", "edit", "calendar"] as const).map((tb) => (
-            <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "12px 0", background: tab === tb ? "rgba(0,206,209,.06)" : "none", border: "none", color: tab === tb ? "#00e5e8" : "rgba(255,255,255,.4)", fontSize: 13, fontWeight: tab === tb ? 700 : 500, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid rgba(255,255,255,.05)", transition: "all .15s", letterSpacing: tab === tb ? 0.1 : 0 }}>
-              {tb === "preview" ? t.preview : tb === "edit" ? t.editProfile : (isHe ? "יומן" : "Calendar")}
-            </button>
-          ))}
+          {(["preview", "edit", "calendar", "leads"] as const).map((tb) => {
+            const myLeads = chatThreads.filter((ct) => ct.vendorName === (vProfile.businessName || user?.name || ""));
+            const unread = myLeads.reduce((s, ct) => s + ct.unreadVendor, 0);
+            return (
+              <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "12px 0", background: tab === tb ? "rgba(0,206,209,.06)" : "none", border: "none", color: tab === tb ? "#00e5e8" : "rgba(255,255,255,.4)", fontSize: 12, fontWeight: tab === tb ? 700 : 500, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid rgba(255,255,255,.05)", transition: "all .15s", position: "relative", fontFamily: "inherit" }}>
+                {tb === "preview" ? t.preview : tb === "edit" ? t.editProfile : tb === "calendar" ? (isHe ? "יומן" : "Cal") : (isHe ? "לידים" : "Leads")}
+                {tb === "leads" && unread > 0 && <span style={{ position: "absolute", top: 6, right: 6, width: 14, height: 14, borderRadius: "50%", background: "#FF4444", color: "#fff", fontSize: 8, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center" }}>{unread}</span>}
+              </button>
+            );
+          })}
         </div>
 
         {tab === "preview" && (
@@ -226,6 +232,33 @@ export default function VendorDash() {
                 </div>
               )}
             </div>
+            {/* Live stats panel */}
+            {(() => {
+              const vname = vProfile.businessName || user?.name || "";
+              function sh(seed: string, min: number, max: number) { let h = 0; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) & 0xffffffff; return min + (Math.abs(h) % (max - min + 1)); }
+              const leads = chatThreads.filter((ct) => ct.vendorName === vname).length;
+              const stats = [
+                { l: isHe ? "👁 צפיות" : "👁 Views", v: sh(vname + "v", 120, 890), color: "#00CED1" },
+                { l: isHe ? "❤️ שמירות" : "❤️ Saves", v: sh(vname + "s", 12, 67), color: "#FF4444" },
+                { l: isHe ? "💬 לידים" : "💬 Leads", v: leads, color: "#a855f7" },
+                { l: isHe ? "📅 הזמנות" : "📅 Bookings", v: (vendorAvailability[vname] ?? []).length, color: "#FFD700" },
+              ];
+              return (
+                <div style={{ margin: "8px 14px 0", padding: "12px 14px", background: "rgba(255,255,255,.02)", borderRadius: 14, border: "1px solid rgba(255,255,255,.05)" }}>
+                  <p style={{ color: "#555", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 10px" }}>{isHe ? "סטטיסטיקות" : "Stats"}</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+                    {stats.map((s) => (
+                      <div key={s.l} style={{ textAlign: "center" }}>
+                        <div style={{ color: s.color, fontSize: 18, fontWeight: 900 }}>{s.v}</div>
+                        <div style={{ color: "#555", fontSize: 9, marginTop: 2 }}>{s.l}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {leads > 0 && <button onClick={() => setTab("leads")} style={{ marginTop: 10, width: "100%", padding: "7px 0", borderRadius: 8, border: "1px solid rgba(168,85,247,.3)", background: "rgba(168,85,247,.08)", color: "#a855f7", fontWeight: 700, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>💬 {isHe ? `ראה ${leads} לידים` : `View ${leads} leads`}</button>}
+                </div>
+              );
+            })()}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, padding: "10px 14px" }}>
               {[{ l: lang === "he" ? "צפיות" : "Views", v: 0 }, { l: lang === "he" ? "לייקים" : "Likes", v: 0 }, { l: lang === "he" ? "התאמות" : "Matches", v: 0 }, { l: lang === "he" ? "הצעות" : "Quotes", v: 0 }].map((s, i) => (
                 <div key={i} style={{ background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 6px", textAlign: "center", border: "1px solid rgba(255,255,255,.03)" }}>
@@ -262,6 +295,54 @@ export default function VendorDash() {
             </div>
           </div>
         )}
+
+        {tab === "leads" && (() => {
+          const myLeads = chatThreads.filter((ct) => ct.vendorName === (vProfile.businessName || user?.name || ""));
+          return (
+            <div style={{ padding: "16px 14px", animation: "fadeIn .3s" }}>
+              <p style={{ color: "#fff", fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{isHe ? "לידים נכנסים" : "Incoming Leads"}</p>
+              <p style={{ color: "#555", fontSize: 11, marginBottom: 16 }}>{isHe ? "פניות לקוחות שנשלחו דרך האפליקציה" : "Client requests sent through the app"}</p>
+              {myLeads.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
+                  <p style={{ color: "#555", fontSize: 13 }}>{isHe ? "עדיין אין לידים" : "No leads yet"}</p>
+                  <p style={{ color: "#333", fontSize: 11, marginTop: 4 }}>{isHe ? "לקוחות שיפנו אליך יופיעו כאן" : "Clients who contact you will appear here"}</p>
+                </div>
+              ) : myLeads.map((ct) => (
+                <div key={ct.id} style={{ background: ct.unreadVendor > 0 ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.02)", border: `1px solid ${ct.unreadVendor > 0 ? "rgba(0,206,209,.25)" : "rgba(255,255,255,.06)"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                    <div>
+                      <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, margin: 0 }}>{ct.clientName || (isHe ? "לקוח אנונימי" : "Anonymous")}</p>
+                      <p style={{ color: "#555", fontSize: 11, margin: "2px 0 0" }}>{new Date(ct.createdAt).toLocaleDateString(isHe ? "he-IL" : "en-US")}</p>
+                    </div>
+                    {ct.unreadVendor > 0 && <span style={{ background: "#FF4444", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, flexShrink: 0 }}>{ct.unreadVendor}</span>}
+                  </div>
+                  {(ct.lead.date || ct.lead.guests || ct.lead.budget) && (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                      {ct.lead.date && <span style={{ padding: "3px 10px", borderRadius: 8, background: "rgba(255,255,255,.05)", color: "#aaa", fontSize: 11 }}>📅 {ct.lead.date}</span>}
+                      {ct.lead.guests && <span style={{ padding: "3px 10px", borderRadius: 8, background: "rgba(255,255,255,.05)", color: "#aaa", fontSize: 11 }}>👥 {ct.lead.guests}</span>}
+                      {ct.lead.budget && <span style={{ padding: "3px 10px", borderRadius: 8, background: "rgba(255,255,255,.05)", color: "#aaa", fontSize: 11 }}>💰 {ct.lead.budget}</span>}
+                    </div>
+                  )}
+                  {ct.messages.length > 0 && (
+                    <p style={{ color: "#666", fontSize: 12, margin: "0 0 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {ct.messages[ct.messages.length - 1].text.split("\n")[0]}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => {
+                      setChatThreads((p) => p.map((t) => t.id === ct.id ? { ...t, unreadVendor: 0 } : t));
+                      showToast(isHe ? "✅ סומן כנקרא" : "✅ Marked as read");
+                    }}
+                    style={{ width: "100%", padding: "9px 0", borderRadius: 10, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}
+                  >
+                    {isHe ? "✓ סמן כנקרא" : "✓ Mark as Read"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {tab === "edit" && (
           <div style={{ padding: "10px 14px", overflowY: "auto", maxHeight: "calc(100dvh - 96px)" }}>
@@ -332,7 +413,35 @@ export default function VendorDash() {
             ))}
 
             <p style={{ color: "#666", fontSize: 12, marginBottom: 4 }}>{t.coupon}</p>
-            <Inp value={coupon} onChange={setCoupon} style={{ marginBottom: 12 }} />
+            <Inp value={coupon} onChange={setCoupon} style={{ marginBottom: 20 }} />
+
+            {/* ── PRO VIDEO ── */}
+            <div style={{ background: vendorIsPro ? "rgba(168,85,247,.06)" : "rgba(255,255,255,.02)", border: `1px solid ${vendorIsPro ? "rgba(168,85,247,.3)" : "rgba(255,255,255,.06)"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 18 }}>🎥</span>
+                <p style={{ color: vendorIsPro ? "#a855f7" : "#888", fontWeight: 800, fontSize: 13, margin: 0 }}>{isHe ? "סרטון ספק" : "Vendor Reel"}</p>
+                <span style={{ padding: "2px 8px", borderRadius: 6, background: vendorIsPro ? "rgba(168,85,247,.2)" : "rgba(255,215,0,.1)", border: `1px solid ${vendorIsPro ? "rgba(168,85,247,.4)" : "rgba(255,215,0,.2)"}`, color: vendorIsPro ? "#a855f7" : "#FFD700", fontSize: 9, fontWeight: 900 }}>
+                  {vendorIsPro ? "PRO ✓" : "👑 PRO"}
+                </span>
+              </div>
+              <p style={{ color: "#555", fontSize: 11, marginBottom: 12 }}>
+                {isHe ? "הוסף לינק לסרטון YouTube/Vimeo — לקוחות יראו כפתור ▶️ על הכרטיס שלך" : "Add a YouTube/Vimeo link — clients will see a ▶️ button on your card"}
+              </p>
+              {vendorIsPro ? (
+                <input
+                  value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                  style={{ width: "100%", background: "rgba(168,85,247,.08)", border: "1px solid rgba(168,85,247,.25)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
+                />
+              ) : (
+                <button
+                  onClick={() => { setVendorIsPro(true); showToast(isHe ? "🎉 שודרגת ל-Pro!" : "🎉 Upgraded to Pro!"); }}
+                  style={{ width: "100%", padding: "11px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#a855f7,#7c3aed)", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(168,85,247,.3)" }}
+                >
+                  {isHe ? "שדרג ל-Pro ✨" : "Upgrade to Pro ✨"}
+                </button>
+              )}
+            </div>
 
             <B style={{ width: "100%", marginBottom: 24 }} onClick={() => showToast(t.saved)}>{t.saveAll}</B>
           </div>

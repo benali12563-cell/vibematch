@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
-import { T, findVendor, findCat } from "@/lib/constants";
+import { T, findVendor, findCat, DV } from "@/lib/constants";
 import type { Vendor } from "@/types";
 import SwipeCardView from "./SwipeCardView";
 import VLinks from "./VLinks";
@@ -16,12 +16,16 @@ interface Props {
 }
 
 export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Props) {
-  const { lang } = useApp();
+  const { lang, likes, vendorAvailability, selectedDate } = useApp();
   const t = T[lang];
+  const isHe = lang === "he";
   const [imgIdx, setImgIdx] = useState(0);
   const [qv, setQv] = useState(false);
   const ck = findCat(vendor.name);
   const recs = (vendor.recommends ?? []).map((n) => findVendor(n)).filter(Boolean) as Vendor[];
+  // Similar vendors: same category, exclude this vendor
+  const similarVendors = ck ? (DV[ck] ?? []).filter((v) => v.name !== vendor.name).slice(0, 3) : [];
+  const isBooked = selectedDate ? (vendorAvailability[vendor.name] ?? []).includes(selectedDate) : false;
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 200, overflowY: "auto", direction: lang === "he" ? "rtl" : "ltr", fontFamily: "inherit" }}>
@@ -41,6 +45,42 @@ export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Pr
                 <div key={rv.name} style={{ flexShrink: 0, background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 80, border: "1px solid rgba(255,255,255,.04)" }}>
                   <div style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{rv.name}</div>
                   <div style={{ color: "#666", fontSize: 9 }}>{rv.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Booked warning + similar vendors */}
+        {isBooked && (
+          <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 12, background: "rgba(255,68,68,.06)", border: "1px solid rgba(255,68,68,.2)" }}>
+            <p style={{ color: "#FF6666", fontSize: 12, fontWeight: 700, margin: "0 0 8px" }}>
+              ❌ {isHe ? `תפוס ב-${selectedDate}` : `Booked on ${selectedDate}`}
+            </p>
+            {similarVendors.length > 0 && (
+              <>
+                <p style={{ color: "#555", fontSize: 11, margin: "0 0 8px" }}>{isHe ? "ספקים דומים שפנויים:" : "Similar vendors available:"}</p>
+                <div style={{ display: "flex", gap: 7, overflowX: "auto" }}>
+                  {similarVendors.map((sv) => (
+                    <div key={sv.name} style={{ flexShrink: 0, background: "rgba(255,255,255,.03)", borderRadius: 10, padding: "8px 12px", border: "1px solid rgba(255,255,255,.06)", minWidth: 90 }}>
+                      <div style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>{sv.name}</div>
+                      <div style={{ color: "#00CED1", fontSize: 10, marginTop: 2 }}>{sv.price}</div>
+                      <div style={{ color: "#555", fontSize: 9 }}>⭐ {sv.rating}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {!isBooked && similarVendors.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <p style={{ color: "#444", fontSize: 11, marginBottom: 8 }}>{isHe ? "ספקים דומים:" : "Similar vendors:"}</p>
+            <div style={{ display: "flex", gap: 7, overflowX: "auto" }}>
+              {similarVendors.map((sv) => (
+                <div key={sv.name} style={{ flexShrink: 0, background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "8px 12px", border: "1px solid rgba(255,255,255,.04)", minWidth: 90 }}>
+                  <div style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>{sv.name}</div>
+                  <div style={{ color: "#00CED1", fontSize: 10, marginTop: 2 }}>{sv.price}</div>
+                  <div style={{ color: "#555", fontSize: 9 }}>⭐ {sv.rating}</div>
                 </div>
               ))}
             </div>

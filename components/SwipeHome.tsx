@@ -16,6 +16,8 @@ import VendorCard from "./VendorCard";
 import AuroraBg from "./AuroraBg";
 import B from "./B";
 import { loadPublishedVendors } from "@/lib/supabase/vendors";
+import LeadChatModal, { VideoModal } from "./LeadChatModal";
+import PackageModal from "./PackageModal";
 
 const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   venues: [
@@ -44,7 +46,7 @@ function sp(name: string, min: number, max: number) {
 }
 
 export default function SwipeHome() {
-  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors } = useApp();
+  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors, chatThreads } = useApp();
   const t = T[lang];
   const router = useRouter();
   const isHe = lang === "he";
@@ -63,6 +65,9 @@ export default function SwipeHome() {
   const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
   const [infoVendor, setInfoVendor] = useState<Vendor | null>(null);
+  const [leadVendor, setLeadVendor] = useState<Vendor | null>(null);
+  const [videoVendor, setVideoVendor] = useState<Vendor | null>(null);
+  const [showPackage, setShowPackage] = useState(false);
 
   // Load live published vendors from Supabase once on mount
   useEffect(() => {
@@ -134,6 +139,15 @@ export default function SwipeHome() {
             <div key={v.name} style={{ height: "100%", scrollSnapAlign: "start", position: "relative", flexShrink: 0 }}>
               <SwipeCardView vendor={v} imgIdx={imgIdx} setImgIdx={(fn) => setPhotoIdx(v.name, fn)} actions={null} />
 
+              {/* Availability badge */}
+              {selectedDate && (
+                <div style={{ position: "absolute", top: 52, [isHe ? "right" : "left"]: 14, zIndex: 7, pointerEvents: "none" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 10, background: "rgba(0,200,100,.18)", border: "1px solid rgba(0,200,100,.4)", color: "#00e87a", fontSize: 10, fontWeight: 700, backdropFilter: "blur(8px)" }}>
+                    ✅ {isHe ? `פנוי ${selectedDate}` : `Free ${selectedDate}`}
+                  </span>
+                </div>
+              )}
+
               {/* Social proof badges */}
               <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
                 <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)" }}>👁 {looked}</span>
@@ -142,28 +156,45 @@ export default function SwipeHome() {
               </div>
 
               {/* Right-side action column (TikTok/Reels style) */}
-              <div style={{ position: "absolute", [isHe ? "left" : "right"]: 12, bottom: 155, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
-                {/* Like */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <button
-                    onClick={() => doLike(v)}
-                    style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: 26, fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                  </button>
-                  <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שמור" : "Save"}</span>
-                </div>
-                {/* Info */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <button
-                    onClick={() => setInfoVendor(v)}
-                    style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: 26 }}>info</span>
-                  </button>
-                  <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "פרטים" : "Info"}</span>
-                </div>
-              </div>
+              {(() => {
+                const existingThread = chatThreads.find((t) => t.vendorName === v.name);
+                const hasUnread = (existingThread?.unreadClient ?? 0) > 0;
+                return (
+                  <div style={{ position: "absolute", [isHe ? "left" : "right"]: 12, bottom: 155, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+                    {/* Like */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <button onClick={() => doLike(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 26, fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                      </button>
+                      <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שמור" : "Save"}</span>
+                    </div>
+                    {/* Lead / Chat */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative" }}>
+                      <button onClick={() => setLeadVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: existingThread ? "rgba(0,206,209,.18)" : "rgba(0,0,0,.6)", border: `2px solid ${existingThread ? "rgba(0,229,232,.6)" : "rgba(255,255,255,.22)"}`, color: existingThread ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 24 }}>chat_bubble</span>
+                      </button>
+                      {hasUnread && <div style={{ position: "absolute", top: 0, right: 0, width: 14, height: 14, borderRadius: "50%", background: "#FF4444", border: "2px solid #000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 900 }}>{existingThread!.unreadClient}</div>}
+                      <span style={{ fontSize: 10, color: existingThread ? "#00CED1" : "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "הצעה" : "Quote"}</span>
+                    </div>
+                    {/* Info */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <button onClick={() => setInfoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 24 }}>info</span>
+                      </button>
+                      <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "פרטים" : "Info"}</span>
+                    </div>
+                    {/* Video (Pro) */}
+                    {v.videoUrl && (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                        <button onClick={() => setVideoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(168,85,247,.18)", border: "2px solid rgba(168,85,247,.55)", color: "#a855f7", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 16px rgba(168,85,247,.3)" }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 24 }}>play_circle</span>
+                        </button>
+                        <span style={{ fontSize: 10, color: "#a855f7", fontWeight: 700 }}>{isHe ? "סרטון" : "Video"}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           );
         }) : (
@@ -328,6 +359,10 @@ export default function SwipeHome() {
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(0,206,209,.2)", background: "rgba(0,206,209,.06)", color: "#00CED1", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               💑 {isHe ? "חפשו יחד" : "Search Together"}
             </button>
+            <button onClick={() => { setShowSidebar(false); setShowPackage(true); }}
+              style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(0,206,209,.35)", background: "linear-gradient(135deg,rgba(0,206,209,.15),rgba(0,139,139,.1))", color: "#00e5e8", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 2px 12px rgba(0,206,209,.15)" }}>
+              ✨ {isHe ? "בנה חבילה אוטומטית" : "Auto Event Package"}
+            </button>
           </div>
         </div>
       </div>
@@ -374,6 +409,15 @@ export default function SwipeHome() {
       {showTogether && <SwipeTogetherModal onClose={() => setShowTogether(false)} />}
       {hotView && <VendorCard vendor={hotView} onClose={() => setHotView(null)} />}
       {infoVendor && <VendorCard vendor={infoVendor} onClose={() => setInfoVendor(null)} />}
+      {leadVendor && (
+        <LeadChatModal
+          vendor={leadVendor}
+          existingThread={chatThreads.find((t) => t.vendorName === leadVendor.name)}
+          onClose={() => setLeadVendor(null)}
+        />
+      )}
+      {videoVendor?.videoUrl && <VideoModal url={videoVendor.videoUrl} onClose={() => setVideoVendor(null)} />}
+      {showPackage && <PackageModal onClose={() => setShowPackage(false)} />}
     </div>
   );
 }

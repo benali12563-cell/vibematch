@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry } from "@/types";
+import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry, ChatThread } from "@/types";
 import { createClient } from "@/lib/supabase/client";
 
 const AppCtx = createContext<AppContextType | null>(null);
@@ -45,6 +45,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [publishedVendors, setPublishedVendors] = useState<Vendor[]>([]);
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const addGuest = useCallback((g: GuestEntry) => setGuests((p) => [...p, g]), []);
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [vendorIsPro, setVendorIsPro] = useState(false);
 
   // Restore Supabase session on mount + listen for auth changes
   useEffect(() => {
@@ -103,6 +105,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectedDate, setSelectedDate,
       publishedVendors, setPublishedVendors,
       guests, addGuest,
+      chatThreads, setChatThreads,
+      vendorIsPro, setVendorIsPro,
     }}>
       {children}
     </AppCtx.Provider>
