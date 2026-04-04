@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
@@ -49,28 +49,20 @@ export default function SwipeHome() {
   const router = useRouter();
   const isHe = lang === "he";
 
-  const [ci, setCi] = useState(0);
-  const [imgIdx, setImgIdx] = useState(0);
+  const [photoIdxMap, setPhotoIdxMap] = useState<Record<string, number>>({});
   const [matchVendor, setMatchVendor] = useState<Vendor | null>(null);
   const [confetti, setConfetti] = useState(false);
   const [showTogether, setShowTogether] = useState(false);
   const [hotView, setHotView] = useState<Vendor | null>(null);
   const [likeCount, setLikeCount] = useState(0);
-  const [likeAnim, setLikeAnim] = useState(false);
-  const [nopeAnim, setNopeAnim] = useState(false);
-  const [cardAnim, setCardAnim] = useState<"like" | "nope" | null>(null);
+  const [likedName, setLikedName] = useState<string | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const [showHotSheet, setShowHotSheet] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
-  const [swipeX, setSwipeX] = useState(0);
   const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
-
-  // Refs for gesture + shine
-  const cardWrapRef = useRef<HTMLDivElement>(null);
-  const shineRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, startX: 0, startY: 0, x: 0, y: 0 });
+  const [infoVendor, setInfoVendor] = useState<Vendor | null>(null);
 
   // Load live published vendors from Supabase once on mount
   useEffect(() => {
@@ -92,104 +84,24 @@ export default function SwipeHome() {
   const vs = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))
     : areaFiltered;
-  const cur = vs[ci];
-  const looked = cur ? sp(cur.name, 8, 63) : 0;
-  const liveNow = cur ? sp(cur.name + "x", 1, 9) : 0;
-  const isHot = cur ? (sp(cur.name, 0, 10) > 7) : false;
+  function setPhotoIdx(name: string, fn: (i: number) => number) {
+    setPhotoIdxMap((m) => ({ ...m, [name]: fn(m[name] ?? 0) }));
+  }
 
-  const next = useCallback(() => { setCi((i) => i + 1); setImgIdx(0); }, []);
-
-  function doLike(gestured = false) {
-    if (!cur) return;
-    if (!gestured) { setLikeAnim(true); setCardAnim("like"); }
-    setTimeout(() => { setLikeAnim(false); if (!gestured) setCardAnim(null); }, 500);
-    setLikes((p) => (p.includes(cur.name) ? p : [...p, cur.name]));
+  function doLike(v: Vendor) {
+    if (likes.includes(v.name)) return;
+    setLikes((p) => [...p, v.name]);
+    setLikedName(v.name);
+    setTimeout(() => setLikedName(null), 600);
     const nc = likeCount + 1;
     setLikeCount(nc);
     const isMatch = Math.random() < 0.2 || nc % 5 === 0;
     if (isMatch) {
-      setTimeout(() => { setMatchVendor(cur); setConfetti(true); setTimeout(() => setConfetti(false), 100); }, gestured ? 120 : 450);
+      setTimeout(() => { setMatchVendor(v); setConfetti(true); setTimeout(() => setConfetti(false), 100); }, 120);
     } else {
-      showToast("❤️ " + cur.name);
+      showToast("❤️ " + v.name);
     }
     if (nc === 3) setTimeout(() => setShowTogether(true), 600);
-    if (gestured) {
-      setTimeout(() => {
-        if (cardWrapRef.current) { cardWrapRef.current.style.transition = ""; cardWrapRef.current.style.transform = ""; }
-        setSwipeX(0); next();
-      }, 300);
-    } else {
-      setTimeout(next, 400);
-    }
-  }
-
-  function doNope(gestured = false) {
-    if (!cur) return;
-    if (!gestured) { setNopeAnim(true); setCardAnim("nope"); }
-    if (gestured) {
-      setTimeout(() => {
-        if (cardWrapRef.current) { cardWrapRef.current.style.transition = ""; cardWrapRef.current.style.transform = ""; }
-        setSwipeX(0); next();
-      }, 300);
-    } else {
-      setTimeout(() => { setNopeAnim(false); setCardAnim(null); next(); }, 420);
-    }
-  }
-
-  // ── Gesture handlers ──
-  function onCardTouchStart(e: React.TouchEvent) {
-    if (e.touches.length !== 1) return;
-    drag.current = { active: true, startX: e.touches[0].clientX, startY: e.touches[0].clientY, x: 0, y: 0 };
-  }
-
-  function onCardTouchMove(e: React.TouchEvent) {
-    if (!drag.current.active || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - drag.current.startX;
-    const dy = e.touches[0].clientY - drag.current.startY;
-    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-    drag.current.x = dx; drag.current.y = dy;
-
-    const card = cardWrapRef.current;
-    if (card) {
-      const rot = dx * 0.055;
-      const tiltY = dx * 0.018;
-      card.style.transition = "none";
-      card.style.transform = `translateX(${dx}px) translateY(${dy * 0.04}px) rotate(${rot}deg) perspective(900px) rotateY(${tiltY}deg)`;
-    }
-    // Moving specular shine
-    if (shineRef.current && cardWrapRef.current) {
-      const rect = cardWrapRef.current.getBoundingClientRect();
-      const sx = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
-      const sy = ((e.touches[0].clientY - rect.top) / rect.height) * 100;
-      shineRef.current.style.opacity = "1";
-      shineRef.current.style.background = `radial-gradient(circle at ${sx}% ${sy}%, rgba(255,255,255,.14) 0%, transparent 58%)`;
-    }
-    setSwipeX(dx);
-  }
-
-  function onCardTouchEnd() {
-    if (!drag.current.active) return;
-    drag.current.active = false;
-    const dx = drag.current.x;
-    if (shineRef.current) shineRef.current.style.opacity = "0";
-
-    if (Math.abs(dx) > 90) {
-      const card = cardWrapRef.current;
-      if (card) {
-        const tx = dx > 0 ? "135vw" : "-135vw";
-        const rot = dx > 0 ? 26 : -26;
-        card.style.transition = "transform .28s cubic-bezier(.4,0,1,1)";
-        card.style.transform = `translateX(${tx}) rotate(${rot}deg)`;
-      }
-      setSwipeX(0);
-      if (dx > 0) doLike(true); else doNope(true);
-    } else {
-      if (cardWrapRef.current) {
-        cardWrapRef.current.style.transition = "transform .45s cubic-bezier(.23,1,.32,1)";
-        cardWrapRef.current.style.transform = "";
-      }
-      setSwipeX(0);
-    }
   }
 
   function parsePriceNum(p: string) { const m = p.replace(/,/g, "").match(/\d+/); return m ? parseInt(m[0]) : 0; }
@@ -208,70 +120,57 @@ export default function SwipeHome() {
       <AuroraBg />
       <ConfettiEffect trigger={confetti} />
 
-      {/* ── FULL-SCREEN CARD ── */}
-      <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto" }}>
-        {cur ? (
-          <>
-            <div
-              ref={cardWrapRef}
-              onTouchStart={onCardTouchStart}
-              onTouchMove={onCardTouchMove}
-              onTouchEnd={onCardTouchEnd}
-              style={{
-                position: "absolute", inset: 0,
-                animation: cardAnim === "like" ? "swipeRight .45s ease forwards" : cardAnim === "nope" ? "swipeLeft .45s ease forwards" : undefined,
-                willChange: "transform",
-              }}
-            >
-              {/* Holographic ring border */}
-              <div className="holo-ring" style={{ opacity: Math.min(.45, Math.abs(swipeX) / 200 + .12) }} />
+      {/* ── INSTAGRAM SCROLL FEED ── */}
+      <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
+        {vs.length > 0 ? vs.map((v) => {
+          const imgIdx = photoIdxMap[v.name] ?? 0;
+          const looked = sp(v.name, 8, 63);
+          const liveNow = sp(v.name + "x", 1, 9);
+          const isHot = sp(v.name, 0, 10) > 7;
+          const isLiked = likes.includes(v.name);
+          const isLikeAnim = likedName === v.name;
 
-              {/* Moving specular shine */}
-              <div ref={shineRef} style={{ position: "absolute", inset: 0, zIndex: 8, borderRadius: 20, opacity: 0, pointerEvents: "none", transition: "opacity .2s" }} />
+          return (
+            <div key={v.name} style={{ height: "100%", scrollSnapAlign: "start", position: "relative", flexShrink: 0 }}>
+              <SwipeCardView vendor={v} imgIdx={imgIdx} setImgIdx={(fn) => setPhotoIdx(v.name, fn)} actions={null} />
 
-              {/* LIKE stamp */}
-              {swipeX > 28 && (
-                <div style={{ position: "absolute", top: 52, left: 22, zIndex: 10, opacity: Math.min(1, swipeX / 90), pointerEvents: "none" }}>
-                  <div className="stamp-like">LIKE ♥</div>
+              {/* Social proof badges */}
+              <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)" }}>👁 {looked}</span>
+                {liveNow > 4 && <span style={{ fontSize: 10, color: "#FF4444", fontWeight: 600, background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", animation: "pulse 2s infinite" }}>🔴 {liveNow} {isHe ? "עכשיו" : "now"}</span>}
+                {isHot && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>}
+              </div>
+
+              {/* Right-side action column (TikTok/Reels style) */}
+              <div style={{ position: "absolute", [isHe ? "left" : "right"]: 12, bottom: 155, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+                {/* Like */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                  <button
+                    onClick={() => doLike(v)}
+                    style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: 26, fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                  </button>
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שמור" : "Save"}</span>
                 </div>
-              )}
-              {/* NOPE stamp */}
-              {swipeX < -28 && (
-                <div style={{ position: "absolute", top: 52, right: 22, zIndex: 10, opacity: Math.min(1, -swipeX / 90), pointerEvents: "none" }}>
-                  <div className="stamp-nope">NOPE ✕</div>
+                {/* Info */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                  <button
+                    onClick={() => setInfoVendor(v)}
+                    style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: 26 }}>info</span>
+                  </button>
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "פרטים" : "Info"}</span>
                 </div>
-              )}
-
-              <SwipeCardView vendor={cur} imgIdx={imgIdx} setImgIdx={setImgIdx}
-                actions={
-                  <div style={{ display: "flex", justifyContent: "center", gap: 28 }}>
-                    {/* Nope */}
-                    <button onClick={() => doNope()} style={{ width: 68, height: 68, borderRadius: "50%", background: nopeAnim ? "rgba(255,68,68,.3)" : "rgba(20,0,0,.65)", border: "2px solid rgba(255,68,68,.5)", color: "#FF5555", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: nopeAnim ? "nopeFlash .4s" : undefined, boxShadow: "0 4px 20px rgba(255,68,68,.25), inset 0 1px 0 rgba(255,255,255,.1)" }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: "'FILL' 0" }}>close</span>
-                    </button>
-                    {/* Like */}
-                    <button onClick={() => doLike()} style={{ width: 68, height: 68, borderRadius: "50%", background: likeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : likes.includes(cur.name) ? "linear-gradient(160deg,rgba(0,229,232,.25),rgba(0,206,209,.15))" : "rgba(0,20,20,.65)", border: `2px solid ${likes.includes(cur.name) ? "rgba(0,229,232,.7)" : "rgba(0,206,209,.45)"}`, color: likeAnim ? "#000" : "#00e5e8", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .12s", animation: likeAnim ? "likeFlash .45s" : undefined, boxShadow: likes.includes(cur.name) ? "0 4px 20px rgba(0,206,209,.4), inset 0 1px 0 rgba(255,255,255,.15)" : "0 4px 20px rgba(0,206,209,.2), inset 0 1px 0 rgba(255,255,255,.08)" }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: 30, fontVariationSettings: likes.includes(cur.name) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                    </button>
-                  </div>
-                }
-              />
+              </div>
             </div>
-
-            {/* Social proof badges — float above action area */}
-            <div style={{ position: "absolute", bottom: 148, left: 14, right: 14, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>👁 {looked}</span>
-              {liveNow > 4 && <span style={{ fontSize: 10, color: "#FF4444", fontWeight: 600, background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "pulse 2s infinite" }}>🔴 {liveNow} {isHe ? "עכשיו" : "now"}</span>}
-              {isHot && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>}
-              <span style={{ marginInlineStart: "auto", color: "rgba(255,255,255,.35)", fontSize: 10, background: "rgba(0,0,0,.4)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{ci + 1}/{vs.length}</span>
-            </div>
-          </>
-        ) : (
+          );
+        }) : (
           <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
             <div style={{ fontSize: 48 }}>🎉</div>
             <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
             <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
-            <B s="sm" v="accent" onClick={() => { setCi(0); }}>{isHe ? "הצג מחדש" : "Show again"}</B>
           </div>
         )}
       </div>
@@ -331,7 +230,7 @@ export default function SwipeHome() {
             {CATS.map((c) => {
               const active = activeCat === c.k;
               return (
-                <button key={c.k} onClick={() => { setActiveCat(c.k); setCi(0); setImgIdx(0); setActiveSub(null); }}
+                <button key={c.k} onClick={() => { setActiveCat(c.k); setActiveSub(null); setPhotoIdxMap({}); }}
                   style={{ padding: "10px 6px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.65)" : "1px solid rgba(255,255,255,.08)", background: active ? "linear-gradient(160deg,rgba(0,229,232,.18),rgba(0,206,209,.1))" : "rgba(255,255,255,.04)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s", boxShadow: active ? "0 4px 16px rgba(0,206,209,.25), inset 0 1px 0 rgba(0,255,255,.15)" : "none", fontFamily: "inherit" }}>
                   <span style={{ fontSize: 22 }}>{CAT_ICONS[c.k]}</span>
                   <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 10, fontWeight: active ? 800 : 500, textAlign: "center", lineHeight: 1.2 }}>{isHe ? c.he : c.en}</span>
@@ -364,7 +263,7 @@ export default function SwipeHome() {
             {AREAS.map((a) => {
               const active = areaFilter === a;
               return (
-                <button key={a} onClick={() => { setAreaFilter(a); setCi(0); }}
+                <button key={a} onClick={() => { setAreaFilter(a); }}
                   style={{ padding: "8px 16px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
                   {t[a]}
                 </button>
@@ -376,9 +275,9 @@ export default function SwipeHome() {
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "תאריך האירוע" : "Event Date"}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
             <span className="material-symbols-outlined" style={{ fontSize: 18, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.2)" }}>calendar_month</span>
-            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setCi(0); }}
+            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); }}
               style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.35)" : "rgba(255,255,255,.08)"}`, borderRadius: 12, padding: "10px 14px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
-            {selectedDate && <button onClick={() => { setSelectedDate(""); setCi(0); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.07)", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", fontSize: 13 }}>✕</button>}
+            {selectedDate && <button onClick={() => { setSelectedDate(""); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.07)", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", fontSize: 13 }}>✕</button>}
           </div>
 
           {/* ── 5. EVENT TYPE ── */}
@@ -417,11 +316,11 @@ export default function SwipeHome() {
 
           {/* ── CTAs ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <button onClick={() => { setCi(0); setShowSidebar(false); }}
+            <button onClick={() => { setShowSidebar(false); }}
               style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
               {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
             </button>
-            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCi(0); }}
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); }}
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {isHe ? "אפס הכל" : "Reset All"}
             </button>
@@ -474,6 +373,7 @@ export default function SwipeHome() {
 
       {showTogether && <SwipeTogetherModal onClose={() => setShowTogether(false)} />}
       {hotView && <VendorCard vendor={hotView} onClose={() => setHotView(null)} />}
+      {infoVendor && <VendorCard vendor={infoVendor} onClose={() => setInfoVendor(null)} />}
     </div>
   );
 }
