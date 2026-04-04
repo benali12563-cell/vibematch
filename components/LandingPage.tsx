@@ -53,7 +53,7 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
   const features = [
     { icon: "💍", title: isHe ? "כל סוגי האירועים" : "All Event Types", desc: isHe ? "חתונות, בר/בת מצווה, ימי הולדת, כנסים, מסיבות — הכל במקום אחד." : "Weddings, bar mitzvahs, birthdays, corporate events — all in one place." },
-    { icon: "🔥", title: isHe ? "החלקת ספקים כמו Tinder" : "Swipe Vendors Like Tinder", desc: isHe ? "עד 5 תמונות לכל ספק, לייק / דיסלייק, והתאמה מושלמת תוך שניות." : "Up to 5 photos per vendor, like / dislike, perfect match in seconds." },
+    { icon: "📸", title: isHe ? "פיד ספקים כמו אינסטגרם" : "Instagram-Style Vendor Feed", desc: isHe ? "עד 5 תמונות לכל ספק, גלילה אנכית חלקה, שמרו את מה שאהבתם בלחיצה." : "Up to 5 photos per vendor, smooth vertical scroll, save favorites in one tap." },
     { icon: "🧠", title: isHe ? "VibeMatching חכם" : "Smart VibeMatching", desc: isHe ? "שאלון אישי (Story Mode) שמתאים ספקים לפי הסגנון, הקהל והתקציב שלכם." : "Personal questionnaire that matches vendors to your style, crowd & budget." },
     { icon: "📋", title: isHe ? "ניהול אירוע מלא" : "Full Event Management", desc: isHe ? "רשימת ספקים, מעקב תקציב, לוח זמנים, ניהול אורחים — הכל בלוח שליטה אחד." : "Vendor list, budget tracker, timeline, guest management — one dashboard." },
     { icon: "📨", title: isHe ? "RSVP חכם" : "Smart RSVP", desc: isHe ? "קישור ייחודי לאורחים, ספירת מאשרים בזמן אמת, בלי גיליונות Excel." : "Unique guest link, real-time confirmations, no Excel spreadsheets." },
@@ -62,13 +62,13 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
   const steps = [
     { n: "01", title: isHe ? "ספרו לנו על האירוע" : "Tell us about the event", desc: isHe ? "4 שאלות מהירות — סוג, סגנון, ויב, תקציב." : "4 quick questions — type, style, vibe, budget." },
-    { n: "02", title: isHe ? "החליקו ספקים" : "Swipe vendors", desc: isHe ? "כרטיסים עם תמונות, מחירים ודירוגים — לייק מה שאהבתם." : "Cards with photos, prices & ratings — like what you love." },
+    { n: "02", title: isHe ? "גלו ספקים" : "Discover vendors", desc: isHe ? "כרטיסים עם תמונות, מחירים ודירוגים — שמרו את מה שאהבתם." : "Cards with photos, prices & ratings — save what you love." },
     { n: "03", title: isHe ? "נהלו הכל ממקום אחד" : "Manage everything in one place", desc: isHe ? "תקציב, לוח זמנים, אורחים — מוכנים לאירוע." : "Budget, timeline, guests — ready for the big day." },
   ];
 
   const testimonials = [
     { name: "שירה ודן", event: isHe ? "חתונה, מרץ 2026" : "Wedding, March 2026", text: isHe ? "חסכנו שבועות של חיפוש. מצאנו DJ, צלם וקייטרינג תוך יום אחד. VibeMatch שינתה לנו את החיים!" : "We saved weeks of searching. Found DJ, photographer & catering in one day!" },
-    { name: "מיכל כהן", event: isHe ? "בת מצווה, ינואר 2026" : "Bat Mitzvah, Jan 2026", text: isHe ? "הממשק פשוט מגניב. זה כמו טינדר לספקים — כיף, מהיר, ומדויק." : "The interface is just genius. It's like Tinder for vendors — fun, fast, precise." },
+    { name: "מיכל כהן", event: isHe ? "בת מצווה, ינואר 2026" : "Bat Mitzvah, Jan 2026", text: isHe ? "הממשק פשוט מגניב — גוללים ספקים כמו אינסטגרם, רואים מחיר מיד, שומרים בלחיצה." : "The interface is brilliant — scroll vendors like Instagram, see prices instantly, save in one tap." },
     { name: "אורן לוי", event: isHe ? "אירוע חברה, פברואר 2026" : "Corporate, Feb 2026", text: isHe ? "ניהלנו אירוע של 300 איש. ה-RSVP החכם חסך לנו עשרות שעות של עבודה." : "Managed a 300-person event. Smart RSVP saved us dozens of hours." },
   ];
 
@@ -119,8 +119,8 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
         {/* Sub */}
         <p style={{ color: "rgba(255,255,255,.55)", fontSize: "clamp(14px, 3vw, 18px)", lineHeight: 1.7, maxWidth: 480, margin: "0 auto 36px", animation: "fadeInUp .7s ease .2s both" }}>
           {isHe
-            ? "החלקת כרטיסים כמו Tinder, VibeMatching חכם, ניהול אירוע מלא — הכל ב-VibeMatch."
-            : "Tinder-style vendor swiping, smart VibeMatching, full event management — all in VibeMatch."}
+            ? "פיד ספקים חכם, מחירים שקופים, ניהול אירוע מלא — הכל ב-VibeMatch. בחינם."
+            : "Smart vendor feed, transparent pricing, full event management — all in VibeMatch. Free."}
         </p>
 
         {/* CTA */}

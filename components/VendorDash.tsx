@@ -415,32 +415,18 @@ export default function VendorDash() {
             <p style={{ color: "#666", fontSize: 12, marginBottom: 4 }}>{t.coupon}</p>
             <Inp value={coupon} onChange={setCoupon} style={{ marginBottom: 20 }} />
 
-            {/* ── PRO VIDEO ── */}
-            <div style={{ background: vendorIsPro ? "rgba(168,85,247,.06)" : "rgba(255,255,255,.02)", border: `1px solid ${vendorIsPro ? "rgba(168,85,247,.3)" : "rgba(255,255,255,.06)"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            {/* ── VIDEO (coming soon) ── */}
+            <div style={{ background: "rgba(255,255,255,.02)", border: "1px solid rgba(255,255,255,.05)", borderRadius: 14, padding: "14px 16px", marginBottom: 20, opacity: 0.6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <span style={{ fontSize: 18 }}>🎥</span>
-                <p style={{ color: vendorIsPro ? "#a855f7" : "#888", fontWeight: 800, fontSize: 13, margin: 0 }}>{isHe ? "סרטון ספק" : "Vendor Reel"}</p>
-                <span style={{ padding: "2px 8px", borderRadius: 6, background: vendorIsPro ? "rgba(168,85,247,.2)" : "rgba(255,215,0,.1)", border: `1px solid ${vendorIsPro ? "rgba(168,85,247,.4)" : "rgba(255,215,0,.2)"}`, color: vendorIsPro ? "#a855f7" : "#FFD700", fontSize: 9, fontWeight: 900 }}>
-                  {vendorIsPro ? "PRO ✓" : "👑 PRO"}
+                <p style={{ color: "#888", fontWeight: 800, fontSize: 13, margin: 0 }}>{isHe ? "סרטון ספק" : "Vendor Reel"}</p>
+                <span style={{ padding: "2px 8px", borderRadius: 6, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", color: "#555", fontSize: 9, fontWeight: 700 }}>
+                  {isHe ? "בקרוב" : "Coming Soon"}
                 </span>
               </div>
-              <p style={{ color: "#555", fontSize: 11, marginBottom: 12 }}>
-                {isHe ? "הוסף לינק לסרטון YouTube/Vimeo — לקוחות יראו כפתור ▶️ על הכרטיס שלך" : "Add a YouTube/Vimeo link — clients will see a ▶️ button on your card"}
+              <p style={{ color: "#444", fontSize: 11 }}>
+                {isHe ? "בקרוב תוכל להוסיף סרטון קצר לפרופיל שלך" : "Soon you'll be able to add a short video to your profile"}
               </p>
-              {vendorIsPro ? (
-                <input
-                  value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://youtube.com/watch?v=..."
-                  style={{ width: "100%", background: "rgba(168,85,247,.08)", border: "1px solid rgba(168,85,247,.25)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
-                />
-              ) : (
-                <button
-                  onClick={() => { setVendorIsPro(true); showToast(isHe ? "🎉 שודרגת ל-Pro!" : "🎉 Upgraded to Pro!"); }}
-                  style={{ width: "100%", padding: "11px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#a855f7,#7c3aed)", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 16px rgba(168,85,247,.3)" }}
-                >
-                  {isHe ? "שדרג ל-Pro ✨" : "Upgrade to Pro ✨"}
-                </button>
-              )}
             </div>
 
             <B style={{ width: "100%", marginBottom: 24 }} onClick={() => showToast(t.saved)}>{t.saveAll}</B>

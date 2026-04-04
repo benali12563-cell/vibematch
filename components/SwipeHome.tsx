@@ -10,7 +10,6 @@ import Nav from "./Nav";
 import Logo from "./Logo";
 import LangToggle from "./LangToggle";
 import HotStrip from "./HotStrip";
-import ConfettiEffect from "./ConfettiEffect";
 import SwipeTogetherModal from "./SwipeTogetherModal";
 import VendorCard from "./VendorCard";
 import AuroraBg from "./AuroraBg";
@@ -52,11 +51,8 @@ export default function SwipeHome() {
   const isHe = lang === "he";
 
   const [photoIdxMap, setPhotoIdxMap] = useState<Record<string, number>>({});
-  const [matchVendor, setMatchVendor] = useState<Vendor | null>(null);
-  const [confetti, setConfetti] = useState(false);
   const [showTogether, setShowTogether] = useState(false);
   const [hotView, setHotView] = useState<Vendor | null>(null);
-  const [likeCount, setLikeCount] = useState(0);
   const [likedName, setLikedName] = useState<string | null>(null);
   const [activeSub, setActiveSub] = useState<string | null>(null);
   const [showHotSheet, setShowHotSheet] = useState(false);
@@ -101,15 +97,7 @@ export default function SwipeHome() {
     setLikes((p) => [...p, v.name]);
     setLikedName(v.name);
     setTimeout(() => setLikedName(null), 600);
-    const nc = likeCount + 1;
-    setLikeCount(nc);
-    const isMatch = Math.random() < 0.2 || nc % 5 === 0;
-    if (isMatch) {
-      setTimeout(() => { setMatchVendor(v); setConfetti(true); setTimeout(() => setConfetti(false), 100); }, 120);
-    } else {
-      showToast("❤️ " + v.name);
-    }
-    if (nc === 3) setTimeout(() => setShowTogether(true), 600);
+    showToast("❤️ " + v.name + (isHe ? " נשמר" : " saved"));
   }
 
   function parsePriceNum(p: string) { const m = p.replace(/,/g, "").match(/\d+/); return m ? parseInt(m[0]) : 0; }
@@ -126,7 +114,7 @@ export default function SwipeHome() {
   return (
     <div style={{ height: "100dvh", overflow: "hidden", background: "#000", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo'", direction: isHe ? "rtl" : "ltr" }}>
       <AuroraBg />
-      <ConfettiEffect trigger={confetti} />
+
 
       {/* ── INSTAGRAM SCROLL FEED ── */}
       <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
@@ -399,26 +387,6 @@ export default function SwipeHome() {
       </div>
 
       <Nav />
-
-      {/* ── Match overlay ── */}
-      {matchVendor && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.92)", backdropFilter: "blur(20px)", zIndex: 350, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setMatchVendor(null)}>
-          <div style={{ animation: "scaleIn .4s", textAlign: "center", padding: "0 28px" }}>
-            <div style={{ fontSize: 64, marginBottom: 10, animation: "glow 1.2s ease infinite" }}>♥</div>
-            <h2 style={{ color: "#00CED1", fontSize: 28, fontWeight: 900, marginBottom: 6, fontFamily: "'Manrope','Heebo',sans-serif", letterSpacing: -0.5 }}>
-              {isHe ? "התאמה מושלמת!" : "Perfect Match!"}
-            </h2>
-            <p style={{ color: "#fff", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{matchVendor.name}</p>
-            <p style={{ color: "rgba(255,255,255,.4)", fontSize: 13, marginBottom: 24 }}>
-              {isHe ? "נשמר לרשימת המועדפים ✓" : "Saved to favorites ✓"}
-            </p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <B v="accent" onClick={() => { setMatchVendor(null); router.push("/manage"); }}>{isHe ? "ראה ניהול" : "See Manage"}</B>
-              <B v="ghost" onClick={() => setMatchVendor(null)}>{isHe ? "המשך" : "Continue"}</B>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showTogether && <SwipeTogetherModal onClose={() => setShowTogether(false)} />}
       {hotView && <VendorCard vendor={hotView} onClose={() => setHotView(null)} />}
