@@ -497,7 +497,22 @@ export default function VendorDash() {
               </p>
             </div>
 
-            <B style={{ width: "100%", marginBottom: 24 }} onClick={() => showToast(t.saved)}>{t.saveAll}</B>
+            <B style={{ width: "100%", marginBottom: 24 }} onClick={async () => {
+              const saveVendor: import("@/types").Vendor = {
+                ...previewVendor,
+                catKey: vProfile.category as import("@/types").CatKey,
+                isPublished: published,
+                whatsapp: vProfile.whatsapp,
+                phone: vProfile.phone,
+                instagram: vProfile.instagram,
+                tiktok: vProfile.tiktok,
+                website: vProfile.website,
+                google: vProfile.google,
+                waze: vProfile.waze,
+              };
+              const { error } = await saveVendorProfile(saveVendor);
+              showToast(error ? (isHe ? "✅ נשמר (לא מחובר)" : "✅ Saved (offline)") : (isHe ? "✅ הפרופיל נשמר!" : "✅ Profile saved!"));
+            }}>{t.saveAll}</B>
           </div>
         )}
       </div>

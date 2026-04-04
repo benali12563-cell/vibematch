@@ -14,7 +14,7 @@ import B from "./B";
 import Inp from "./Inp";
 
 export default function ManageScreen() {
-  const { lang, likes, setLikes, setArchived, budget, setBudget, vendorPrices, setVendorPrices, setActiveCat } = useApp();
+  const { lang, likes, setLikes, setArchived, budget, setBudget, vendorPrices, setVendorPrices, setActiveCat, publishedVendors } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
@@ -55,7 +55,8 @@ export default function ManageScreen() {
 
       <div style={{ padding: "10px 16px", overflowY: "auto", maxHeight: "calc(100dvh - 180px)" }}>
         {tab === "checklist" && CATS.map((cat) => {
-          const matched = (DV[cat.k] ?? []).filter((v) => likes.includes(v.name));
+          const allCatVs = [...(DV[cat.k] ?? []), ...publishedVendors.filter((v) => v.catKey === cat.k)];
+          const matched = allCatVs.filter((v) => likes.includes(v.name));
           return (
             <div key={cat.k} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.03)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -114,7 +115,7 @@ export default function ManageScreen() {
             </div>
             <Inp value={String(budget.total ?? "")} onChange={(v) => setBudget((p) => ({ ...p, total: Number(v) }))} type="number" placeholder={t.budget} dir="ltr" style={{ marginBottom: 12 }} />
             {CATS.map((ck) => {
-              const hasM = (DV[ck.k] ?? []).some((v) => likes.includes(v.name));
+              const hasM = [...(DV[ck.k] ?? []), ...publishedVendors.filter((v) => v.catKey === ck.k)].some((v) => likes.includes(v.name));
               const exp = (budget.items ?? []).filter((it) => it.cat === ck.k);
               const total = exp.reduce((s, e) => s + e.amount, 0);
               return (

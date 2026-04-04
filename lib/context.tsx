@@ -19,17 +19,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [loginMode, setLoginMode] = useState<"owner" | "vendor">("owner");
   const [activeCat, setActiveCat] = useState<CatKey>("music");
   const [areaFilter, setAreaFilter] = useState<Area>("allAreas");
-  const [likes, setLikes] = useState<string[]>([]);
-  const [archived, setArchived] = useState<string[]>([]);
-  const [budget, setBudget] = useState<Budget>({ total: 0, spent: 0, items: [] });
-  const [tlItems, setTlItems] = useState<TimelineItem[]>([]);
-  const [vGallery, setVGallery] = useState<GalleryItem[]>([]);
-  const [vPic, setVPic] = useState<string | null>(null);
-  const [vAbout, setVAbout] = useState("");
-  const [vProfile, setVProfile] = useState<VProfile>({ businessName: "", businessPrice: "", category: "" });
-  const [vendorPrices, setVendorPrices] = useState<Record<string, number>>({});
-  const [eventInfo, setEventInfo] = useState<EventInfo>({ address: "", wazeLink: "", date: "", notes: "" });
-  const [toast, setToast] = useState("");
+
+  // ── Persisted to localStorage ──────────────────────────────────────────────
+  function ls<T>(key: string, fallback: T): T {
+    if (typeof window === "undefined") return fallback;
+    try { return JSON.parse(localStorage.getItem(key) ?? "null") ?? fallback; } catch { return fallback; }
+  }
+
+  const [likes, setLikes] = useState<string[]>(() => ls("vm_likes", []));
+  const [archived, setArchived] = useState<string[]>(() => ls("vm_archived", []));
+  const [budget, setBudget] = useState<Budget>(() => ls("vm_budget", { total: 0, spent: 0, items: [] }));
+  const [tlItems, setTlItems] = useState<TimelineItem[]>(() => ls("vm_tl", []));
+  const [vendorPrices, setVendorPrices] = useState<Record<string, number>>(() => ls("vm_vprices", {}));
+  const [eventInfo, setEventInfo] = useState<EventInfo>(() => ls("vm_eventinfo", { address: "", wazeLink: "", date: "", notes: "" }));
+  const [vendorAvailability, setVendorAvailability] = useState<Record<string, string[]>>(() => ls("vm_avail", {}));
+  const [guests, setGuests] = useState<GuestEntry[]>(() => ls("vm_guests", []));
+
+  useEffect(() => { localStorage.setItem("vm_likes",     JSON.stringify(likes));             }, [likes]);
+  useEffect(() => { localStorage.setItem("vm_archived",  JSON.stringify(archived));          }, [archived]);
+  useEffect(() => { localStorage.setItem("vm_budget",    JSON.stringify(budget));            }, [budget]);
+  useEffect(() => { localStorage.setItem("vm_tl",        JSON.stringify(tlItems));           }, [tlItems]);
+  useEffect(() => { localStorage.setItem("vm_vprices",   JSON.stringify(vendorPrices));      }, [vendorPrices]);
+  useEffect(() => { localStorage.setItem("vm_eventinfo", JSON.stringify(eventInfo));         }, [eventInfo]);
+  useEffect(() => { localStorage.setItem("vm_avail",     JSON.stringify(vendorAvailability));}, [vendorAvailability]);
+  useEffect(() => { localStorage.setItem("vm_guests",    JSON.stringify(guests));            }, [guests]);
+  // ─────────────────────────────────────────────────────────────────────────
   const [onboardingDone, setOnboardingDoneRaw] = useState(
     () => typeof window !== "undefined" && localStorage.getItem("vm_onboarded") === "1"
   );
@@ -40,11 +54,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }, []);
-  const [vendorAvailability, setVendorAvailability] = useState<Record<string, string[]>>({});
   const [selectedDate, setSelectedDate] = useState("");
   const [publishedVendors, setPublishedVendors] = useState<Vendor[]>([]);
-  const [guests, setGuests] = useState<GuestEntry[]>([]);
   const addGuest = useCallback((g: GuestEntry) => setGuests((p) => [...p, g]), []);
+  const [vGallery, setVGallery] = useState<GalleryItem[]>([]);
+  const [vPic, setVPic] = useState<string | null>(null);
+  const [vAbout, setVAbout] = useState("");
+  const [vProfile, setVProfile] = useState<VProfile>({ businessName: "", businessPrice: "", category: "" });
+  const [toast, setToast] = useState("");
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
   const [vendorIsPro, setVendorIsPro] = useState(false);
 
