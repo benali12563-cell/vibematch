@@ -2,15 +2,21 @@
 import B from "./B";
 import type { Vendor } from "@/types";
 
+function ensureHttps(v: string): string {
+  if (!v) return v;
+  if (v.startsWith("http://") || v.startsWith("https://")) return v;
+  return "https://" + v;
+}
+
 const LINK_DEFS = [
-  { k: "whatsapp" as keyof Vendor, l: "WhatsApp", fn: (v: string) => "https://wa.me/" + v.replace(/[\s-]/g, "").replace(/^0/, "972") },
-  { k: "phone" as keyof Vendor, l: "Call", fn: (v: string) => "tel:" + v },
-  { k: "instagram" as keyof Vendor, l: "Instagram", fn: (v: string) => v },
-  { k: "tiktok" as keyof Vendor, l: "TikTok", fn: (v: string) => v },
-  { k: "youtube" as keyof Vendor, l: "YouTube", fn: (v: string) => v },
-  { k: "website" as keyof Vendor, l: "Website", fn: (v: string) => v },
-  { k: "google" as keyof Vendor, l: "Reviews", fn: (v: string) => v },
-  { k: "waze" as keyof Vendor, l: "Waze", fn: (v: string) => v },
+  { k: "whatsapp" as keyof Vendor, l: "WhatsApp", fn: (v: string) => "https://wa.me/" + v.replace(/[\s\-()]/g, "").replace(/^0/, "972") },
+  { k: "phone" as keyof Vendor, l: "Call", fn: (v: string) => "tel:" + v.replace(/[\s\-()]/g, "") },
+  { k: "instagram" as keyof Vendor, l: "Instagram", fn: ensureHttps },
+  { k: "tiktok" as keyof Vendor, l: "TikTok", fn: ensureHttps },
+  { k: "youtube" as keyof Vendor, l: "YouTube", fn: ensureHttps },
+  { k: "website" as keyof Vendor, l: "Website", fn: ensureHttps },
+  { k: "google" as keyof Vendor, l: "Reviews", fn: ensureHttps },
+  { k: "waze" as keyof Vendor, l: "Waze", fn: ensureHttps },
 ];
 
 export default function VLinks({ vendor }: { vendor: Vendor }) {

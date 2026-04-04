@@ -4,7 +4,8 @@ import type { Vendor, CatKey, Area } from "@/types";
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 export function makeSlug(name: string) {
-  return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+  // Keep Latin letters, Hebrew chars (U+0590–U+05FF), digits, hyphens
+  return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\u0590-\u05ff-]/g, "");
 }
 
 function dbToVendor(row: Record<string, unknown>): Vendor {

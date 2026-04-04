@@ -9,7 +9,8 @@ import Logo from "./Logo";
 import VLinks from "./VLinks";
 import AvailabilityCalendar from "./AvailabilityCalendar";
 import { saveVendorProfile, loadVendorBySlug, makeSlug } from "@/lib/supabase/vendors";
-import type { Vendor } from "@/types";
+import { loadVendorLeads, markLeadReadVendor, saveLeadMessage } from "@/lib/supabase/leads";
+import type { Vendor, ChatThread, ChatMessage } from "@/types";
 
 function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean }) {
   const { vendorAvailability, setVendorAvailability } = useApp();
@@ -43,6 +44,9 @@ export default function VendorDash() {
   const [published, setPublished] = useState(false);
   const [vendorName, setVendorName] = useState("");
   const [vendorPin, setVendorPin] = useState("");
+  const [dbLeads, setDbLeads] = useState<ChatThread[]>([]);
+  const [dbLeadsLoading, setDbLeadsLoading] = useState(false);
+  const [replyMsgs, setReplyMsgs] = useState<Record<string, string>>({});
   const fRef = useRef<HTMLInputElement>(null);
   const pRef = useRef<HTMLInputElement>(null);
 
@@ -65,6 +69,22 @@ export default function VendorDash() {
       if (v.isPublished) setPublished(true);
     }).catch(() => {});
   }, [vendorSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load leads from Supabase when Leads tab is opened
+  const vname = vProfile.businessName || user?.name || "";
+  useEffect(() => {
+    if (tab !== "leads" || !vname) return;
+    setDbLeadsLoading(true);
+    loadVendorLeads(vname).then((leads) => {
+      setDbLeads(leads);
+      // Merge into global chatThreads so client-side chat also stays in sync
+      setChatThreads((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id));
+        const newOnes = leads.filter((l) => !existingIds.has(l.id));
+        return [...prev.filter((t) => !leads.find((l) => l.id === t.id)), ...leads, ...newOnes];
+      });
+    }).catch(() => {}).finally(() => setDbLeadsLoading(false));
+  }, [tab, vname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
   if (!user || user.role !== "vendor") {
@@ -180,8 +200,8 @@ export default function VendorDash() {
       <div style={{ padding: "48px 0 0" }}>
         <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
           {(["preview", "edit", "calendar", "leads"] as const).map((tb) => {
-            const myLeads = chatThreads.filter((ct) => ct.vendorName === (vProfile.businessName || user?.name || ""));
-            const unread = myLeads.reduce((s, ct) => s + ct.unreadVendor, 0);
+            const allLeads = dbLeads.length > 0 ? dbLeads : chatThreads.filter((ct) => ct.vendorName === vname);
+            const unread = allLeads.reduce((s, ct) => s + ct.unreadVendor, 0);
             return (
               <button key={tb} onClick={() => setTab(tb)} style={{ flex: 1, padding: "12px 0", background: tab === tb ? "rgba(0,206,209,.06)" : "none", border: "none", color: tab === tb ? "#00e5e8" : "rgba(255,255,255,.4)", fontSize: 12, fontWeight: tab === tb ? 700 : 500, cursor: "pointer", borderBottom: tab === tb ? "2px solid #00CED1" : "2px solid rgba(255,255,255,.05)", transition: "all .15s", position: "relative", fontFamily: "inherit" }}>
                 {tb === "preview" ? t.preview : tb === "edit" ? t.editProfile : tb === "calendar" ? (isHe ? "יומן" : "Cal") : (isHe ? "לידים" : "Leads")}
@@ -234,9 +254,8 @@ export default function VendorDash() {
             </div>
             {/* Live stats panel */}
             {(() => {
-              const vname = vProfile.businessName || user?.name || "";
               function sh(seed: string, min: number, max: number) { let h = 0; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) & 0xffffffff; return min + (Math.abs(h) % (max - min + 1)); }
-              const leads = chatThreads.filter((ct) => ct.vendorName === vname).length;
+              const leads = (dbLeads.length > 0 ? dbLeads : chatThreads.filter((ct) => ct.vendorName === vname)).length;
               const stats = [
                 { l: isHe ? "👁 צפיות" : "👁 Views", v: sh(vname + "v", 120, 890), color: "#00CED1" },
                 { l: isHe ? "❤️ שמירות" : "❤️ Saves", v: sh(vname + "s", 12, 67), color: "#FF4444" },
@@ -268,7 +287,7 @@ export default function VendorDash() {
               ))}
             </div>
             <div style={{ padding: "8px 14px" }}>
-              <B v="fire" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText("https://vibematch.co.il/join"); setInvC(true); setTimeout(() => setInvC(false), 2000); }}>
+              <B v="fire" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText(typeof window !== "undefined" ? window.location.origin : ""); setInvC(true); setTimeout(() => setInvC(false), 2000); }}>
                 {invC ? t.linkCopied : t.inviteBoost}
               </B>
             </div>
@@ -297,22 +316,50 @@ export default function VendorDash() {
         )}
 
         {tab === "leads" && (() => {
-          const myLeads = chatThreads.filter((ct) => ct.vendorName === (vProfile.businessName || user?.name || ""));
+          // Prefer DB leads; fallback to in-memory chatThreads for offline/demo
+          const myLeads: ChatThread[] = dbLeads.length > 0
+            ? dbLeads
+            : chatThreads.filter((ct) => ct.vendorName === vname);
+
+          function sendVendorReply(ct: ChatThread) {
+            const text = replyMsgs[ct.id]?.trim();
+            if (!text) return;
+            const newMsg: ChatMessage = {
+              id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+              from: "vendor",
+              text,
+              ts: Date.now(),
+              senderName: vname,
+            };
+            const updated = { ...ct, messages: [...ct.messages, newMsg], unreadClient: ct.unreadClient + 1, unreadVendor: 0 };
+            setDbLeads((p) => p.map((l) => l.id === ct.id ? updated : l));
+            setChatThreads((p) => p.map((t) => t.id === ct.id ? updated : t));
+            setReplyMsgs((p) => ({ ...p, [ct.id]: "" }));
+            // Persist (fire-and-forget)
+            saveLeadMessage(ct.id, newMsg).catch(() => {});
+            markLeadReadVendor(ct.id).catch(() => {});
+            showToast(isHe ? "✅ תגובה נשלחה" : "✅ Reply sent");
+          }
+
           return (
             <div style={{ padding: "16px 14px", animation: "fadeIn .3s" }}>
               <p style={{ color: "#fff", fontSize: 15, fontWeight: 800, marginBottom: 4 }}>{isHe ? "לידים נכנסים" : "Incoming Leads"}</p>
               <p style={{ color: "#555", fontSize: 11, marginBottom: 16 }}>{isHe ? "פניות לקוחות שנשלחו דרך האפליקציה" : "Client requests sent through the app"}</p>
-              {myLeads.length === 0 ? (
+              {dbLeadsLoading ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <div style={{ width: 24, height: 24, border: "2px solid rgba(0,206,209,.3)", borderTopColor: "#00CED1", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto" }} />
+                </div>
+              ) : myLeads.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
                   <p style={{ color: "#555", fontSize: 13 }}>{isHe ? "עדיין אין לידים" : "No leads yet"}</p>
                   <p style={{ color: "#333", fontSize: 11, marginTop: 4 }}>{isHe ? "לקוחות שיפנו אליך יופיעו כאן" : "Clients who contact you will appear here"}</p>
                 </div>
               ) : myLeads.map((ct) => (
-                <div key={ct.id} style={{ background: ct.unreadVendor > 0 ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.02)", border: `1px solid ${ct.unreadVendor > 0 ? "rgba(0,206,209,.25)" : "rgba(255,255,255,.06)"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 10 }}>
+                <div key={ct.id} style={{ background: ct.unreadVendor > 0 ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.02)", border: `1px solid ${ct.unreadVendor > 0 ? "rgba(0,206,209,.25)" : "rgba(255,255,255,.06)"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                     <div>
-                      <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, margin: 0 }}>{ct.clientName || (isHe ? "לקוח אנונימי" : "Anonymous")}</p>
+                      <p style={{ color: "#fff", fontWeight: 700, fontSize: 14, margin: 0 }}>{ct.clientName || (isHe ? "לקוח" : "Client")}</p>
                       <p style={{ color: "#555", fontSize: 11, margin: "2px 0 0" }}>{new Date(ct.createdAt).toLocaleDateString(isHe ? "he-IL" : "en-US")}</p>
                     </div>
                     {ct.unreadVendor > 0 && <span style={{ background: "#FF4444", color: "#fff", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900, flexShrink: 0 }}>{ct.unreadVendor}</span>}
@@ -324,20 +371,41 @@ export default function VendorDash() {
                       {ct.lead.budget && <span style={{ padding: "3px 10px", borderRadius: 8, background: "rgba(255,255,255,.05)", color: "#aaa", fontSize: 11 }}>💰 {ct.lead.budget}</span>}
                     </div>
                   )}
+                  {/* Last message preview */}
                   {ct.messages.length > 0 && (
                     <p style={{ color: "#666", fontSize: 12, margin: "0 0 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {ct.messages[ct.messages.length - 1].text.split("\n")[0]}
                     </p>
                   )}
-                  <button
-                    onClick={() => {
-                      setChatThreads((p) => p.map((t) => t.id === ct.id ? { ...t, unreadVendor: 0 } : t));
-                      showToast(isHe ? "✅ סומן כנקרא" : "✅ Marked as read");
-                    }}
-                    style={{ width: "100%", padding: "9px 0", borderRadius: 10, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}
-                  >
-                    {isHe ? "✓ סמן כנקרא" : "✓ Mark as Read"}
-                  </button>
+                  {/* Vendor reply input */}
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input
+                      value={replyMsgs[ct.id] ?? ""}
+                      onChange={(e) => setReplyMsgs((p) => ({ ...p, [ct.id]: e.target.value }))}
+                      onKeyDown={(e) => { if (e.key === "Enter") sendVendorReply(ct); }}
+                      placeholder={isHe ? "תגובה ללקוח..." : "Reply to client..."}
+                      style={{ flex: 1, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 10, padding: "9px 12px", color: "#fff", fontSize: 13, fontFamily: "inherit", outline: "none" }}
+                    />
+                    <button
+                      onClick={() => sendVendorReply(ct)}
+                      disabled={!replyMsgs[ct.id]?.trim()}
+                      style={{ padding: "9px 14px", borderRadius: 10, border: "none", background: replyMsgs[ct.id]?.trim() ? "linear-gradient(135deg,#00CED1,#008b8b)" : "rgba(255,255,255,.07)", color: replyMsgs[ct.id]?.trim() ? "#000" : "#555", fontWeight: 700, fontSize: 12, cursor: replyMsgs[ct.id]?.trim() ? "pointer" : "default", fontFamily: "inherit", transition: "all .12s" }}
+                    >
+                      {isHe ? "שלח" : "Send"}
+                    </button>
+                  </div>
+                  {ct.unreadVendor > 0 && (
+                    <button
+                      onClick={() => {
+                        setDbLeads((p) => p.map((l) => l.id === ct.id ? { ...l, unreadVendor: 0 } : l));
+                        setChatThreads((p) => p.map((t) => t.id === ct.id ? { ...t, unreadVendor: 0 } : t));
+                        markLeadReadVendor(ct.id).catch(() => {});
+                      }}
+                      style={{ marginTop: 8, width: "100%", padding: "7px 0", borderRadius: 8, border: "1px solid rgba(255,255,255,.08)", background: "transparent", color: "#555", fontWeight: 600, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}
+                    >
+                      {isHe ? "✓ סמן כנקרא" : "✓ Mark as read"}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

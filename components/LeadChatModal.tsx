@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "@/lib/context";
 import { sendLocalNotification } from "./PWASetup";
+import { saveLead, saveLeadMessage } from "@/lib/supabase/leads";
 import type { Vendor, ChatThread, ChatMessage } from "@/types";
 
 interface Props {
@@ -103,22 +104,22 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     };
     setChatThreads((p) => [...p, newThread]);
     setThread(newThread);
-    setSending(false);
     setStep("chat");
     showToast(isHe ? "✅ הליד נשלח!" : "✅ Lead sent!");
-    // Notify the vendor (simulated local notification — in production, send via server push)
     sendLocalNotification(
       vendor.name,
       isHe ? `פנייה חדשה מ-${user?.name ?? "לקוח"}` : `New lead from ${user?.name ?? "a client"}`,
       "/"
     );
+    // Persist to Supabase (fire-and-forget)
+    saveLead(newThread).catch(() => {/* offline — context already has it */});
+    setSending(false);
   }
 
   function sendMsg() {
     if (!msg.trim() || !thread) return;
     const newMsg: ChatMessage = { id: uid(), from: "client", text: msg.trim(), ts: Date.now(), senderName: user?.name ?? (isHe ? "אתה" : "You") };
     const updated: ChatThread = { ...thread, messages: [...thread.messages, newMsg], unreadVendor: thread.unreadVendor + 1 };
-    // Notify vendor of new message
     sendLocalNotification(
       vendor.name,
       `${user?.name ?? (isHe ? "לקוח" : "Client")}: ${msg.trim().slice(0, 60)}`,
@@ -126,6 +127,8 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     );
     setThread(updated);
     setChatThreads((p) => p.map((t) => t.id === thread.id ? updated : t));
+    // Persist to Supabase (fire-and-forget)
+    saveLeadMessage(thread.id, newMsg).catch(() => {/* offline — context already has it */});
     setMsg("");
   }
 

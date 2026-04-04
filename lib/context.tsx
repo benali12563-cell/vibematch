@@ -31,12 +31,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [eventInfo, setEventInfo] = useState<EventInfo>({ address: "", wazeLink: "", date: "", notes: "" });
   const [toast, setToast] = useState("");
   const [onboardingDone, setOnboardingDoneRaw] = useState(
-    () => typeof window !== "undefined" && sessionStorage.getItem("vm_onboarded") === "1"
+    () => typeof window !== "undefined" && localStorage.getItem("vm_onboarded") === "1"
   );
   const setOnboardingDone = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
     setOnboardingDoneRaw((prev) => {
       const next = typeof v === "function" ? v(prev) : v;
-      if (typeof window !== "undefined") sessionStorage.setItem("vm_onboarded", next ? "1" : "0");
+      if (typeof window !== "undefined") localStorage.setItem("vm_onboarded", next ? "1" : "0");
       return next;
     });
   }, []);

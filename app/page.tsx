@@ -16,8 +16,8 @@ export default function HomePage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         // Returning authenticated user — skip landing and onboarding
-        sessionStorage.setItem("vm_seen", "1");
-        sessionStorage.setItem("vm_onboarded", "1");
+        localStorage.setItem("vm_seen", "1");
+        localStorage.setItem("vm_onboarded", "1");
         setHasSession(true);
         setOnboardingDone(true);
         if (session.user.email) {
@@ -40,12 +40,12 @@ export default function HomePage() {
   // Authenticated user — go straight to app
   if (hasSession || onboardingDone) return <SwipeHome />;
 
-  // First visit this session → landing page
+  // First visit ever → landing page
   if (typeof window !== "undefined") {
-    const seen = sessionStorage.getItem("vm_seen");
+    const seen = localStorage.getItem("vm_seen");
     if (!seen) {
       return <LandingPage onStart={() => {
-        sessionStorage.setItem("vm_seen", "1");
+        localStorage.setItem("vm_seen", "1");
         window.location.reload();
       }} />;
     }
