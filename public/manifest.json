@@ -1,0 +1,44 @@
+{
+  "name": "VibeMatch — ספקי אירועים",
+  "short_name": "VibeMatch",
+  "description": "מצא ספקים לאירוע שלך — חתונות, בר מצוות ועוד",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00CED1",
+  "orientation": "portrait",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["lifestyle", "events", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "חפש ספקים",
+      "short_name": "חיפוש",
+      "description": "עבור לדף הבית לחיפוש ספקים",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "ניהול אירוע",
+      "short_name": "ניהול",
+      "description": "פתח את דף הניהול",
+      "url": "/manage",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

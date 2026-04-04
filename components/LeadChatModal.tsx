@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useApp } from "@/lib/context";
+import { sendLocalNotification } from "./PWASetup";
 import type { Vendor, ChatThread, ChatMessage } from "@/types";
 
 interface Props {
@@ -105,12 +106,24 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     setSending(false);
     setStep("chat");
     showToast(isHe ? "✅ הליד נשלח!" : "✅ Lead sent!");
+    // Notify the vendor (simulated local notification — in production, send via server push)
+    sendLocalNotification(
+      vendor.name,
+      isHe ? `פנייה חדשה מ-${user?.name ?? "לקוח"}` : `New lead from ${user?.name ?? "a client"}`,
+      "/"
+    );
   }
 
   function sendMsg() {
     if (!msg.trim() || !thread) return;
     const newMsg: ChatMessage = { id: uid(), from: "client", text: msg.trim(), ts: Date.now(), senderName: user?.name ?? (isHe ? "אתה" : "You") };
     const updated: ChatThread = { ...thread, messages: [...thread.messages, newMsg], unreadVendor: thread.unreadVendor + 1 };
+    // Notify vendor of new message
+    sendLocalNotification(
+      vendor.name,
+      `${user?.name ?? (isHe ? "לקוח" : "Client")}: ${msg.trim().slice(0, 60)}`,
+      "/"
+    );
     setThread(updated);
     setChatThreads((p) => p.map((t) => t.id === thread.id ? updated : t));
     setMsg("");
