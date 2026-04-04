@@ -4,7 +4,8 @@ import { useApp } from "@/lib/context";
 import { DV, CATS } from "@/lib/constants";
 import type { Vendor, CatKey } from "@/types";
 
-const PACK_CATS: CatKey[] = ["venues", "food", "music", "photo", "beauty", "lighting"];
+type RealCatKey = Exclude<CatKey, "all">;
+const PACK_CATS: RealCatKey[] = ["venues", "food", "music", "photo", "beauty", "lighting"];
 
 interface Props { onClose: () => void; }
 

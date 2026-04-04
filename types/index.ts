@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 
 export type Lang = "he" | "en";
-export type CatKey = "venues" | "food" | "music" | "lighting" | "photo" | "beauty" | "entertainment" | "design" | "logistics" | "ceremony" | "digital";
+export type CatKey = "all" | "venues" | "food" | "music" | "lighting" | "photo" | "beauty" | "entertainment" | "design" | "logistics" | "ceremony" | "digital";
 export type Area = "allAreas" | "north" | "center" | "south" | "jerusalem";
 export type UserRole = "owner" | "vendor" | "admin";
 

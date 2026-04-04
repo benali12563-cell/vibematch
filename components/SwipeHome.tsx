@@ -79,12 +79,15 @@ export default function SwipeHome() {
   const seenNames = new Set<string>();
   const liveVendors: Vendor[] = [];
   for (const v of [
-    ...publishedVendors.filter((v) => v.catKey === activeCat),
-    ...dbVendors.filter((v) => v.catKey === activeCat),
+    ...(activeCat === "all" ? publishedVendors : publishedVendors.filter((v) => v.catKey === activeCat)),
+    ...(activeCat === "all" ? dbVendors : dbVendors.filter((v) => v.catKey === activeCat)),
   ]) {
     if (!seenNames.has(v.name)) { seenNames.add(v.name); liveVendors.push(v); }
   }
-  const rawVs = [...(DV[activeCat] ?? []), ...liveVendors];
+  const dvVendors = activeCat === "all"
+    ? Object.values(DV).flat()
+    : (DV[activeCat] ?? []);
+  const rawVs = [...dvVendors, ...liveVendors];
   const areaFiltered = areaFilter === "allAreas" ? rawVs : rawVs.filter((v) => v.area === areaFilter);
   const vs = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))
@@ -114,11 +117,11 @@ export default function SwipeHome() {
   else if (sortBy === "price_asc") vs.sort((a, b) => parsePriceNum(a.price) - parsePriceNum(b.price));
   else if (sortBy === "price_desc") vs.sort((a, b) => parsePriceNum(b.price) - parsePriceNum(a.price));
 
-  const subs = SUB[activeCat] ?? [];
+  const subs = activeCat === "all" ? [] : (SUB[activeCat] ?? []);
   const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0);
-  const activeCatLabel = CATS.find((c) => c.k === activeCat);
+  const activeCatLabel = activeCat === "all" ? { he: "הכל", en: "All" } : CATS.find((c) => c.k === activeCat);
 
-  const CAT_ICONS: Record<string, string> = { venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
+  const CAT_ICONS: Record<string, string> = { all: "✨", venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
 
   return (
     <div style={{ height: "100dvh", overflow: "hidden", background: "#000", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo'", direction: isHe ? "rtl" : "ltr" }}>
@@ -258,6 +261,17 @@ export default function SwipeHome() {
           {/* ── 1. CATEGORIES ── */}
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 12 }}>{isHe ? "קטגוריה" : "Category"}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
+            {/* All categories option */}
+            {(() => {
+              const active = activeCat === "all";
+              return (
+                <button key="all" onClick={() => { setActiveCat("all"); setActiveSub(null); setPhotoIdxMap({}); }}
+                  style={{ padding: "10px 6px", borderRadius: 14, border: active ? "1.5px solid rgba(168,85,247,.65)" : "1px solid rgba(255,255,255,.08)", background: active ? "linear-gradient(160deg,rgba(168,85,247,.22),rgba(139,67,209,.12))" : "rgba(255,255,255,.04)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, transition: "all .15s", boxShadow: active ? "0 4px 16px rgba(168,85,247,.3), inset 0 1px 0 rgba(200,130,255,.15)" : "none", fontFamily: "inherit" }}>
+                  <span style={{ fontSize: 22 }}>✨</span>
+                  <span style={{ color: active ? "#c084fc" : "rgba(255,255,255,.6)", fontSize: 10, fontWeight: active ? 800 : 500, textAlign: "center", lineHeight: 1.2 }}>{isHe ? "הכל" : "All"}</span>
+                </button>
+              );
+            })()}
             {CATS.map((c) => {
               const active = activeCat === c.k;
               return (

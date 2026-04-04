@@ -19,7 +19,7 @@ export const T: Record<string, Record<string, string>> = {
   en: { home: "Home", manage: "Manage", timeline: "Timeline", hosting: "Guests", vendor: "Vendor Login", login: "Sign In", checklist: "Checklist", budget: "Budget", save: "Save", saved: "Saved", find: "Find", manual: "Add Manual", remove: "Remove", cancel: "Cancel", archive: "Will be archived", confirmRemove: "Remove", quote: "Get Quote", copy: "Copy", copied: "Copied", wa: "WhatsApp", yourName: "Your Name", go: "Continue", logout: "Sign Out", preview: "Preview", editProfile: "Edit Profile", inviteBoost: "Invite vendor — both get boosted", linkCopied: "Link copied", gallery: "Gallery", desc: "Description", price: "Price", links: "Links", coupon: "Coupon", profilePic: "Change photo", saveAll: "Save All", bizName: "Business Name", noMore: "All done", pickCat: "Pick another category", match: "Perfect Match", invited: "You're Invited", coming: "I'm Coming", notComing: "Can't Make It", howMany: "How many", thanks: "Thank You", waze: "Navigate Waze", maps: "Google Maps", team: "Your Team", meetTeam: "Meet the Team", credits: "Share Credits", addCustom: "Add Step", guestLink: "Copy Link", previewGuest: "Preview", confirmed: "Confirmed", sendGuests: "Send link to guests", authBanner: "Sign in to save", allAreas: "All", north: "North", center: "Center", south: "South", jerusalem: "Jerusalem", reviews: "reviews", recommends: "Also recommends", updatePrice: "Update price", eventDetails: "Event Details", eventAddress: "Address", eventDate: "Date", eventNotes: "Notes for guests", sendMagicLink: "Send Magic Link ✉️", magicLinkSent: "Check your email!", magicLinkDesc: "We sent a login link to", enterEmail: "Enter email — no password needed", adminPanel: "Admin Panel", points: "Points", badges: "Badges", leaderboard: "Leaderboard" },
 };
 
-export const CATS: { k: CatKey; he: string; en: string }[] = [
+export const CATS: { k: Exclude<CatKey, "all">; he: string; en: string }[] = [
   { k: "venues", he: "מקומות", en: "Venues" },
   { k: "food", he: "אוכל", en: "Food" },
   { k: "music", he: "מוזיקה", en: "Music" },
@@ -97,7 +97,7 @@ function mg(n: string, s: string, p: string, r: number, c: string, rv: number, d
   return { name: n, sub: s, price: p, rating: r, city: c, reviews: rv, desc: d, coupon: cp, area, imgs, niche: ni, deal, recommends: recs, vendorReviews: [] };
 }
 
-export const DV: Record<CatKey, Vendor[]> = {
+export const DV: Record<Exclude<CatKey, "all">, Vendor[]> = {
   venues: [
     mg("Vista Hall", "אולמות", "החל מ-₪400", 4.9, "תל אביב", 342, "נוף פנורמי מקומה 40, אולם יוקרתי", "5% הנחה", ["✨", "🏙️", "🌃"], { kosher: "כשר", capacity: "500", indoorOutdoor: "שניהם" }, null, ["DJ Eyal"], "center"),
     mg("Royal Garden", "גנים", "החל מ-₪350", 4.8, "ראשון לציון", 215, "גן מעוצב ל-200-500", "", ["🌿", "🌸", "🌳"], {}, null, [], "center"),
