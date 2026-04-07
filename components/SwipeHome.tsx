@@ -60,6 +60,8 @@ export default function SwipeHome() {
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
   const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
+  const [ceremonyFilter, setCeremonyFilter] = useState<string | null>(null);
+  const [dealsOnly, setDealsOnly] = useState(false);
   const [infoVendor, setInfoVendor] = useState<Vendor | null>(null);
   const [leadVendor, setLeadVendor] = useState<Vendor | null>(null);
   const [videoVendor, setVideoVendor] = useState<Vendor | null>(null);
@@ -85,9 +87,13 @@ export default function SwipeHome() {
     : (DV[activeCat] ?? []);
   const rawVs = [...dvVendors, ...liveVendors];
   const areaFiltered = areaFilter === "allAreas" ? rawVs : rawVs.filter((v) => v.area === areaFilter);
-  const vs = selectedDate
+  const dateFiltered = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))
     : areaFiltered;
+  const ceremonyFiltered = ceremonyFilter
+    ? dateFiltered.filter((v) => v.niche?.ceremonyType === ceremonyFilter)
+    : dateFiltered;
+  const vs = dealsOnly ? ceremonyFiltered.filter((v) => v.deal !== null) : ceremonyFiltered;
   function setPhotoIdx(name: string, fn: (i: number) => number) {
     setPhotoIdxMap((m) => ({ ...m, [name]: fn(m[name] ?? 0) }));
   }
@@ -106,7 +112,7 @@ export default function SwipeHome() {
   else if (sortBy === "price_desc") vs.sort((a, b) => parsePriceNum(b.price) - parsePriceNum(a.price));
 
   const subs = activeCat === "all" ? [] : (SUB[activeCat] ?? []);
-  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0);
+  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (ceremonyFilter ? 1 : 0) + (dealsOnly ? 1 : 0);
   const activeCatLabel = activeCat === "all" ? { he: "הכל", en: "All" } : CATS.find((c) => c.k === activeCat);
 
   const CAT_ICONS: Record<string, string> = { all: "✨", venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
@@ -328,7 +334,47 @@ export default function SwipeHome() {
             })}
           </div>
 
-          {/* ── 6. SORT ── */}
+          {/* ── 6. CEREMONY TYPE (only for ceremony cat or all) ── */}
+          {(activeCat === "ceremony" || activeCat === "all") && (
+            <>
+              <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "סוג טקס" : "Ceremony Type"}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
+                {[
+                  { k: null, label: isHe ? "🕊️ הכל" : "🕊️ All" },
+                  { k: "אורתודוקסי", label: "🕍 " + (isHe ? "אורתודוקסי" : "Orthodox") },
+                  { k: "קונסרבטיבי", label: "✡️ " + (isHe ? "קונסרבטיבי" : "Conservative") },
+                  { k: "רפורמי", label: "🌿 " + (isHe ? "רפורמי" : "Reform") },
+                  { k: "חילוני", label: "⚖️ " + (isHe ? "חילוני" : "Secular") },
+                ].map((opt) => {
+                  const active = ceremonyFilter === opt.k;
+                  return (
+                    <button key={String(opt.k)} onClick={() => setCeremonyFilter(opt.k)}
+                      style={{ padding: "8px 14px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ── 7. DEALS ONLY ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מבצעים" : "Deals"}</p>
+          <div style={{ marginBottom: 24 }}>
+            <button onClick={() => setDealsOnly((p) => !p)}
+              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 16px", borderRadius: 14, border: dealsOnly ? "1.5px solid rgba(255,68,68,.5)" : "1px solid rgba(255,255,255,.08)", background: dealsOnly ? "rgba(255,68,68,.1)" : "rgba(255,255,255,.03)", cursor: "pointer", fontFamily: "inherit", transition: "all .12s" }}>
+              <span style={{ fontSize: 20 }}>🔥</span>
+              <div style={{ flex: 1, textAlign: isHe ? "right" : "left" }}>
+                <p style={{ color: dealsOnly ? "#FF6666" : "rgba(255,255,255,.7)", fontSize: 13, fontWeight: 700, margin: 0 }}>{isHe ? "מבצעי רגע אחרון בלבד" : "Last-Minute Deals Only"}</p>
+                <p style={{ color: "#555", fontSize: 11, margin: "2px 0 0" }}>{isHe ? "ספקים עם הנחה לתאריכים פתוחים" : "Vendors with discounts on open dates"}</p>
+              </div>
+              <div style={{ width: 40, height: 22, borderRadius: 11, background: dealsOnly ? "#FF4444" : "rgba(255,255,255,.1)", border: `1px solid ${dealsOnly ? "#FF4444" : "rgba(255,255,255,.1)"}`, position: "relative", transition: "all .2s", flexShrink: 0 }}>
+                <div style={{ position: "absolute", top: 2, left: dealsOnly ? 20 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 4px rgba(0,0,0,.4)" }} />
+              </div>
+            </button>
+          </div>
+
+          {/* ── 8. SORT ── */}
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מיון" : "Sort By"}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginBottom: 28 }}>
             {[
@@ -353,7 +399,7 @@ export default function SwipeHome() {
               style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
               {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
             </button>
-            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); }}
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); }}
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {isHe ? "אפס הכל" : "Reset All"}
             </button>
