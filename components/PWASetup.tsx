@@ -71,16 +71,25 @@ export default function PWASetup() {
       showToast(isHe ? "הדפדפן לא תומך בהתראות" : "Browser doesn't support notifications");
       return;
     }
+    // Already denied — browser won't show prompt again, guide user manually
+    if (Notification.permission === "denied") {
+      showToast(isHe
+        ? "🔒 חסום — הגדרות → Safari/Chrome → VibeMatch → התראות → הרשה"
+        : "🔒 Blocked — Settings → Safari/Chrome → VibeMatch → Notifications → Allow");
+      return;
+    }
     const perm = await Notification.requestPermission();
     setNotifGranted(perm === "granted");
     if (perm === "granted") {
       showToast(isHe ? "🔔 התראות הופעלו!" : "🔔 Notifications enabled!");
       sendLocalNotification(
-        isHe ? "VibeMatch 🎉" : "VibeMatch 🎉",
+        "VibeMatch 🎉",
         isHe ? "תקבל התראות על הודעות ועדכונים" : "You'll get notified about messages & updates"
       );
     } else {
-      showToast(isHe ? "⚠️ ההתראות נחסמו בהגדרות" : "⚠️ Notifications blocked in settings");
+      showToast(isHe
+        ? "🔒 נחסם — הגדרות → אתר זה → התראות → הרשה"
+        : "🔒 Blocked — Settings → this site → Notifications → Allow");
     }
   }
 
@@ -152,7 +161,8 @@ export default function PWASetup() {
   }
 
   // ── Notification permission request (no install prompt available = already installed or desktop) ──
-  if (!notifGranted && swReady && !installPrompt) {
+  // Don't show prompt if already denied — user must unblock manually via browser settings
+  if (!notifGranted && swReady && !installPrompt && (typeof window === "undefined" || Notification.permission !== "denied")) {
     return (
       <NotifPermissionPrompt
         isHe={isHe}
