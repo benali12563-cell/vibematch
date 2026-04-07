@@ -8,6 +8,8 @@ import Inp from "./Inp";
 import Logo from "./Logo";
 import VLinks from "./VLinks";
 import AvailabilityCalendar from "./AvailabilityCalendar";
+import VendorOnboardingWizard from "./VendorOnboardingWizard";
+import VendorGoLiveModal from "./VendorGoLiveModal";
 import { saveVendorProfile, loadVendorBySlug, makeSlug } from "@/lib/supabase/vendors";
 import { loadVendorLeads, markLeadReadVendor, saveLeadMessage } from "@/lib/supabase/leads";
 import type { Vendor, ChatThread, ChatMessage } from "@/types";
@@ -49,6 +51,9 @@ export default function VendorDash() {
   const [dbLeads, setDbLeads] = useState<ChatThread[]>([]);
   const [dbLeadsLoading, setDbLeadsLoading] = useState(false);
   const [replyMsgs, setReplyMsgs] = useState<Record<string, string>>({});
+  const [showWizard, setShowWizard] = useState(false);
+  const [wizardLoaded, setWizardLoaded] = useState(false);
+  const [showGoLive, setShowGoLive] = useState(false);
   const fRef = useRef<HTMLInputElement>(null);
   const pRef = useRef<HTMLInputElement>(null);
 
@@ -59,18 +64,28 @@ export default function VendorDash() {
     ? `${window.location.origin}/v/${vendorSlug}`
     : "";
 
-  // Load existing profile from Supabase on mount
+  // Load existing profile from Supabase on mount — decide wizard vs dashboard
   useEffect(() => {
-    if (!user || user.role !== "vendor" || !vendorSlug) return;
-    loadVendorBySlug(vendorSlug).then((v) => {
-      if (!v) return;
-      if (v.desc && !vAbout) setVAbout(v.desc);
-      if (v.price && !vProfile.businessPrice) setVProfile((p) => ({ ...p, businessPrice: v.price }));
-      if (v.imgs?.length && !vGallery.length) setVGallery(v.imgs.map((src, i) => ({ id: i, src })));
-      if (v.coupon) setCoupon(v.coupon);
-      if (v.isPublished) setPublished(true);
-    }).catch(() => {});
-  }, [vendorSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!user || user.role !== "vendor") { setWizardLoaded(true); return; }
+    const slug = makeSlug(user.name);
+    if (!slug) { setWizardLoaded(true); setShowWizard(true); return; }
+    loadVendorBySlug(slug).then((v) => {
+      if (!v) {
+        // New vendor — show wizard unless businessName already set (returning session)
+        if (!vProfile.businessName) setShowWizard(true);
+      } else {
+        // Returning vendor — hydrate state
+        if (v.desc && !vAbout) setVAbout(v.desc);
+        if (v.price && !vProfile.businessPrice) setVProfile((p) => ({ ...p, businessPrice: v.price }));
+        if (v.imgs?.length && !vGallery.length) setVGallery(v.imgs.map((src, i) => ({ id: i, src })));
+        if (v.coupon) setCoupon(v.coupon);
+        if (v.isPublished) setPublished(true);
+        if (v.catKey && !vProfile.category) setVProfile((p) => ({ ...p, category: v.catKey ?? "", businessName: v.name }));
+      }
+    }).catch(() => {
+      if (!vProfile.businessName) setShowWizard(true);
+    }).finally(() => setWizardLoaded(true));
+  }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load leads from Supabase when Leads tab is opened
   const vname = vProfile.businessName || user?.name || "";
@@ -113,6 +128,28 @@ export default function VendorDash() {
             {isHe ? "קוד: 1234 לדמו" : "Code: 1234 for demo"}
           </p>
         </div>
+      </div>
+    );
+  }
+
+  // Show wizard for new vendors
+  if (showWizard && wizardLoaded) {
+    return (
+      <VendorOnboardingWizard
+        isHe={isHe}
+        onComplete={() => {
+          setShowWizard(false);
+          setTab("edit");
+        }}
+      />
+    );
+  }
+
+  // Loading state while checking Supabase
+  if (!wizardLoaded) {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(0,206,209,.2)", borderTopColor: "#00CED1", animation: "spin 1s linear infinite" }} />
       </div>
     );
   }
@@ -179,7 +216,7 @@ export default function VendorDash() {
             });
           }
           setPublished(true);
-          if (publicLink) setTimeout(() => { navigator.clipboard?.writeText(publicLink); }, 500);
+          setShowGoLive(true);
         }} style={{ background: published ? "rgba(0,206,209,.14)" : "linear-gradient(160deg,#00e5e8 0%,#00CED1 55%,#009eb0 100%)", border: published ? "1.5px solid rgba(0,229,232,.55)" : "1px solid rgba(0,255,255,.3)", color: published ? "#00e5e8" : "#000", borderRadius: 20, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: published ? "0 2px 10px rgba(0,206,209,.2)" : "0 4px 16px rgba(0,206,209,.45), inset 0 1px 0 rgba(255,255,255,.3)", transition: "all .12s", letterSpacing: 0.2 }}>
           {published ? (isHe ? "✓ פורסם" : "✓ Live") : (isHe ? "פרסם" : "Publish")}
         </button>
@@ -219,6 +256,8 @@ export default function VendorDash() {
 
         {tab === "preview" && (
           <div style={{ animation: "fadeIn .3s" }}>
+
+            {/* Action bar */}
             <div style={{ padding: "10px 14px 0", display: "flex", gap: 8, direction: dir }}>
               <B s="sm" v="ghost" style={{ flex: 1 }} onClick={() => router.push("/")}>
                 <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
@@ -231,45 +270,99 @@ export default function VendorDash() {
                 </B>
               )}
             </div>
-            <p style={{ color: "#555", fontSize: 12, padding: "8px 16px 0" }}>{isHe ? "ככה הלקוחות רואים אותך:" : "How clients see you:"}</p>
-            <div style={{ margin: "8px 14px", height: 400, borderRadius: 14, overflow: "hidden", border: "1px solid rgba(255,255,255,.04)", position: "relative", background: "#0a0a0a" }}>
-              {vGallery.length > 0 ? (
-                <>
-                  <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+
+            {/* Live-preview label */}
+            <div style={{ padding: "10px 16px 4px", display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: published ? "#00e87a" : "#FF4444", animation: published ? "pulse 2s infinite" : "none" }} />
+              <p style={{ color: published ? "#00e87a" : "#FF4444", fontSize: 11, fontWeight: 700, margin: 0 }}>
+                {published ? (isHe ? "פרופיל חי — ככה הלקוחות רואים אותך" : "Live — this is what clients see") : (isHe ? "טיוטה — לחצו פרסם כדי לפרסם" : "Draft — press Publish to go live")}
+              </p>
+            </div>
+
+            {/* Public-page style preview */}
+            <div style={{ margin: "0 14px 12px", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,.07)", background: "#0a0a0a" }}>
+
+              {/* Hero */}
+              <div style={{ position: "relative", height: "52vw", maxHeight: 280, background: "#0a0a0a" }}>
+                {vGallery.length > 0 ? (
+                  <>
                     <img src={vGallery[pIdx % vGallery.length]?.src} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                    {vGallery.length > 1 && (
+                      <>
+                        <div onClick={() => setPIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 2 }} />
+                        <div onClick={() => setPIdx((i) => Math.min(vGallery.length - 1, i + 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 2 }} />
+                        <div style={{ position: "absolute", top: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 4, zIndex: 3 }}>
+                          {vGallery.map((_, i) => (
+                            <div key={i} style={{ width: pIdx === i ? 20 : 4, height: 3, borderRadius: 2, background: pIdx === i ? "#00CED1" : "rgba(255,255,255,.3)", transition: "all .2s" }} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer" }} onClick={() => setTab("edit")}>
+                    <span style={{ fontSize: 40, opacity: .3 }}>📷</span>
+                    <p style={{ color: "#444", fontSize: 12 }}>{isHe ? "לחצו \'עריכה\' להוספת תמונות" : "Tap 'Edit' to add photos"}</p>
                   </div>
-                  {vGallery.length > 1 && (
-                    <>
-                      <div onClick={() => setPIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 2 }} />
-                      <div onClick={() => setPIdx((i) => Math.min(vGallery.length - 1, i + 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 2 }} />
-                    </>
+                )}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 55%)", pointerEvents: "none", zIndex: 1 }} />
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "40px 16px 14px", zIndex: 2, direction: isHe ? "rtl" : "ltr" }}>
+                  {vProfile.category && (
+                    <span style={{ display: "inline-block", padding: "2px 10px", borderRadius: 8, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", fontSize: 10, fontWeight: 700, marginBottom: 6 }}>
+                      {CATS.find(c => c.k === vProfile.category)?.[isHe ? "he" : "en"] ?? vProfile.category}
+                    </span>
                   )}
-                  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "50px 16px 14px", background: "linear-gradient(to top,rgba(0,0,0,.95) 50%,transparent)", zIndex: 3 }}>
-                    <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 800 }}>{previewVendor.name}</h3>
-                    {vProfile.businessPrice && <span style={{ color: "#00CED1", fontSize: 15, fontWeight: 600 }}>{vProfile.businessPrice}</span>}
-                    {vAbout && <p style={{ color: "#bbb", fontSize: 12, marginTop: 4, maxHeight: 32, overflow: "hidden" }}>{vAbout}</p>}
-                    <VLinks vendor={previewVendor} />
+                  <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 900, margin: "0 0 4px", lineHeight: 1.1 }}>{previewVendor.name || (isHe ? "שם העסק" : "Business Name")}</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ color: "#FFD700", fontSize: 12 }}>★★★★★</span>
+                    {vProfile.businessPrice && <span style={{ color: "#00CED1", fontWeight: 900, fontSize: 15 }}>{vProfile.businessPrice}</span>}
                   </div>
-                </>
-              ) : (
-                <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: "#333", fontSize: 36 }}>+</span>
-                  <p style={{ color: "#444", fontSize: 12, marginTop: 8 }}>{lang === "he" ? "העלו תמונות בעריכה" : "Upload in Edit"}</p>
+                </div>
+              </div>
+
+              {/* Gallery strip */}
+              {vGallery.length > 1 && (
+                <div style={{ display: "flex", gap: 5, padding: "8px 12px", overflowX: "auto", background: "#0a0a0a" }}>
+                  {vGallery.map((g, i) => (
+                    <img key={g.id} src={g.src} onClick={() => setPIdx(i)} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8, flexShrink: 0, border: `1.5px solid ${pIdx === i ? "#00CED1" : "rgba(255,255,255,.06)"}`, cursor: "pointer" }} alt="" />
+                  ))}
                 </div>
               )}
+
+              {/* Info section */}
+              <div style={{ padding: "12px 16px 16px", direction: isHe ? "rtl" : "ltr" }}>
+                {vAbout && <p style={{ color: "rgba(255,255,255,.75)", fontSize: 13, lineHeight: 1.7, marginBottom: 12 }}>{vAbout}</p>}
+
+                {Object.keys(builtNiche).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                    {Object.entries(builtNiche).map(([k, v]) => (
+                      <span key={k} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", color: "rgba(255,255,255,.65)", fontSize: 11 }}>{v}</span>
+                    ))}
+                  </div>
+                )}
+
+                <VLinks vendor={previewVendor} />
+
+                {!vProfile.businessName && (
+                  <button onClick={() => setTab("edit")} style={{ marginTop: 12, width: "100%", padding: "12px 0", borderRadius: 12, border: "2px dashed rgba(0,206,209,.3)", background: "transparent", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                    ✏️ {isHe ? "השלם את הפרופיל" : "Complete your profile"}
+                  </button>
+                )}
+              </div>
             </div>
-            {/* Live stats panel */}
+
+            {/* Stats */}
             {(() => {
-              function sh(seed: string, min: number, max: number) { let h = 0; for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) & 0xffffffff; return min + (Math.abs(h) % (max - min + 1)); }
               const leads = (dbLeads.length > 0 ? dbLeads : chatThreads.filter((ct) => ct.vendorName === vname)).length;
+              const busyDates = (vendorAvailability[vname] ?? []).length;
               const stats = [
-                { l: isHe ? "👁 צפיות" : "👁 Views", v: sh(vname + "v", 120, 890), color: "#00CED1" },
-                { l: isHe ? "❤️ שמירות" : "❤️ Saves", v: sh(vname + "s", 12, 67), color: "#FF4444" },
-                { l: isHe ? "💬 לידים" : "💬 Leads", v: leads, color: "#a855f7" },
-                { l: isHe ? "📅 הזמנות" : "📅 Bookings", v: (vendorAvailability[vname] ?? []).length, color: "#FFD700" },
+                { l: isHe ? "💬 לידים" : "💬 Leads", v: leads, color: "#a855f7", real: true },
+                { l: isHe ? "📅 עסוק" : "📅 Busy", v: busyDates, color: "#FFD700", real: true },
+                { l: isHe ? "📸 תמונות" : "📸 Photos", v: vGallery.length, color: "#00CED1", real: true },
+                { l: isHe ? "✅ שדות" : "✅ Fields", v: Object.keys(builtNiche).length, color: "#00e87a", real: true },
               ];
               return (
-                <div style={{ margin: "8px 14px 0", padding: "12px 14px", background: "rgba(255,255,255,.02)", borderRadius: 14, border: "1px solid rgba(255,255,255,.05)" }}>
+                <div style={{ margin: "0 14px 8px", padding: "12px 14px", background: "rgba(255,255,255,.02)", borderRadius: 14, border: "1px solid rgba(255,255,255,.05)" }}>
                   <p style={{ color: "#555", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 10px" }}>{isHe ? "סטטיסטיקות" : "Stats"}</p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
                     {stats.map((s) => (
@@ -283,17 +376,8 @@ export default function VendorDash() {
                 </div>
               );
             })()}
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, padding: "10px 14px" }}>
-              {[{ l: lang === "he" ? "צפיות" : "Views", v: 0 }, { l: lang === "he" ? "לייקים" : "Likes", v: 0 }, { l: lang === "he" ? "התאמות" : "Matches", v: 0 }, { l: lang === "he" ? "הצעות" : "Quotes", v: 0 }].map((s, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 6px", textAlign: "center", border: "1px solid rgba(255,255,255,.03)" }}>
-                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 700 }}>{s.v}</div>
-                  <div style={{ color: "#555", fontSize: 9 }}>{s.l}</div>
-                </div>
-              ))}
-            </div>
             <div style={{ padding: "8px 14px" }}>
-              <B v="fire" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText(typeof window !== "undefined" ? window.location.origin : ""); setInvC(true); setTimeout(() => setInvC(false), 2000); }}>
+              <B v="fire" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText(publicLink || (typeof window !== "undefined" ? window.location.origin : "")); setInvC(true); setTimeout(() => setInvC(false), 2000); }}>
                 {invC ? t.linkCopied : t.inviteBoost}
               </B>
             </div>
@@ -607,6 +691,16 @@ export default function VendorDash() {
           </div>
         )}
       </div>
+
+      {/* Go Live celebration modal */}
+      {showGoLive && publicLink && (
+        <VendorGoLiveModal
+          vendorName={vProfile.businessName || user?.name || ""}
+          publicLink={publicLink}
+          isHe={isHe}
+          onClose={() => { setShowGoLive(false); setTab("preview"); }}
+        />
+      )}
     </div>
   );
 }

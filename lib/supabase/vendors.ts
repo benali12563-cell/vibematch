@@ -101,11 +101,47 @@ export async function loadVendorBySlug(slug: string): Promise<Vendor | null> {
 /** Increment view count for a vendor (fire-and-forget) */
 export async function trackVendorView(slug: string, ref?: string) {
   const sb = createClient();
+  // Increment view_count (requires column: alter table vendor_profiles add column if not exists view_count int default 0;)
+  void sb.rpc("increment_vendor_view", { vendor_slug: slug.toLowerCase() });
   if (ref) {
-    await sb.from("referral_visits").insert({
+    void sb.from("referral_visits").insert({
       referrer_slug: ref,
       referrer_type: "vendor_view",
       page_visited: `/v/${slug}`,
     });
   }
 }
+
+/** Increment like count for a vendor */
+export async function trackVendorLike(slug: string) {
+  const sb = createClient();
+  void sb.rpc("increment_vendor_like", { vendor_slug: slug.toLowerCase() });
+}
+
+/** Load stats for a vendor (view_count, like_count) */
+export async function loadVendorStats(slug: string): Promise<{ views: number; likes: number }> {
+  const sb = createClient();
+  const { data } = await sb
+    .from("vendor_profiles")
+    .select("view_count, like_count")
+    .eq("slug", slug.toLowerCase())
+    .single();
+  return { views: (data?.view_count as number) ?? 0, likes: (data?.like_count as number) ?? 0 };
+}
+
+/*
+── SQL to run in Supabase (once) ─────────────────────────────────────────────
+alter table vendor_profiles add column if not exists view_count int default 0;
+alter table vendor_profiles add column if not exists like_count  int default 0;
+
+create or replace function increment_vendor_view(vendor_slug text)
+returns void language sql security definer as $$
+  update vendor_profiles set view_count = view_count + 1 where slug = vendor_slug;
+$$;
+
+create or replace function increment_vendor_like(vendor_slug text)
+returns void language sql security definer as $$
+  update vendor_profiles set like_count = like_count + 1 where slug = vendor_slug;
+$$;
+─────────────────────────────────────────────────────────────────────────────
+*/
