@@ -145,6 +145,15 @@ export default function SwipeHome() {
                 </div>
               )}
 
+              {/* Ceremony type badge */}
+              {v.niche?.ceremonyType && (activeCat === "ceremony" || ceremonyFilter) && (
+                <div style={{ position: "absolute", top: selectedDate ? 78 : 52, [isHe ? "right" : "left"]: 14, zIndex: 7, pointerEvents: "none" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 10, background: "rgba(0,206,209,.15)", border: "1px solid rgba(0,206,209,.35)", color: "#00e5e8", fontSize: 10, fontWeight: 700, backdropFilter: "blur(8px)" }}>
+                    {v.niche.ceremonyType === "אורתודוקסי" ? "🕍" : v.niche.ceremonyType === "חילוני" ? "⚖️" : v.niche.ceremonyType === "רפורמי" ? "🌿" : "✡️"} {v.niche.ceremonyType}
+                  </span>
+                </div>
+              )}
+
               {/* Social proof badges */}
               <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
                 <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)" }}>👁 {looked}</span>
@@ -189,6 +198,22 @@ export default function SwipeHome() {
                         <span style={{ fontSize: 10, color: "#a855f7", fontWeight: 700 }}>{isHe ? "סרטון" : "Video"}</span>
                       </div>
                     )}
+                    {/* Share */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <button onClick={() => {
+                        const slug = v.name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\u0590-\u05ff-]/g, "");
+                        const url = `${window.location.origin}/v/${slug}`;
+                        if (navigator.share) {
+                          navigator.share({ title: v.name, text: `${v.name} — ${v.sub} | VibeMatch`, url });
+                        } else {
+                          navigator.clipboard?.writeText(url);
+                          showToast(isHe ? "🔗 לינק הועתק" : "🔗 Link copied");
+                        }
+                      }} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 22 }}>share</span>
+                      </button>
+                      <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שתף" : "Share"}</span>
+                    </div>
                   </div>
                 );
               })()}

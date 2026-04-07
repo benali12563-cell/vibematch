@@ -117,6 +117,9 @@ export default function VendorDash() {
     );
   }
 
+  const builtNiche: Record<string, string> = {};
+  nicheFields.forEach((f) => { if (vProfile[f.k]) builtNiche[f.k] = vProfile[f.k]; });
+
   const previewVendor: Vendor = {
     name: vProfile.businessName || (user?.name ?? ""),
     sub: vProfile.category || "",
@@ -128,7 +131,7 @@ export default function VendorDash() {
     coupon,
     area: "center",
     imgs: vGallery.map((g) => g.src),
-    niche: {},
+    niche: builtNiche,
     deal: dealText.trim() ? { text: dealText.trim(), endsIn: dealHours } : null,
     recommends: [],
     vendorReviews: [],
@@ -417,6 +420,41 @@ export default function VendorDash() {
 
         {tab === "edit" && (
           <div style={{ padding: "10px 14px", overflowY: "auto", maxHeight: "calc(100dvh - 96px)" }}>
+            {/* ── PROFILE COMPLETENESS ── */}
+            {(() => {
+              const steps = [
+                { done: !!vProfile.businessName, label: isHe ? "שם עסק" : "Business name" },
+                { done: !!vProfile.category, label: isHe ? "קטגוריה" : "Category" },
+                { done: vGallery.length >= 1, label: isHe ? "תמונה" : "Photo" },
+                { done: vGallery.length >= 3, label: isHe ? "3 תמונות" : "3 photos" },
+                { done: !!vAbout, label: isHe ? "תיאור" : "Description" },
+                { done: !!vProfile.businessPrice, label: isHe ? "מחיר" : "Price" },
+                { done: !!(vProfile.whatsapp || vProfile.phone), label: isHe ? "יצירת קשר" : "Contact" },
+              ];
+              const done = steps.filter((s) => s.done).length;
+              const pct = Math.round((done / steps.length) * 100);
+              const color = pct === 100 ? "#00CED1" : pct >= 60 ? "#FFD700" : "#FF4444";
+              return (
+                <div style={{ background: "rgba(255,255,255,.02)", border: `1px solid ${color}22`, borderRadius: 14, padding: "12px 14px", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <p style={{ color, fontSize: 12, fontWeight: 800, margin: 0 }}>
+                      {pct === 100 ? (isHe ? "✅ פרופיל מלא!" : "✅ Profile complete!") : (isHe ? `השלמת פרופיל — ${pct}%` : `Profile completeness — ${pct}%`)}
+                    </p>
+                    <span style={{ color, fontSize: 14, fontWeight: 900 }}>{pct}%</span>
+                  </div>
+                  <div style={{ height: 5, background: "rgba(255,255,255,.06)", borderRadius: 4, overflow: "hidden", marginBottom: 8 }}>
+                    <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 4, transition: "width .4s ease" }} />
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                    {steps.map((s) => (
+                      <span key={s.label} style={{ padding: "2px 8px", borderRadius: 8, background: s.done ? `${color}18` : "rgba(255,255,255,.03)", border: `1px solid ${s.done ? color + "44" : "rgba(255,255,255,.06)"}`, color: s.done ? color : "#444", fontSize: 10, fontWeight: s.done ? 700 : 400 }}>
+                        {s.done ? "✓ " : ""}{s.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div style={{ textAlign: "center", marginBottom: 14 }}>
               <div onClick={() => pRef.current?.click()} style={{ width: 68, height: 68, borderRadius: "50%", background: vPic ? "transparent" : "rgba(255,255,255,.03)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, margin: "0 auto 6px", border: "1px solid rgba(255,255,255,.08)", cursor: "pointer", overflow: "hidden" }}>
                 {vPic ? <img src={vPic} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" /> : <span style={{ color: "#555" }}>+</span>}
