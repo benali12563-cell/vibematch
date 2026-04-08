@@ -10,7 +10,7 @@ import Logo from "./Logo";
 import { saveEventPage } from "@/lib/supabase/events";
 
 export default function GuestsScreen() {
-  const { lang, user, likes, eventInfo, setEventInfo, guests, addGuest } = useApp();
+  const { lang, user, likes, eventInfo, setEventInfo, guests, setGuests } = useApp();
   const t = T[lang];
   const isHe = lang === "he";
   const dir = isHe ? "rtl" : "ltr";

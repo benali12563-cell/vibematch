@@ -107,53 +107,6 @@ export async function loadVendorLeads(vendorName: string): Promise<ChatThread[]>
   });
 }
 
-/** Load leads submitted by a client (by client_name — lightweight) */
-export async function loadClientLeads(clientName: string): Promise<ChatThread[]> {
-  const sb = createClient();
-
-  const { data: leads, error } = await sb
-    .from("leads")
-    .select("*, lead_messages(*)")
-    .eq("client_name", clientName)
-    .order("created_at", { ascending: false });
-
-  if (error || !leads) return [];
-
-  return leads.map((row) => {
-    const msgs: ChatMessage[] = (row.lead_messages ?? [])
-      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => Number(a.ts) - Number(b.ts))
-      .map((m: Record<string, unknown>) => ({
-        id: m.id as string,
-        from: m.from_role as ChatMessage["from"],
-        text: m.text as string,
-        ts: m.ts as number,
-        senderName: (m.sender_name as string) ?? undefined,
-      }));
-
-    return {
-      id: row.id as string,
-      vendorName: row.vendor_name as string,
-      vendorCat: (row.vendor_cat as string) ?? undefined,
-      clientName: (row.client_name as string) ?? undefined,
-      messages: msgs,
-      lead: {
-        date: (row.event_date as string) ?? undefined,
-        guests: (row.guest_count as string) ?? undefined,
-        budget: (row.budget as string) ?? undefined,
-      },
-      createdAt: new Date(row.created_at as string).getTime(),
-      unreadClient: (row.unread_client as number) ?? 0,
-      unreadVendor: (row.unread_vendor as number) ?? 0,
-    };
-  });
-}
-
-/** Mark all messages as read for client */
-export async function markLeadReadClient(leadId: string): Promise<void> {
-  const sb = createClient();
-  await sb.from("leads").update({ unread_client: 0 }).eq("id", leadId);
-}
-
 /** Mark all messages as read for vendor */
 export async function markLeadReadVendor(leadId: string): Promise<void> {
   const sb = createClient();

@@ -15,8 +15,6 @@ export function useApp(): AppContextType {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>("he");
   const [user, setUser] = useState<AppUser | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginMode, setLoginMode] = useState<"owner" | "vendor">("owner");
   const [activeCat, setActiveCat] = useState<CatKey>("music");
   const [areaFilter, setAreaFilter] = useState<Area>("allAreas");
 
@@ -56,14 +54,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   const [selectedDate, setSelectedDate] = useState("");
   const [publishedVendors, setPublishedVendors] = useState<Vendor[]>([]);
-  const addGuest = useCallback((g: GuestEntry) => setGuests((p) => [...p, g]), []);
   const [vGallery, setVGallery] = useState<GalleryItem[]>([]);
   const [vPic, setVPic] = useState<string | null>(null);
   const [vAbout, setVAbout] = useState("");
   const [vProfile, setVProfile] = useState<VProfile>({ businessName: "", businessPrice: "", category: "" });
   const [toast, setToast] = useState("");
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
-  const [vendorIsPro, setVendorIsPro] = useState(false);
 
   // Restore Supabase session on mount + listen for auth changes
   useEffect(() => {
@@ -102,8 +98,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppCtx.Provider value={{
       lang, setLang,
       user, setUser,
-      showLogin, setShowLogin,
-      loginMode, setLoginMode,
       activeCat, setActiveCat,
       areaFilter, setAreaFilter,
       likes, setLikes,
@@ -121,9 +115,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       vendorAvailability, setVendorAvailability,
       selectedDate, setSelectedDate,
       publishedVendors, setPublishedVendors,
-      guests, addGuest,
+      guests, setGuests,
       chatThreads, setChatThreads,
-      vendorIsPro, setVendorIsPro,
     }}>
       {children}
     </AppCtx.Provider>

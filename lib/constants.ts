@@ -176,16 +176,3 @@ export function catName(k: CatKey, lang: Lang): string {
   return c ? (lang === "en" ? c.en : c.he) : k;
 }
 
-export const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{overflow-x:hidden;background:#000}
-input:focus,textarea:focus{outline:none}
-::-webkit-scrollbar{width:0}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@keyframes scaleIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
-@keyframes toast{0%{opacity:0;transform:translateX(-50%) translateY(8px)}8%{opacity:1;transform:translateX(-50%)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}
-@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(0,206,209,.4)}50%{box-shadow:0 0 0 16px rgba(0,206,209,0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-@keyframes spin{to{transform:rotate(360deg)}}
-`;

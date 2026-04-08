@@ -32,7 +32,7 @@ function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean
 }
 
 export default function VendorDash() {
-  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors, chatThreads, setChatThreads, vendorIsPro, setVendorIsPro, vendorAvailability } = useApp();
+  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors, chatThreads, setChatThreads, vendorAvailability } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();

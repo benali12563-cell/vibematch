@@ -131,10 +131,6 @@ export interface AppContextType {
   setLang: Setter<Lang>;
   user: AppUser | null;
   setUser: Setter<AppUser | null>;
-  showLogin: boolean;
-  setShowLogin: Setter<boolean>;
-  loginMode: "owner" | "vendor";
-  setLoginMode: Setter<"owner" | "vendor">;
   activeCat: CatKey;
   setActiveCat: Setter<CatKey>;
   areaFilter: Area;
@@ -170,9 +166,7 @@ export interface AppContextType {
   publishedVendors: Vendor[];
   setPublishedVendors: Setter<Vendor[]>;
   guests: GuestEntry[];
-  addGuest: (g: GuestEntry) => void;
+  setGuests: Setter<GuestEntry[]>;
   chatThreads: ChatThread[];
   setChatThreads: Setter<ChatThread[]>;
-  vendorIsPro: boolean;
-  setVendorIsPro: Setter<boolean>;
 }
