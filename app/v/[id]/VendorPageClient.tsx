@@ -120,7 +120,7 @@ export default function VendorPageClient({ params }: { params: Promise<{ id: str
 
     // 2. Try Supabase (async — may replace DV result or find new vendor)
     loadVendorBySlug(id).then((v) => {
-      if (v) { setVendor(v); setCat(catLabel(v.catKey)); }
+      if (v) { setVendor(v); setCat(catLabel(v.catKey) || v.sub || ""); }
       setLoading(false);
     }).catch(() => setLoading(false));
 

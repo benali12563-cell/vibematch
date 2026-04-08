@@ -90,8 +90,10 @@ export default function SwipeHome() {
   const dateFiltered = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))
     : areaFiltered;
+  // QA-004/QA-009: vendors with no ceremonyType set serve all ceremony types — keep them visible.
+  // Only hide vendors that explicitly declare a DIFFERENT ceremonyType.
   const ceremonyFiltered = ceremonyFilter
-    ? dateFiltered.filter((v) => v.niche?.ceremonyType === ceremonyFilter)
+    ? dateFiltered.filter((v) => !v.niche?.ceremonyType || v.niche.ceremonyType === ceremonyFilter)
     : dateFiltered;
   const vs = dealsOnly ? ceremonyFiltered.filter((v) => v.deal !== null) : ceremonyFiltered;
   function setPhotoIdx(name: string, fn: (i: number) => number) {
@@ -204,8 +206,7 @@ export default function SwipeHome() {
                     {/* Share */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                       <button onClick={() => {
-                        const slug = v.name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9\u0590-\u05ff-]/g, "");
-                        const url = `${window.location.origin}/v/${slug}`;
+                        const url = `${window.location.origin}/v/${makeSlug(v.name)}`;
                         if (navigator.share) {
                           navigator.share({ title: v.name, text: `${v.name} — ${v.sub} | VibeMatch`, url });
                         } else {

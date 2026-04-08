@@ -50,6 +50,7 @@ export default function VendorDash() {
   const [vendorPin, setVendorPin] = useState("");
   const [dbLeads, setDbLeads] = useState<ChatThread[]>([]);
   const [dbLeadsLoading, setDbLeadsLoading] = useState(false);
+  const [dbLeadsError, setDbLeadsError] = useState(false);
   const [replyMsgs, setReplyMsgs] = useState<Record<string, string>>({});
   const [showWizard, setShowWizard] = useState(false);
   const [wizardLoaded, setWizardLoaded] = useState(false);
@@ -83,7 +84,8 @@ export default function VendorDash() {
         if (v.catKey && !vProfile.category) setVProfile((p) => ({ ...p, category: v.catKey ?? "", businessName: v.name }));
       }
     }).catch(() => {
-      if (!vProfile.businessName) setShowWizard(true);
+      // Network error — don't show wizard for potentially returning vendors
+      // Wizard only shows when Supabase confirms the vendor truly doesn't exist
     }).finally(() => setWizardLoaded(true));
   }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -92,6 +94,7 @@ export default function VendorDash() {
   useEffect(() => {
     if (tab !== "leads" || !vname) return;
     setDbLeadsLoading(true);
+    setDbLeadsError(false);
     loadVendorLeads(vname).then((leads) => {
       setDbLeads(leads);
       // Merge into global chatThreads so client-side chat also stays in sync
@@ -100,7 +103,7 @@ export default function VendorDash() {
         const newOnes = leads.filter((l) => !existingIds.has(l.id));
         return [...prev.filter((t) => !leads.find((l) => l.id === t.id)), ...leads, ...newOnes];
       });
-    }).catch(() => {}).finally(() => setDbLeadsLoading(false));
+    }).catch(() => { setDbLeadsError(true); }).finally(() => setDbLeadsLoading(false));
   }, [tab, vname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
@@ -186,6 +189,11 @@ export default function VendorDash() {
         <button onClick={() => {
           const catLabel = CATS.find((c) => c.k === vProfile.category)?.[isHe ? "he" : "en"] ?? vProfile.category;
           const bizName = vProfile.businessName || user?.name || "";
+          if (!vGallery.length) {
+            showToast(isHe ? "📸 הוסף לפחות תמונה אחת לפני פרסום" : "📸 Add at least one photo before publishing");
+            setTab("edit");
+            return;
+          }
           if (bizName && vProfile.category) {
             const newVendor: Vendor = {
               name: bizName,
@@ -438,6 +446,15 @@ export default function VendorDash() {
               {dbLeadsLoading ? (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <div style={{ width: 24, height: 24, border: "2px solid rgba(0,206,209,.3)", borderTopColor: "#00CED1", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto" }} />
+                </div>
+              ) : dbLeadsError ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <div style={{ fontSize: 40, marginBottom: 10 }}>⚠️</div>
+                  <p style={{ color: "#FF6666", fontSize: 13 }}>{isHe ? "שגיאה בטעינת הלידים" : "Failed to load leads"}</p>
+                  <button onClick={() => { setDbLeadsError(false); setTab("preview"); setTimeout(() => setTab("leads"), 50); }}
+                    style={{ marginTop: 12, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", borderRadius: 10, padding: "8px 18px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                    {isHe ? "נסה שוב" : "Retry"}
+                  </button>
                 </div>
               ) : myLeads.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
@@ -693,7 +710,7 @@ export default function VendorDash() {
       </div>
 
       {/* Go Live celebration modal */}
-      {showGoLive && publicLink && (
+      {showGoLive && (
         <VendorGoLiveModal
           vendorName={vProfile.businessName || user?.name || ""}
           publicLink={publicLink}
