@@ -54,10 +54,23 @@ export default function OTPLoginForm({ isHe, onSuccess, onTrack, compact = false
     setLoading(true);
     setError("");
     const sb = createClient();
-    // Omitting emailRedirectTo → Supabase sends 6-digit code (not magic link)
+    // Without emailRedirectTo → Supabase sends 6-digit OTP code (not a magic link)
     const { error: err } = await sb.auth.signInWithOtp({ email: trimmed });
     setLoading(false);
-    if (err) { setError(err.message); return; }
+    if (err) {
+      // Translate common Supabase errors to Hebrew/English
+      const msg = err.message.toLowerCase();
+      if (msg.includes("rate limit") || msg.includes("too many")) {
+        setError(isHe
+          ? "יותר מדי ניסיונות — נסה שוב בעוד מספר דקות"
+          : "Too many attempts — please wait a few minutes");
+      } else if (msg.includes("invalid email") || msg.includes("unable to validate")) {
+        setError(isHe ? "כתובת מייל לא תקינה" : "Invalid email address");
+      } else {
+        setError(isHe ? `שגיאה: ${err.message}` : err.message);
+      }
+      return;
+    }
     onTrack?.(trimmed);
     setStep("code");
     startCooldown(60);
