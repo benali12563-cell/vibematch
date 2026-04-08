@@ -7,6 +7,7 @@ import Nav from "@/components/Nav";
 import B from "@/components/B";
 import Inp from "@/components/Inp";
 import AuroraBg from "@/components/AuroraBg";
+import OTPLoginForm from "@/components/OTPLoginForm";
 
 export default function ProfilePage() {
   const { lang, user, setUser, likes, budget, tlItems, guests, eventInfo, showToast } = useApp();
@@ -17,9 +18,6 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState(user?.name ?? "");
   const [editMode, setEditMode] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginSent, setLoginSent] = useState(false);
-  const [loginLoading, setLoginLoading] = useState(false);
 
   // Readiness steps
   const steps = [
@@ -54,16 +52,6 @@ export default function ProfilePage() {
     setEditMode(false);
     showToast(isHe ? "✓ הפרופיל עודכן" : "✓ Profile updated");
     setTimeout(() => setSaved(false), 2000);
-  }
-
-  async function sendLogin() {
-    if (!loginEmail.includes("@")) return;
-    setLoginLoading(true);
-    const sb = createClient();
-    const { error } = await sb.auth.signInWithOtp({ email: loginEmail, options: { emailRedirectTo: `${location.origin}/auth/callback` } });
-    setLoginLoading(false);
-    if (error) { showToast(error.message); return; }
-    setLoginSent(true);
   }
 
   const quickActions = [
@@ -189,22 +177,11 @@ export default function ProfilePage() {
             <p style={{ color: "rgba(255,255,255,.45)", fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>
               {isHe ? "הירשמו בחינם — שמרו ספקים, נהלו תקציב, שלחו הזמנות לאורחים" : "Register free — save vendors, manage budget, invite guests"}
             </p>
-            {!loginSent ? (
-              <>
-                <input type="email" placeholder={isHe ? "האימייל שלך" : "Your email"} value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendLogin()}
-                  style={{ width: "100%", padding: "13px 16px", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.06)", color: "#fff", fontSize: 14, fontFamily: "inherit", outline: "none", marginBottom: 10, direction: "ltr", textAlign: "center", boxSizing: "border-box" }} />
-                <button onClick={sendLogin} disabled={loginLoading}
-                  style={{ width: "100%", padding: "14px 0", borderRadius: 14, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 20px rgba(0,206,209,.35)", opacity: loginLoading ? .7 : 1 }}>
-                  {loginLoading ? "..." : (isHe ? "כניסה ללא סיסמה ✉️" : "Magic Link ✉️")}
-                </button>
-              </>
-            ) : (
-              <div style={{ textAlign: "center", padding: "10px 0" }}>
-                <div style={{ fontSize: 40, marginBottom: 8 }}>📬</div>
-                <p style={{ color: "#fff", fontWeight: 700 }}>{isHe ? "בדוק את המייל!" : "Check your email!"}</p>
-                <p style={{ color: "rgba(255,255,255,.4)", fontSize: 12, marginTop: 4 }}>{loginEmail}</p>
-              </div>
-            )}
+            <OTPLoginForm
+              isHe={isHe}
+              compact
+              onSuccess={() => { showToast(isHe ? "✅ התחברת בהצלחה!" : "✅ Signed in!"); router.refresh(); }}
+            />
             <p style={{ color: "rgba(255,255,255,.15)", fontSize: 10, textAlign: "center", marginTop: 12 }}>{isHe ? "ללא סיסמה · ללא תשלום" : "No password · No payment"}</p>
           </div>
         )}

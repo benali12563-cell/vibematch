@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { saveRsvp, trackReferral, loadRsvps } from "@/lib/supabase/rsvp";
 import { loadEventPage, type EventPage } from "@/lib/supabase/events";
 import Logo from "@/components/Logo";
+import OTPLoginForm from "@/components/OTPLoginForm";
 
 function useCountdown(dateStr?: string) {
   const [diff, setDiff] = useState<{ d: number; h: number; m: number } | null>(null);
@@ -39,9 +40,7 @@ export default function InvitePage({ params }: { params: Promise<{ slug: string 
   const [ans, setAns] = useState<"yes" | "no" | null>(null);
   const [name, setName] = useState("");
   const [count, setCount] = useState("2");
-  const [email, setEmail] = useState("");
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
+  const [joinDone, setJoinDone] = useState(false);
 
   const countdown = useCountdown(eventPage?.event_date);
   const hostName = eventPage?.host_name ?? fallbackName;
@@ -82,17 +81,9 @@ export default function InvitePage({ params }: { params: Promise<{ slug: string 
     setTimeout(() => setStep("join"), 2000);
   }
 
-  async function joinVibeMatch() {
-    if (!email.includes("@")) return;
-    setEmailLoading(true);
-    try {
-      const sb = createClient();
-      await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
-      void sb.from("referral_visits").insert({ referrer_slug: slug, referrer_type: "invite", page_visited: `/invite/${slug}`, registered: true });
-      setEmailSent(true);
-    } finally {
-      setEmailLoading(false);
-    }
+  async function trackJoinReferral() {
+    const sb = createClient();
+    void sb.from("referral_visits").insert({ referrer_slug: slug, referrer_type: "invite", page_visited: `/invite/${slug}`, registered: true });
   }
 
   const shareWhatsApp = () => {
@@ -265,28 +256,24 @@ export default function InvitePage({ params }: { params: Promise<{ slug: string 
                 <strong style={{ color: "#00CED1" }}>בחינם לגמרי</strong>.
               </p>
 
-              {!emailSent ? (
+              {joinDone ? (
+                <div style={{ padding: "10px 0", animation: "scaleIn .35s" }}>
+                  <div style={{ fontSize: 52, marginBottom: 12 }}>🎉</div>
+                  <p style={{ color: "#fff", fontWeight: 800, fontSize: 16 }}>ברוכים הבאים!</p>
+                  <p style={{ color: "rgba(255,255,255,.4)", fontSize: 12, marginTop: 6 }}>מתחברים לאתר...</p>
+                </div>
+              ) : (
                 <>
-                  <input
-                    type="email" placeholder="הכניסו אימייל לגישה חופשית"
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && joinVibeMatch()}
-                    style={{ width: "100%", padding: "13px 16px", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.05)", color: "#fff", fontSize: 14, fontFamily: "inherit", outline: "none", marginBottom: 10, direction: "ltr", textAlign: "center", boxSizing: "border-box" }}
+                  <OTPLoginForm
+                    isHe
+                    compact
+                    onTrack={trackJoinReferral}
+                    onSuccess={() => { setJoinDone(true); setTimeout(() => { window.location.href = "/"; }, 1800); }}
                   />
-                  <button onClick={joinVibeMatch} disabled={emailLoading}
-                    style={{ width: "100%", padding: "15px 0", borderRadius: 14, border: "none", background: "#00CED1", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 20px rgba(0,206,209,.4)", opacity: emailLoading ? .7 : 1 }}>
-                    {emailLoading ? "..." : "🚀 הצטרפו בחינם"}
-                  </button>
-                  <a href="/" style={{ display: "block", marginTop: 10, color: "rgba(255,255,255,.2)", fontSize: 12, textDecoration: "none", padding: "6px 0" }}>
+                  <a href="/" style={{ display: "block", marginTop: 12, color: "rgba(255,255,255,.2)", fontSize: 12, textDecoration: "none", padding: "6px 0" }}>
                     עיון ללא הרשמה →
                   </a>
                 </>
-              ) : (
-                <div style={{ padding: "10px 0" }}>
-                  <div style={{ fontSize: 44, marginBottom: 12 }}>📬</div>
-                  <p style={{ color: "#fff", fontWeight: 700, fontSize: 16 }}>בדקו את המייל!</p>
-                  <p style={{ color: "rgba(255,255,255,.4)", fontSize: 12, marginTop: 6 }}>שלחנו לינק כניסה ישיר</p>
-                </div>
               )}
               <p style={{ color: "rgba(255,255,255,.12)", fontSize: 10, marginTop: 14 }}>ללא סיסמה · ללא תשלום · ביטול בכל עת</p>
             </div>
