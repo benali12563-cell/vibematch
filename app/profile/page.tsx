@@ -45,13 +45,16 @@ export default function ProfilePage() {
     router.push("/");
   }
 
-  function saveProfile() {
+  async function saveProfile() {
     if (!editName.trim()) return;
     setUser((p) => p ? { ...p, name: editName.trim() } : p);
     setSaved(true);
     setEditMode(false);
     showToast(isHe ? "✓ הפרופיל עודכן" : "✓ Profile updated");
     setTimeout(() => setSaved(false), 2000);
+    // Persist name to Supabase auth metadata so it survives refresh
+    const sb = createClient();
+    sb.auth.updateUser({ data: { full_name: editName.trim() } }).catch(() => {});
   }
 
   const quickActions = [

@@ -1,13 +1,13 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 import { T, allVendors } from "@/lib/constants";
 import Nav from "./Nav";
 import B from "./B";
 import Inp from "./Inp";
-import Logo from "./Logo";
 import { saveEventPage } from "@/lib/supabase/events";
+import { loadRsvps } from "@/lib/supabase/rsvp";
 
 export default function GuestsScreen() {
   const { lang, user, likes, eventInfo, setEventInfo, guests, setGuests } = useApp();
@@ -20,11 +20,23 @@ export default function GuestsScreen() {
   const [editInfo, setEditInfo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [rsvpLoading, setRsvpLoading] = useState(false);
 
   const team = allVendors().filter((v) => likes.includes(v.name));
 
-  const slug = encodeURIComponent((user?.name ?? "guest").replace(/\s+/g, "-"));
+  const slug = encodeURIComponent((user?.name ?? "").replace(/\s+/g, "-"));
   const inviteLink = `${typeof window !== "undefined" ? window.location.origin : "https://vibematch.co.il"}/invite/${slug}`;
+
+  // Load RSVPs from Supabase whenever we have a valid slug
+  useEffect(() => {
+    if (!slug) return;
+    setRsvpLoading(true);
+    loadRsvps(slug).then(({ data }) => {
+      if (data?.length) {
+        setGuests(data.map((r) => ({ name: r.guest_name, count: r.guest_count, ts: Date.now() })));
+      }
+    }).catch(() => {}).finally(() => setRsvpLoading(false));
+  }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const copyLink = useCallback(() => {
     navigator.clipboard?.writeText(inviteLink).catch(() => {});
@@ -58,11 +70,31 @@ export default function GuestsScreen() {
 
   const confirmedCount = guests.reduce((s, g) => s + g.count, 0);
 
+  // Not logged in — can't create a meaningful invite link
+  if (!user) {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", direction: dir, fontFamily: "inherit" }}>
+        <div style={{ fontSize: 52, marginBottom: 16 }}>👥</div>
+        <h2 style={{ color: "#fff", fontSize: 20, fontWeight: 800, marginBottom: 8, textAlign: "center" }}>
+          {isHe ? "נדרשת כניסה" : "Sign in required"}
+        </h2>
+        <p style={{ color: "#555", fontSize: 13, textAlign: "center", marginBottom: 24, lineHeight: 1.6 }}>
+          {isHe ? "התחברו כדי ליצור דף אירוע ולשלוח הזמנות לאורחים" : "Sign in to create an event page and invite guests"}
+        </p>
+        <button onClick={() => router.push("/auth/login")} style={{ padding: "14px 32px", borderRadius: 14, background: "linear-gradient(160deg,#00e5e8,#00CED1)", border: "none", color: "#000", fontWeight: 800, fontSize: 15, cursor: "pointer", fontFamily: "inherit" }}>
+          {isHe ? "כניסה / הרשמה" : "Sign In / Register"}
+        </button>
+        <Nav />
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 14px 80px" }}>
       {/* Header */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 48, background: "rgba(0,0,0,.92)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,.06)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, maxWidth: 480, margin: "0 auto" }}>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{isHe ? "ניהול אורחים" : "Guest Management"}</span>
+        {rsvpLoading && <div style={{ position: "absolute", right: 14, width: 16, height: 16, border: "2px solid rgba(0,206,209,.3)", borderTopColor: "#00CED1", borderRadius: "50%", animation: "spin 1s linear infinite" }} />}
       </div>
 
       {/* Invite link hero */}

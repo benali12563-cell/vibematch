@@ -384,11 +384,21 @@ export default function VendorDash() {
                 </div>
               );
             })()}
-            <div style={{ padding: "8px 14px" }}>
-              <B v="fire" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText(publicLink || (typeof window !== "undefined" ? window.location.origin : "")); setInvC(true); setTimeout(() => setInvC(false), 2000); }}>
-                {invC ? t.linkCopied : t.inviteBoost}
-              </B>
-            </div>
+            {publicLink && (
+              <div style={{ padding: "8px 14px" }}>
+                <B v="fire" style={{ width: "100%" }} onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: vProfile.businessName || user?.name || "VibeMatch", url: publicLink }).catch(() => {});
+                  } else {
+                    navigator.clipboard?.writeText(publicLink);
+                    setInvC(true);
+                    setTimeout(() => setInvC(false), 2000);
+                  }
+                }}>
+                  {invC ? (isHe ? "✓ הלינק הועתק!" : "✓ Link copied!") : (isHe ? "📤 שתף את הפרופיל שלך" : "📤 Share your profile")}
+                </B>
+              </div>
+            )}
           </div>
         )}
 
