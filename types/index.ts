@@ -38,6 +38,7 @@ export interface Vendor {
   isPublished?: boolean;
   videoUrl?: string;   // Pro feature — 15-30s reel
   isPro?: boolean;
+  eventType?: string;  // e.g. "wedding" | "birthday" — null means serves all types
 }
 
 export interface ChatMessage {

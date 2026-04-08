@@ -52,12 +52,12 @@ export const QF: Record<string, string[]> = {
 export const TL_PRESETS = ["קבלת פנים", "חופה", "ארוחה", "ריקוד ראשון", "מסיבה", "סיום"];
 
 export const EVENT_TYPES = [
-  { k: "wedding", he: "חתונה", emoji: "💍" },
-  { k: "bar_mitzvah", he: "בר/בת מצווה", emoji: "✡️" },
-  { k: "birthday", he: "יום הולדת", emoji: "🎂" },
-  { k: "corporate", he: "אירוע חברה/כנס", emoji: "🏢" },
-  { k: "equipment", he: "השכרת ציוד", emoji: "🎪" },
-  { k: "private_party", he: "מסיבה פרטית", emoji: "🎉" },
+  { k: "wedding", he: "חתונה", en: "Wedding", emoji: "💍" },
+  { k: "bar_mitzvah", he: "בר/בת מצווה", en: "Bar/Bat Mitzvah", emoji: "✡️" },
+  { k: "birthday", he: "יום הולדת", en: "Birthday", emoji: "🎂" },
+  { k: "corporate", he: "אירוע חברה/כנס", en: "Corporate Event", emoji: "🏢" },
+  { k: "equipment", he: "השכרת ציוד", en: "Equipment Rental", emoji: "🎪" },
+  { k: "private_party", he: "מסיבה פרטית", en: "Private Party", emoji: "🎉" },
 ];
 
 export const EVENT_STYLES = [

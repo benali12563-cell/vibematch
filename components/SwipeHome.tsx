@@ -95,7 +95,17 @@ export default function SwipeHome() {
   const ceremonyFiltered = ceremonyFilter
     ? dateFiltered.filter((v) => !v.niche?.ceremonyType || v.niche.ceremonyType === ceremonyFilter)
     : dateFiltered;
-  const vs = dealsOnly ? ceremonyFiltered.filter((v) => v.deal !== null) : ceremonyFiltered;
+  // Sub-category: partial match so "אולמות" hits "אולמות אירועים", "DJ" hits "DJ", etc.
+  const subFiltered = activeSub
+    ? ceremonyFiltered.filter((v) => v.sub.toLowerCase().includes(activeSub.toLowerCase()))
+    : ceremonyFiltered;
+  // Event type: vendors with no eventType declared are shown for all event types.
+  const eventFiltered = eventTypeFilter
+    ? subFiltered.filter((v) => !v.eventType || v.eventType === eventTypeFilter)
+    : subFiltered;
+  const vsBase = dealsOnly ? eventFiltered.filter((v) => v.deal !== null) : eventFiltered;
+  // Copy before sorting to avoid mutating the reactive array.
+  const vs = sortBy !== "default" ? [...vsBase] : vsBase;
   function setPhotoIdx(name: string, fn: (i: number) => number) {
     setPhotoIdxMap((m) => ({ ...m, [name]: fn(m[name] ?? 0) }));
   }
@@ -115,6 +125,7 @@ export default function SwipeHome() {
   if (sortBy === "rating") vs.sort((a, b) => b.rating - a.rating);
   else if (sortBy === "price_asc") vs.sort((a, b) => parsePriceNum(a.price) - parsePriceNum(b.price));
   else if (sortBy === "price_desc") vs.sort((a, b) => parsePriceNum(b.price) - parsePriceNum(a.price));
+  // (sorting is safe — vs is a fresh copy when sortBy !== "default")
 
   const subs = activeCat === "all" ? [] : (SUB[activeCat] ?? []);
   const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (ceremonyFilter ? 1 : 0) + (dealsOnly ? 1 : 0);
@@ -357,7 +368,7 @@ export default function SwipeHome() {
                 <button key={e.k} onClick={() => setEventTypeFilter(active ? null : e.k)}
                   style={{ padding: "10px 12px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.08)", background: active ? "rgba(0,206,209,.12)" : "rgba(255,255,255,.03)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all .12s", fontFamily: "inherit" }}>
                   <span style={{ fontSize: 18 }}>{e.emoji}</span>
-                  <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500 }}>{e.he}</span>
+                  <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500 }}>{isHe ? e.he : e.en}</span>
                 </button>
               );
             })}

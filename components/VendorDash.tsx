@@ -75,13 +75,32 @@ export default function VendorDash() {
         // New vendor — show wizard unless businessName already set (returning session)
         if (!vProfile.businessName) setShowWizard(true);
       } else {
-        // Returning vendor — hydrate state
+        // Returning vendor — hydrate state from Supabase
         if (v.desc && !vAbout) setVAbout(v.desc);
-        if (v.price && !vProfile.businessPrice) setVProfile((p) => ({ ...p, businessPrice: v.price }));
+        if (v.isPublished) setPublished(true);
         if (v.imgs?.length && !vGallery.length) setVGallery(v.imgs.map((src, i) => ({ id: i, src })));
         if (v.coupon) setCoupon(v.coupon);
-        if (v.isPublished) setPublished(true);
-        if (v.catKey && !vProfile.category) setVProfile((p) => ({ ...p, category: v.catKey ?? "", businessName: v.name }));
+        if (v.deal?.text) { setDealText(v.deal.text); setDealHours(v.deal.endsIn ?? 48); }
+        if (v.videoUrl) setVideoUrl(v.videoUrl);
+        // Restore all vProfile fields at once
+        setVProfile((p) => ({
+          ...p,
+          ...(v.catKey && !p.category ? { category: v.catKey } : {}),
+          ...(v.name && !p.businessName ? { businessName: v.name } : {}),
+          ...(v.price && !p.businessPrice ? { businessPrice: v.price } : {}),
+          // Contact fields
+          ...(v.whatsapp ? { whatsapp: v.whatsapp } : {}),
+          ...(v.phone ? { phone: v.phone } : {}),
+          ...(v.instagram ? { instagram: v.instagram } : {}),
+          ...(v.tiktok ? { tiktok: v.tiktok } : {}),
+          ...(v.website ? { website: v.website } : {}),
+          ...(v.google ? { google: v.google } : {}),
+          ...(v.waze ? { waze: v.waze } : {}),
+          // Niche fields (only restore if not already set in session)
+          ...Object.fromEntries(
+            Object.entries(v.niche ?? {}).filter(([k]) => !p[k])
+          ),
+        }));
       }
     }).catch(() => {
       // Network error — don't show wizard for potentially returning vendors
@@ -204,8 +223,9 @@ export default function VendorDash() {
               coupon: coupon,
               area: "center" as import("@/types").Area,
               imgs: vGallery.map((g) => g.src),
-              niche: {},
-              deal: null, recommends: [], vendorReviews: [],
+              niche: builtNiche,
+              deal: dealText.trim() ? { text: dealText.trim(), endsIn: dealHours } : null,
+              recommends: [], vendorReviews: [],
               whatsapp: vProfile.whatsapp, phone: vProfile.phone,
               instagram: vProfile.instagram, tiktok: vProfile.tiktok,
               website: vProfile.website, google: vProfile.google, waze: vProfile.waze,
