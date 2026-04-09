@@ -51,7 +51,14 @@ export const QF: Record<string, string[]> = {
   digital: ["אורחים?", "תאריך?"],
 };
 
-export const TL_PRESETS = ["קבלת פנים", "חופה", "ארוחה", "ריקוד ראשון", "מסיבה", "סיום"];
+export const TL_PRESETS: { he: string; en: string }[] = [
+  { he: "קבלת פנים", en: "Reception" },
+  { he: "חופה",       en: "Ceremony" },
+  { he: "ארוחה",      en: "Dinner" },
+  { he: "ריקוד ראשון", en: "First Dance" },
+  { he: "מסיבה",      en: "Party" },
+  { he: "סיום",       en: "Farewell" },
+];
 
 export const EVENT_TYPES = [
   { k: "wedding", he: "חתונה", en: "Wedding", emoji: "💍" },

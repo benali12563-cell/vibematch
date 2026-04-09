@@ -81,9 +81,10 @@ export default function ManageScreen() {
                       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                         <input value={priceVal} onChange={(e) => setPriceVal(e.target.value)} type="number" style={{ width: 70, padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(0,206,209,.2)", background: "rgba(255,255,255,.03)", color: "#fff", fontSize: 12, direction: "ltr" }} placeholder="₪" />
                         <B s="sm" onClick={() => {
-                          if (priceVal) {
-                            setVendorPrices((p) => ({ ...p, [v.name]: Number(priceVal) }));
-                            setBudget((p) => ({ ...p, spent: (p.spent ?? 0) + Number(priceVal), items: [...(p.items ?? []).filter((x) => x.name !== v.name), { name: v.name, cat: cat.k, amount: Number(priceVal) }] }));
+                          const num = Number(priceVal);
+                          if (priceVal && !isNaN(num) && num > 0) {
+                            setVendorPrices((p) => ({ ...p, [v.name]: num }));
+                            setBudget((p) => ({ ...p, spent: (p.spent ?? 0) + num, items: [...(p.items ?? []).filter((x) => x.name !== v.name), { name: v.name, cat: cat.k, amount: num }] }));
                           }
                           setPriceEdit(null); setPriceVal("");
                         }} style={{ padding: "4px 8px", fontSize: 10 }}>OK</B>

@@ -28,11 +28,14 @@ export default function TimelineScreen() {
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginBottom: 14 }}>
-        {TL_PRESETS.filter((p) => !tlItems.some((x) => x.label === p)).map((p) => (
-          <button key={p} onClick={() => setTlItems((prev) => [...prev, { label: p, time: "", id: Date.now() + Math.random() }])} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "transparent", color: "#888", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
-            + {p}
-          </button>
-        ))}
+        {TL_PRESETS.filter((p) => !tlItems.some((x) => x.label === p.he || x.label === p.en)).map((p) => {
+          const label = lang === "he" ? p.he : p.en;
+          return (
+            <button key={p.he} onClick={() => setTlItems((prev) => [...prev, { label, time: "", id: Date.now() + Math.random() }])} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "transparent", color: "#888", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
+              + {label}
+            </button>
+          );
+        })}
         <button onClick={() => setShowAdd(true)} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(0,206,209,.15)", background: "rgba(0,206,209,.04)", color: "#00CED1", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
           {t.addCustom}
         </button>

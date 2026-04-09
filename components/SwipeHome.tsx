@@ -38,14 +38,9 @@ const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   ],
 };
 
-function sp(name: string, min: number, max: number) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
-  return min + (Math.abs(h) % (max - min + 1));
-}
 
 export default function SwipeHome() {
-  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors, chatThreads } = useApp();
+  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors, chatThreads, eventInfo, onboardingDone } = useApp();
   const t = T[lang];
   const router = useRouter();
   const isHe = lang === "he";
@@ -71,6 +66,13 @@ export default function SwipeHome() {
   useEffect(() => {
     loadPublishedVendors().then(setDbVendors).catch(() => {});
   }, []);
+
+  // Apply onboarding event type to filter (only on first mount, only if not already set)
+  useEffect(() => {
+    if (onboardingDone && eventInfo.type && !eventTypeFilter) {
+      setEventTypeFilter(eventInfo.type);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Merge: DV hardcoded + context (just published) + Supabase DB
   // Deduplicate by name so a vendor who just published doesn't appear twice
@@ -142,9 +144,7 @@ export default function SwipeHome() {
       <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
         {vs.length > 0 ? vs.map((v) => {
           const imgIdx = photoIdxMap[v.name] ?? 0;
-          const looked = sp(v.name, 8, 63);
-          const liveNow = sp(v.name + "x", 1, 9);
-          const isHot = sp(v.name, 0, 10) > 7;
+          const isHot = v.rating >= 4.7;
           const isLiked = likes.includes(v.name);
           const isLikeAnim = likedName === v.name;
 
@@ -170,12 +170,12 @@ export default function SwipeHome() {
                 </div>
               )}
 
-              {/* Social proof badges */}
-              <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
-                <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)" }}>👁 {looked}</span>
-                {liveNow > 4 && <span style={{ fontSize: 10, color: "#FF4444", fontWeight: 600, background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", animation: "pulse 2s infinite" }}>🔴 {liveNow} {isHe ? "עכשיו" : "now"}</span>}
-                {isHot && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>}
-              </div>
+              {/* Hot badge — real rating based */}
+              {isHot && (
+                <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, pointerEvents: "none" }}>
+                  <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>
+                </div>
+              )}
 
               {/* Right-side action column (TikTok/Reels style) */}
               {(() => {
@@ -235,10 +235,27 @@ export default function SwipeHome() {
             </div>
           );
         }) : (
-          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-            <div style={{ fontSize: 48 }}>🎉</div>
-            <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
-            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: "0 32px", textAlign: "center" }}>
+            {activeFilterCount > 0 ? (
+              <>
+                <div style={{ fontSize: 48 }}>🔍</div>
+                <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>
+                  {isHe ? "אין תוצאות לסינון הנוכחי" : "No results for current filters"}
+                </p>
+                <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>
+                  {isHe ? "נסה לשנות אזור, תאריך או קטגוריה" : "Try changing area, date or category"}
+                </p>
+                <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); setSortBy("default"); }} style={{ marginTop: 4, padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                  {isHe ? "נקה סינונים" : "Clear filters"}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 48 }}>🎉</div>
+                <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
+                <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
+              </>
+            )}
           </div>
         )}
       </div>
