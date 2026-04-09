@@ -43,6 +43,19 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
 export async function saveVendorProfile(vendor: Vendor) {
   const sb = createClient();
   const slug = makeSlug(vendor.name);
+
+  if (!slug) return { data: null, error: new Error("Vendor name produces empty slug") };
+
+  // Guard: if a vendor with this slug already exists under a DIFFERENT business name, reject
+  const { data: existing } = await sb
+    .from("vendor_profiles")
+    .select("business_name")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing && existing.business_name !== vendor.name) {
+    return { data: null, error: new Error(`Slug "${slug}" is already taken by "${existing.business_name}"`) };
+  }
+
   const { data, error } = await sb
     .from("vendor_profiles")
     .upsert(

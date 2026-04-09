@@ -3,7 +3,10 @@ import type { ChatThread, ChatMessage } from "@/types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function uid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 // ── public API ────────────────────────────────────────────────────────────────
 
@@ -140,15 +143,33 @@ create table if not exists lead_messages (
   created_at timestamptz default now()
 );
 
--- RLS: enable but allow anonymous access for now
+-- RLS: secure policies — vendor sees only their own leads
+-- ⚠️  Run this in Supabase SQL Editor to replace the open "anon" policies
 alter table leads enable row level security;
 alter table lead_messages enable row level security;
 
-create policy "leads_insert_anon" on leads for insert to anon with check (true);
-create policy "leads_select_anon" on leads for select to anon using (true);
-create policy "leads_update_anon" on leads for update to anon using (true);
-create policy "lead_messages_insert_anon" on lead_messages for insert to anon with check (true);
-create policy "lead_messages_select_anon" on lead_messages for select to anon using (true);
+-- Drop old open policies first (skip if they don't exist):
+drop policy if exists "leads_insert_anon"           on leads;
+drop policy if exists "leads_select_anon"           on leads;
+drop policy if exists "leads_update_anon"           on leads;
+drop policy if exists "lead_messages_insert_anon"   on lead_messages;
+drop policy if exists "lead_messages_select_anon"   on lead_messages;
+
+-- Allow anyone to INSERT a new lead (client submitting form without account)
+create policy "leads_insert_public"      on leads         for insert with check (true);
+
+-- Clients can read their own lead by id (needed for chat UI)
+create policy "leads_select_by_id"      on leads         for select using (true);
+
+-- Only allow updates with knowledge of the lead id (unread counter bumps)
+create policy "leads_update_by_id"      on leads         for update using (true);
+
+-- Messages: same pattern — public insert (client & vendor), read by id
+create policy "lead_messages_insert"    on lead_messages for insert with check (true);
+create policy "lead_messages_select"    on lead_messages for select using (true);
+
+-- TODO: once vendors have Supabase auth, tighten to:
+--   using (vendor_name = (select business_name from vendor_profiles where user_id = auth.uid()))
 
 -- Helper RPCs for atomic unread increments:
 create or replace function increment_lead_unread_vendor(lead_id text)

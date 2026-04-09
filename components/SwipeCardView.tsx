@@ -71,9 +71,13 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
         )}
       </div>
 
-      {/* Tap zones — right=next, left=prev (Instagram convention) */}
-      <div onClick={() => setImgIdx((i) => Math.min(imgs.length - 1, i + 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
-      <div onClick={() => setImgIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
+      {/* Tap zones — only when there are multiple images */}
+      {imgs.length > 1 && (
+        <>
+          <div onClick={() => setImgIdx((i) => Math.min(imgs.length - 1, i + 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
+          <div onClick={() => setImgIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
+        </>
+      )}
 
       {/* Dots */}
       {imgs.length > 1 && (

@@ -139,13 +139,14 @@ export default function VendorDash() {
           <Inp value={vendorPin} onChange={setVendorPin} placeholder={isHe ? "קוד כניסה (4 ספרות)" : "Access code (4 digits)"} dir="ltr" />
           <B style={{ width: "100%" }} onClick={() => {
             if (!vendorName.trim()) { showToast(isHe ? "הכנס שם עסק" : "Enter business name"); return; }
-            if (vendorPin.length < 4) { showToast(isHe ? "קוד חייב להיות 4 ספרות" : "Code must be 4 digits"); return; }
+            if (!/^\d{4}$/.test(vendorPin)) { showToast(isHe ? "קוד חייב להיות 4 ספרות" : "Code must be 4 digits"); return; }
+            if (vendorPin !== "1234") { showToast(isHe ? "קוד שגוי" : "Incorrect code"); return; }
             setUser({ name: vendorName.trim(), role: "vendor" });
           }}>
             {isHe ? "כניסה לפאנל ספק" : "Enter Vendor Panel"}
           </B>
           <p style={{ color: "#2a2a2a", fontSize: 10, textAlign: "center", marginTop: 4 }}>
-            {isHe ? "קוד: 1234 לדמו" : "Code: 1234 for demo"}
+            {isHe ? "קוד: 1234" : "Code: 1234"}
           </p>
         </div>
       </div>
