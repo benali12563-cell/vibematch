@@ -1,5 +1,7 @@
 import type { CatKey, Area, Vendor, Lang } from "@/types";
 
+export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibematch-nine.vercel.app";
+
 export const NICHE_FIELDS: Record<string, { k: string; l: string; type?: string; opts?: string[] }[]> = {
   venues: [{ k: "capacity", l: "קיבולת מקסימלית", type: "text" }, { k: "kosher", l: "כשרות", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"] }, { k: "indoorOutdoor", l: "פנים/חוץ", opts: ["פנים", "חוץ", "שניהם"] }, { k: "parking", l: "חניה", opts: ["כלולה", "לא כלולה"] }],
   food: [{ k: "capacity", l: "כמות סועדים", type: "text" }, { k: "kosher", l: "כשרות", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"] }, { k: "servingStyle", l: "סגנון הגשה", opts: ["ישיבה", "עמידה", "סטיישנים", "מעורב"] }, { k: "cuisineType", l: "סוג מטבח", type: "text" }],

@@ -2,7 +2,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, CATS, NICHE_FIELDS } from "@/lib/constants";
+import { T, CATS, NICHE_FIELDS, SITE_URL } from "@/lib/constants";
 import B from "./B";
 import Inp from "./Inp";
 import Logo from "./Logo";
@@ -61,9 +61,7 @@ export default function VendorDash() {
   const isHe = lang === "he";
   const nicheFields = vProfile.category ? (NICHE_FIELDS[vProfile.category] ?? []) : [];
   const vendorSlug = makeSlug(vProfile.businessName || user?.name || "");
-  const publicLink = typeof window !== "undefined" && vendorSlug
-    ? `${window.location.origin}/v/${vendorSlug}`
-    : "";
+  const publicLink = vendorSlug ? `${SITE_URL}/v/${vendorSlug}` : "";
 
   // Load existing profile from Supabase on mount — decide wizard vs dashboard
   useEffect(() => {

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
-import { T, CATS, AREAS, DV, EVENT_TYPES } from "@/lib/constants";
+import { T, CATS, AREAS, DV, EVENT_TYPES, SITE_URL } from "@/lib/constants";
 import type { Vendor, CatKey } from "@/types";
 import SwipeCardView from "./SwipeCardView";
 import Nav from "./Nav";
@@ -217,7 +217,7 @@ export default function SwipeHome() {
                     {/* Share */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                       <button onClick={() => {
-                        const url = `${window.location.origin}/v/${makeSlug(v.name)}`;
+                        const url = `${SITE_URL}/v/${makeSlug(v.name)}`;
                         if (navigator.share) {
                           navigator.share({ title: v.name, text: `${v.name} — ${v.sub} | VibeMatch`, url });
                         } else {

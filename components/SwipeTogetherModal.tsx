@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
+import { SITE_URL } from "@/lib/constants";
 import B from "./B";
 
 export default function SwipeTogetherModal({ onClose }: { onClose: () => void }) {
@@ -8,7 +9,7 @@ export default function SwipeTogetherModal({ onClose }: { onClose: () => void })
   const isHe = lang === "he";
   const [copied, setCopied] = useState(false);
 
-  const link = typeof window !== "undefined" ? window.location.origin + "/?partner=1" : "https://vibematch-nine.vercel.app/?partner=1";
+  const link = `${SITE_URL}/?partner=1`;
 
   function copy() {
     navigator.clipboard?.writeText(link);
