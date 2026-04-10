@@ -115,10 +115,11 @@ export default function VendorDash() {
     loadVendorLeads(vname).then((leads) => {
       setDbLeads(leads);
       // Merge into global chatThreads so client-side chat also stays in sync
+      // Replace matching threads with fresh DB data, keep local-only threads
       setChatThreads((prev) => {
-        const existingIds = new Set(prev.map((t) => t.id));
-        const newOnes = leads.filter((l) => !existingIds.has(l.id));
-        return [...prev.filter((t) => !leads.find((l) => l.id === t.id)), ...leads, ...newOnes];
+        const dbIds = new Set(leads.map((l) => l.id));
+        const localOnly = prev.filter((t) => !dbIds.has(t.id));
+        return [...localOnly, ...leads];
       });
     }).catch(() => { setDbLeadsError(true); }).finally(() => setDbLeadsLoading(false));
   }, [tab, vname]); // eslint-disable-line react-hooks/exhaustive-deps

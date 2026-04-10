@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Props) {
-  const { lang, likes, vendorAvailability, selectedDate } = useApp();
+  const { lang, likes, vendorAvailability, selectedDate, showToast } = useApp();
   const t = T[lang];
   const isHe = lang === "he";
   const [imgIdx, setImgIdx] = useState(0);
@@ -132,6 +132,7 @@ export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Pr
                   const r: VendorReview = { user: reviewName.trim(), rating: reviewStars, text: reviewText.trim() };
                   setReviews((p) => [r, ...p]);
                   setReviewName(""); setReviewText(""); setReviewStars(5); setShowReviewForm(false);
+                  showToast(isHe ? "✅ ביקורת נוספה!" : "✅ Review added!");
                 }}
                 style={{ width: "100%", padding: "10px 0", borderRadius: 10, border: "none", background: reviewName.trim() && reviewText.trim() ? "linear-gradient(135deg,#00CED1,#008b8b)" : "rgba(255,255,255,.06)", color: reviewName.trim() && reviewText.trim() ? "#000" : "#555", fontWeight: 700, fontSize: 13, cursor: reviewName.trim() && reviewText.trim() ? "pointer" : "default", fontFamily: "inherit" }}>
                 {isHe ? "פרסם ביקורת" : "Post Review"}

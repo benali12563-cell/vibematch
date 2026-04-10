@@ -51,6 +51,20 @@ export const QF: Record<string, string[]> = {
   digital: ["אורחים?", "תאריך?"],
 };
 
+export const QF_EN: Record<string, string[]> = {
+  venues: ["How many guests?", "Date?", "Kosher?", "Decor style?"],
+  food: ["Guests?", "Kosher?", "Serving style?"],
+  music: ["Hours?", "Music style?", "Sound system?"],
+  lighting: ["Indoor/Outdoor?", "Hours?"],
+  photo: ["Hours?", "Photo/Video?", "Album?"],
+  beauty: ["For whom?", "Style?"],
+  entertainment: ["Hours?", "Indoor/Outdoor?"],
+  design: ["Guests?", "Decor style?"],
+  logistics: ["From?", "To?", "Vehicle type?"],
+  ceremony: ["Ceremony type?", "Chuppah?"],
+  digital: ["Guests?", "Date?"],
+};
+
 export const TL_PRESETS: { he: string; en: string }[] = [
   { he: "קבלת פנים", en: "Reception" },
   { he: "חופה",       en: "Ceremony" },
@@ -70,28 +84,28 @@ export const EVENT_TYPES = [
 ];
 
 export const EVENT_STYLES = [
-  { k: "luxury", he: "יוקרתי", emoji: "👑" },
-  { k: "rustic", he: "כפרי/בוהו", emoji: "🌿" },
-  { k: "modern", he: "מודרני", emoji: "🔲" },
-  { k: "classic", he: "קלאסי", emoji: "🎩" },
-  { k: "colorful", he: "צבעוני/פסטיבלי", emoji: "🌈" },
-  { k: "intimate", he: "אינטימי", emoji: "🕯️" },
+  { k: "luxury",   he: "יוקרתי",         en: "Luxury",    emoji: "👑" },
+  { k: "rustic",   he: "כפרי/בוהו",      en: "Rustic",    emoji: "🌿" },
+  { k: "modern",   he: "מודרני",          en: "Modern",    emoji: "🔲" },
+  { k: "classic",  he: "קלאסי",           en: "Classic",   emoji: "🎩" },
+  { k: "colorful", he: "צבעוני/פסטיבלי", en: "Colorful",  emoji: "🌈" },
+  { k: "intimate", he: "אינטימי",          en: "Intimate",  emoji: "🕯️" },
 ];
 
 export const EVENT_VIBES = [
-  { k: "romantic", he: "רומנטי", emoji: "💕" },
-  { k: "fun", he: "כיפי/מצחיק", emoji: "😂" },
-  { k: "emotional", he: "רגשי/נוגע ללב", emoji: "🥹" },
-  { k: "energetic", he: "אנרגטי/רוקד", emoji: "⚡" },
-  { k: "spiritual", he: "רוחני/מסורתי", emoji: "🌌" },
-  { k: "chill", he: "נינוח/שקט", emoji: "😌" },
+  { k: "romantic",  he: "רומנטי",         en: "Romantic",   emoji: "💕" },
+  { k: "fun",       he: "כיפי/מצחיק",    en: "Fun",         emoji: "😂" },
+  { k: "emotional", he: "רגשי/נוגע ללב", en: "Emotional",   emoji: "🥹" },
+  { k: "energetic", he: "אנרגטי/רוקד",   en: "Energetic",   emoji: "⚡" },
+  { k: "spiritual", he: "רוחני/מסורתי",  en: "Traditional", emoji: "🌌" },
+  { k: "chill",     he: "נינוח/שקט",      en: "Chill",       emoji: "😌" },
 ];
 
 export const BUDGET_RANGES = [
-  { k: "under50k", he: "עד ₪50,000" },
-  { k: "50_100k", he: "₪50,000 – ₪100,000" },
-  { k: "100_200k", he: "₪100,000 – ₪200,000" },
-  { k: "over200k", he: "מעל ₪200,000" },
+  { k: "under50k",  he: "עד ₪50,000",                en: "Under ₪50,000" },
+  { k: "50_100k",   he: "₪50,000 – ₪100,000",        en: "₪50K – ₪100K" },
+  { k: "100_200k",  he: "₪100,000 – ₪200,000",       en: "₪100K – ₪200K" },
+  { k: "over200k",  he: "מעל ₪200,000",              en: "Over ₪200,000" },
 ];
 
 export const BADGES = [

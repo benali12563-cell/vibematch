@@ -106,7 +106,9 @@ export default function AvailabilityCalendar({ vendorName, readOnly = false }: P
                   : isToday
                   ? "rgba(0,206,209,.1)"
                   : "rgba(255,255,255,.02)",
-                color: past ? "#333" : busy ? "#FF6666" : isToday ? "#00CED1" : "#ccc",
+                opacity: past ? 0.25 : 1,
+                color: past ? "#666" : busy ? "#FF6666" : isToday ? "#00CED1" : "#ccc",
+                textDecoration: past ? "line-through" : "none",
                 backdropFilter: "blur(8px)",
                 textAlign: "center",
                 transition: "all .15s",
