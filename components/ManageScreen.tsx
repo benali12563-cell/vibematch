@@ -84,7 +84,10 @@ export default function ManageScreen() {
                           const num = Number(priceVal);
                           if (priceVal && !isNaN(num) && num > 0) {
                             setVendorPrices((p) => ({ ...p, [v.name]: num }));
-                            setBudget((p) => ({ ...p, spent: (p.spent ?? 0) + num, items: [...(p.items ?? []).filter((x) => x.name !== v.name), { name: v.name, cat: cat.k, amount: num }] }));
+                            setBudget((p) => {
+                              const oldAmount = (p.items ?? []).find((x) => x.name === v.name)?.amount ?? 0;
+                              return { ...p, spent: (p.spent ?? 0) - oldAmount + num, items: [...(p.items ?? []).filter((x) => x.name !== v.name), { name: v.name, cat: cat.k, amount: num }] };
+                            });
                           }
                           setPriceEdit(null); setPriceVal("");
                         }} style={{ padding: "4px 8px", fontSize: 10 }}>OK</B>
@@ -145,8 +148,12 @@ export default function ManageScreen() {
             <Inp value={mN} onChange={setMN} placeholder={lang === "he" ? "שם הספק" : "Vendor"} style={{ marginBottom: 8 }} />
             <Inp value={mA} onChange={setMA} type="number" placeholder="₪" dir="ltr" style={{ marginBottom: 8 }} />
             <B style={{ width: "100%" }} onClick={() => {
-              if (mN && mA) {
-                setBudget((p) => ({ ...p, spent: (p.spent ?? 0) + Number(mA), items: [...(p.items ?? []), { name: mN, cat: showManual as CatKey, amount: Number(mA) }] }));
+              const num = Number(mA);
+              if (mN.trim() && !isNaN(num) && num > 0) {
+                setBudget((p) => {
+                  const oldAmount = (p.items ?? []).find((x) => x.name === mN.trim())?.amount ?? 0;
+                  return { ...p, spent: (p.spent ?? 0) - oldAmount + num, items: [...(p.items ?? []).filter((x) => x.name !== mN.trim()), { name: mN.trim(), cat: showManual as CatKey, amount: num }] };
+                });
                 setMN(""); setMA(""); setShowManual("");
               }
             }}>{t.save}</B>

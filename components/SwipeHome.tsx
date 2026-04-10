@@ -371,7 +371,7 @@ export default function SwipeHome() {
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "תאריך האירוע" : "Event Date"}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
             <span className="material-symbols-outlined" style={{ fontSize: 18, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.2)" }}>calendar_month</span>
-            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); }}
+            <input type="date" value={selectedDate} min={new Date().toISOString().split("T")[0]} onChange={(e) => { setSelectedDate(e.target.value); }}
               style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.35)" : "rgba(255,255,255,.08)"}`, borderRadius: 12, padding: "10px 14px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
             {selectedDate && <button onClick={() => { setSelectedDate(""); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.07)", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", fontSize: 13 }}>✕</button>}
           </div>
