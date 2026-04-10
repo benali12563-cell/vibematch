@@ -202,7 +202,7 @@ export default function VendorPageClient({ params }: { params: Promise<{ id: str
       <div style={{ padding: "16px 20px 48px" }}>
         {vendor.price && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, padding: "14px 18px", borderRadius: 14, background: "rgba(0,206,209,.05)", border: "1px solid rgba(0,206,209,.12)" }}>
-            <span style={{ color: "rgba(255,255,255,.5)", fontSize: 13 }}>{vendor.sub}</span>
+            <span style={{ color: "rgba(255,255,255,.5)", fontSize: 13 }}>{cat || vendor.sub}</span>
             <span style={{ color: "#00CED1", fontWeight: 900, fontSize: 22, fontFamily: "'Manrope',sans-serif" }}>{vendor.price}</span>
           </div>
         )}

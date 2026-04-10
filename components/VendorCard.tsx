@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
-import { T, findVendor, findCat, DV } from "@/lib/constants";
+import { T, findVendor, findCat, DV, CATS } from "@/lib/constants";
 import type { Vendor, VendorReview } from "@/types";
 import SwipeCardView from "./SwipeCardView";
 import VLinks from "./VLinks";
@@ -53,7 +53,7 @@ export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Pr
               {recs.map((rv) => (
                 <div key={rv.name} style={{ flexShrink: 0, background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 80, border: "1px solid rgba(255,255,255,.04)" }}>
                   <div style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{rv.name}</div>
-                  <div style={{ color: "#666", fontSize: 9 }}>{rv.sub}</div>
+                  <div style={{ color: "#666", fontSize: 9 }}>{rv.catKey ? (CATS.find(c => c.k === rv.catKey)?.[isHe ? "he" : "en"] ?? rv.sub) : rv.sub}</div>
                 </div>
               ))}
             </div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, TL_PRESETS, allVendors } from "@/lib/constants";
+import { T, TL_PRESETS, allVendors, CATS } from "@/lib/constants";
 import Nav from "./Nav";
 import B from "./B";
 import Inp from "./Inp";
@@ -10,7 +10,8 @@ import Inp from "./Inp";
 export default function TimelineScreen() {
   const { lang, likes, tlItems, setTlItems, publishedVendors } = useApp();
   const t = T[lang];
-  const dir = lang === "he" ? "rtl" : "ltr";
+  const isHe = lang === "he";
+  const dir = isHe ? "rtl" : "ltr";
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [cL, setCL] = useState("");
@@ -63,11 +64,11 @@ export default function TimelineScreen() {
             {team.map((v) => (
               <div key={v.name} style={{ flexShrink: 0, background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 80, border: "1px solid rgba(255,255,255,.03)" }}>
                 <div style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{v.name}</div>
-                <div style={{ color: "#666", fontSize: 9 }}>{v.sub}</div>
+                <div style={{ color: "#666", fontSize: 9 }}>{v.catKey ? (CATS.find(c => c.k === v.catKey)?.[isHe ? "he" : "en"] ?? v.sub) : v.sub}</div>
               </div>
             ))}
           </div>
-          <B v="ghost" style={{ width: "100%", marginTop: 12 }} onClick={() => { window.open("https://wa.me/?text=" + encodeURIComponent(["Powered by VibeMatch", "", ...team.map((v) => v.name + " — " + v.sub)].join("\n"))); }}>
+          <B v="ghost" style={{ width: "100%", marginTop: 12 }} onClick={() => { window.open("https://wa.me/?text=" + encodeURIComponent(["Powered by VibeMatch", "", ...team.map((v) => v.name + " — " + (v.catKey ? (CATS.find(c => c.k === v.catKey)?.[isHe ? "he" : "en"] ?? v.sub) : v.sub))].join("\n"))); }}>
             {t.credits}
           </B>
         </div>

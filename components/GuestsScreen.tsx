@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, allVendors, SITE_URL } from "@/lib/constants";
+import { T, allVendors, SITE_URL, CATS } from "@/lib/constants";
 import Nav from "./Nav";
 import B from "./B";
 import Inp from "./Inp";
@@ -195,7 +195,7 @@ export default function GuestsScreen() {
                 <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#00CED1" }}>verified</span>
                 <div>
                   <p style={{ color: "rgba(255,255,255,.8)", fontSize: 12, fontWeight: 600 }}>{v.name}</p>
-                  <p style={{ color: "#00CED1", fontSize: 10, marginTop: 1 }}>{v.sub}</p>
+                  <p style={{ color: "#00CED1", fontSize: 10, marginTop: 1 }}>{v.catKey ? (CATS.find(c => c.k === v.catKey)?.[isHe ? "he" : "en"] ?? v.sub) : v.sub}</p>
                 </div>
               </div>
             ))}
