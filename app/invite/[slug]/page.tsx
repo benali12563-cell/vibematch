@@ -3,6 +3,7 @@ import { use, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saveRsvp, trackReferral, loadRsvps } from "@/lib/supabase/rsvp";
+import { SITE_URL } from "@/lib/constants";
 import { loadEventPage, type EventPage } from "@/lib/supabase/events";
 import Logo from "@/components/Logo";
 import OTPLoginForm from "@/components/OTPLoginForm";
@@ -87,7 +88,7 @@ export default function InvitePage({ params }: { params: Promise<{ slug: string 
   }
 
   const shareWhatsApp = () => {
-    const url = `${window.location.origin}/invite/${slug}`;
+    const url = `${SITE_URL}/invite/${slug}`;
     const text = `הוזמנתם לאירוע של ${hostName} 🎉\nאשרו הגעה כאן:\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
