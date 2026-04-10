@@ -8,7 +8,7 @@ import B from "./B";
 import Inp from "./Inp";
 
 export default function TimelineScreen() {
-  const { lang, likes, tlItems, setTlItems } = useApp();
+  const { lang, likes, tlItems, setTlItems, publishedVendors } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
@@ -16,7 +16,12 @@ export default function TimelineScreen() {
   const [cL, setCL] = useState("");
   const [cT, setCT] = useState("");
 
-  const team = allVendors().filter((v) => likes.includes(v.name));
+  const seenNames = new Set<string>();
+  const team = [...allVendors(), ...publishedVendors].filter((v) => {
+    if (!likes.includes(v.name) || seenNames.has(v.name)) return false;
+    seenNames.add(v.name);
+    return true;
+  });
 
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 14px 64px" }}>

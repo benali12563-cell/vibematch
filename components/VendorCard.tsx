@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Props) {
-  const { lang, likes, vendorAvailability, selectedDate, showToast } = useApp();
+  const { lang, likes, vendorAvailability, selectedDate, showToast, publishedVendors } = useApp();
   const t = T[lang];
   const isHe = lang === "he";
   const [imgIdx, setImgIdx] = useState(0);
@@ -29,7 +29,11 @@ export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Pr
   const ck = (vendor as import("@/types").Vendor).catKey || findCat(vendor.name);
   const recs = (vendor.recommends ?? []).map((n) => findVendor(n)).filter(Boolean) as Vendor[];
   // Similar vendors: same category, exclude this vendor
-  const similarVendors = ck && ck !== "all" ? (DV[ck as Exclude<typeof ck, "all">] ?? []).filter((v) => v.name !== vendor.name).slice(0, 3) : [];
+  const similarVendors = ck && ck !== "all"
+    ? [...(DV[ck as Exclude<typeof ck, "all">] ?? []), ...publishedVendors.filter((v) => v.catKey === ck)]
+        .filter((v) => v.name !== vendor.name)
+        .slice(0, 3)
+    : [];
   const isBooked = selectedDate ? (vendorAvailability[vendor.name] ?? []).includes(selectedDate) : false;
 
   return (

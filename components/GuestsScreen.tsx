@@ -10,7 +10,7 @@ import { saveEventPage } from "@/lib/supabase/events";
 import { loadRsvps } from "@/lib/supabase/rsvp";
 
 export default function GuestsScreen() {
-  const { lang, user, likes, eventInfo, setEventInfo, guests, setGuests } = useApp();
+  const { lang, user, likes, eventInfo, setEventInfo, guests, setGuests, publishedVendors } = useApp();
   const t = T[lang];
   const isHe = lang === "he";
   const dir = isHe ? "rtl" : "ltr";
@@ -22,7 +22,12 @@ export default function GuestsScreen() {
   const [saved, setSaved] = useState(false);
   const [rsvpLoading, setRsvpLoading] = useState(false);
 
-  const team = allVendors().filter((v) => likes.includes(v.name));
+  const seenNames = new Set<string>();
+  const team = [...allVendors(), ...publishedVendors].filter((v) => {
+    if (!likes.includes(v.name) || seenNames.has(v.name)) return false;
+    seenNames.add(v.name);
+    return true;
+  });
 
   const slug = encodeURIComponent((user?.name ?? "").replace(/\s+/g, "-"));
   const inviteLink = `${SITE_URL}/invite/${slug}`;
