@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { CATS } from "@/lib/constants";
 import type { Vendor, CatKey, Area } from "@/types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -12,7 +13,7 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
   return {
     id: row.id as string,
     name: row.business_name as string,
-    sub: (row.category as string) || "",
+    sub: (() => { const ck = row.category as string; const c = CATS.find(x => x.k === ck); return c ? c.he : ck || ""; })(),
     price: (row.price as string) || "",
     rating: 5,
     city: "",
