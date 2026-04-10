@@ -2,7 +2,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, CATS, NICHE_FIELDS, SITE_URL } from "@/lib/constants";
+import { T, CATS, NICHE_FIELDS, SITE_URL, translateNicheVal } from "@/lib/constants";
 import B from "./B";
 import Inp from "./Inp";
 import Logo from "./Logo";
@@ -364,7 +364,7 @@ export default function VendorDash() {
                 {Object.keys(builtNiche).length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                     {Object.entries(builtNiche).map(([k, v]) => (
-                      <span key={k} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", color: "rgba(255,255,255,.65)", fontSize: 11 }}>{v}</span>
+                      <span key={k} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", color: "rgba(255,255,255,.65)", fontSize: 11 }}>{translateNicheVal(v, lang)}</span>
                     ))}
                   </div>
                 )}

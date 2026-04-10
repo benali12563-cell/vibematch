@@ -5,14 +5,17 @@ import { DV, CATS } from "@/lib/constants";
 import type { Vendor } from "@/types";
 
 export default function HotStrip({ onSelect }: { onSelect: (v: Vendor) => void }) {
-  const { lang } = useApp();
+  const { lang, publishedVendors } = useApp();
   const isHe = lang === "he";
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Pick top-rated vendors across categories
-  const hotVendors = CATS.flatMap((c) =>
-    (DV[c.k] ?? []).slice(0, 2).map((v) => ({ ...v, _cat: isHe ? c.he : c.en }))
-  ).sort((a, b) => b.rating - a.rating).slice(0, 12);
+  // Pick top-rated vendors across categories (DV + published)
+  const hotVendors = CATS.flatMap((c) => {
+    const catLabel = isHe ? c.he : c.en;
+    const dv = (DV[c.k] ?? []).slice(0, 2).map((v) => ({ ...v, _cat: catLabel }));
+    const pub = publishedVendors.filter((v) => v.catKey === c.k).slice(0, 2).map((v) => ({ ...v, _cat: catLabel }));
+    return [...dv, ...pub];
+  }).sort((a, b) => b.rating - a.rating).slice(0, 12);
 
   return (
     <div style={{ marginBottom: 0 }}>
