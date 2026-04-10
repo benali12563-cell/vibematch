@@ -181,6 +181,7 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
               <input
                 type={type} value={val} onChange={(e) => set(e.target.value)}
                 placeholder={placeholder}
+                min={type === "date" ? new Date().toISOString().split("T")[0] : undefined}
                 style={{ width: "100%", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, padding: "12px 14px", color: "#fff", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
               />
             </div>

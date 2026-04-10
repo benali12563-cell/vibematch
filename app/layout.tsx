@@ -6,8 +6,8 @@ import BackgroundEffect from "@/components/BackgroundEffect";
 import PWASetup from "@/components/PWASetup";
 
 export const metadata: Metadata = {
-  title: "VibeMatch — מצא את הספקים לאירוע שלך",
-  description: "גלה ספקים לאירועים, נהל תקציב, לוח זמנים ואורחים — הכל במקום אחד.",
+  title: "VibeMatch — Event Vendors | ספקים לאירועים",
+  description: "Find event vendors in Israel — venues, catering, music, photography and more. Transparent prices, real availability. | מצא ספקים לאירועים בישראל",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

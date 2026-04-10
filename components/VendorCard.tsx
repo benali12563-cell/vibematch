@@ -26,7 +26,7 @@ export default function VendorCard({ vendor, onClose, showRemove, onRemove }: Pr
   const [reviewText, setReviewText] = useState("");
   const [reviewStars, setReviewStars] = useState(5);
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const ck = findCat(vendor.name);
+  const ck = (vendor as import("@/types").Vendor).catKey || findCat(vendor.name);
   const recs = (vendor.recommends ?? []).map((n) => findVendor(n)).filter(Boolean) as Vendor[];
   // Similar vendors: same category, exclude this vendor
   const similarVendors = ck && ck !== "all" ? (DV[ck as Exclude<typeof ck, "all">] ?? []).filter((v) => v.name !== vendor.name).slice(0, 3) : [];
