@@ -4,12 +4,14 @@ import { useApp } from "@/lib/context";
 import { CATS, DV, SITE_URL } from "@/lib/constants";
 
 export default function ShareCard() {
-  const { lang, likes, eventInfo, budget } = useApp();
+  const { lang, likes, eventInfo, budget, publishedVendors } = useApp();
   const isHe = lang === "he";
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const likedCats = CATS.filter((c) => (DV[c.k] ?? []).some((v) => likes.includes(v.name)));
+  const likedCats = CATS.filter((c) =>
+    [...(DV[c.k] ?? []), ...publishedVendors.filter((v) => v.catKey === c.k)].some((v) => likes.includes(v.name))
+  );
   const totalLiked = likes.length;
   const eventDate = eventInfo.date ? new Date(eventInfo.date).toLocaleDateString(isHe ? "he-IL" : "en-US") : "";
   const days = eventInfo.date ? Math.ceil((new Date(eventInfo.date).getTime() - Date.now()) / 86400000) : null;
