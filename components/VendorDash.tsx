@@ -453,7 +453,7 @@ export default function VendorDash() {
             const text = replyMsgs[ct.id]?.trim();
             if (!text) return;
             const newMsg: ChatMessage = {
-              id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+              id: (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36),
               from: "vendor",
               text,
               ts: Date.now(),
@@ -626,21 +626,25 @@ export default function VendorDash() {
             {nicheFields.length > 0 && (
               <div style={{ marginBottom: 10 }}>
                 <p style={{ color: "#00CED1", fontSize: 12, fontWeight: 600, marginBottom: 8 }}>{lang === "he" ? "פרטי נישה" : "Niche Details"}</p>
-                {nicheFields.map((f) => (
-                  <div key={f.k} style={{ marginBottom: 10 }}>
-                    <p style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>{f.l}</p>
-                    {f.opts ? (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                        {f.opts.map((o) => {
-                          const sel = vProfile[f.k] === o;
-                          return <button key={o} onClick={() => setVProfile((p) => ({ ...p, [f.k]: o }))} style={{ padding: "6px 14px", borderRadius: 16, border: `1.5px solid ${sel ? "rgba(0,229,232,.55)" : "rgba(255,255,255,.12)"}`, background: sel ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.07)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", color: sel ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 11, fontWeight: sel ? 700 : 500, cursor: "pointer", boxShadow: sel ? "0 3px 10px rgba(0,206,209,.22), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.07)", transition: "all .12s" }}>{o}</button>;
-                        })}
-                      </div>
-                    ) : (
-                      <Inp value={vProfile[f.k] ?? ""} onChange={(v) => setVProfile((p) => ({ ...p, [f.k]: v }))} placeholder="..." />
-                    )}
-                  </div>
-                ))}
+                {nicheFields.map((f) => {
+                  const displayOpts = isHe ? f.opts : (f.optsEn ?? f.opts);
+                  return (
+                    <div key={f.k} style={{ marginBottom: 10 }}>
+                      <p style={{ color: "#888", fontSize: 11, marginBottom: 4 }}>{isHe ? f.l : f.en}</p>
+                      {displayOpts ? (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {displayOpts.map((o, idx) => {
+                            const heVal = f.opts![idx]; // always store Hebrew value as the data key
+                            const sel = vProfile[f.k] === heVal;
+                            return <button key={heVal} onClick={() => setVProfile((p) => ({ ...p, [f.k]: heVal }))} style={{ padding: "6px 14px", borderRadius: 16, border: `1.5px solid ${sel ? "rgba(0,229,232,.55)" : "rgba(255,255,255,.12)"}`, background: sel ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.07)", backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)", color: sel ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 11, fontWeight: sel ? 700 : 500, cursor: "pointer", boxShadow: sel ? "0 3px 10px rgba(0,206,209,.22), inset 0 1px 0 rgba(0,255,255,.15)" : "0 1px 6px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.07)", transition: "all .12s" }}>{o}</button>;
+                          })}
+                        </div>
+                      ) : (
+                        <Inp value={vProfile[f.k] ?? ""} onChange={(v) => setVProfile((p) => ({ ...p, [f.k]: v }))} placeholder="..." />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 

@@ -2,18 +2,18 @@ import type { CatKey, Area, Vendor, Lang } from "@/types";
 
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibematch-nine.vercel.app";
 
-export const NICHE_FIELDS: Record<string, { k: string; l: string; type?: string; opts?: string[] }[]> = {
-  venues: [{ k: "capacity", l: "קיבולת מקסימלית", type: "text" }, { k: "kosher", l: "כשרות", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"] }, { k: "indoorOutdoor", l: "פנים/חוץ", opts: ["פנים", "חוץ", "שניהם"] }, { k: "parking", l: "חניה", opts: ["כלולה", "לא כלולה"] }],
-  food: [{ k: "capacity", l: "כמות סועדים", type: "text" }, { k: "kosher", l: "כשרות", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"] }, { k: "servingStyle", l: "סגנון הגשה", opts: ["ישיבה", "עמידה", "סטיישנים", "מעורב"] }, { k: "cuisineType", l: "סוג מטבח", type: "text" }],
-  music: [{ k: "equipment", l: "ציוד", opts: ["כלול", "לא כלול"] }, { k: "style", l: "סגנון", opts: ["מזרחית", "אלקטרונית", "פופ", "שנות 80", "חסידית", "מעורב"] }, { k: "hours", l: "שעות", type: "text" }],
-  lighting: [{ k: "equipment", l: "ציוד", opts: ["מלא", "בסיסי", "לפי בקשה"] }, { k: "includes", l: "כולל", type: "text" }],
-  photo: [{ k: "type", l: "סוג", opts: ["סטילס", "וידאו", "שניהם"] }, { k: "sameDayEdit", l: "Same Day Edit", opts: ["כן", "לא"] }, { k: "album", l: "אלבום", opts: ["כלול", "בתוספת", "לא"] }],
-  beauty: [{ k: "specialty", l: "התמחות", opts: ["כלות", "אירועים", "שניהם"] }, { k: "location", l: "מיקום", opts: ["מגיעה אליכם", "בסטודיו", "שניהם"] }],
-  entertainment: [{ k: "showType", l: "סוג מופע", type: "text" }, { k: "duration", l: "משך", type: "text" }],
-  design: [{ k: "specialty", l: "התמחות", type: "text" }, { k: "includes", l: "כולל", type: "text" }],
-  logistics: [{ k: "vehicleType", l: "סוג רכב", opts: ["מיניבוס", "אוטובוס", "יוקרה", "משולב"] }, { k: "capacity", l: "נוסעים", type: "text" }],
-  ceremony: [{ k: "ceremonyType", l: "סוג טקס", opts: ["אורתודוקסי", "קונסרבטיבי", "רפורמי", "חילוני"] }, { k: "chuppah", l: "חופה", opts: ["כלולה", "לא כלולה"] }],
-  digital: [{ k: "type", l: "סוג", type: "text" }],
+export const NICHE_FIELDS: Record<string, { k: string; l: string; en: string; type?: string; opts?: string[]; optsEn?: string[] }[]> = {
+  venues: [{ k: "capacity", l: "קיבולת מקסימלית", en: "Max capacity", type: "text" }, { k: "kosher", l: "כשרות", en: "Kashrut", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"], optsEn: ["Kosher", "Non-kosher", "Mehadrin", "Flexible"] }, { k: "indoorOutdoor", l: "פנים/חוץ", en: "Indoor/Outdoor", opts: ["פנים", "חוץ", "שניהם"], optsEn: ["Indoor", "Outdoor", "Both"] }, { k: "parking", l: "חניה", en: "Parking", opts: ["כלולה", "לא כלולה"], optsEn: ["Included", "Not included"] }],
+  food: [{ k: "capacity", l: "כמות סועדים", en: "Capacity", type: "text" }, { k: "kosher", l: "כשרות", en: "Kashrut", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"], optsEn: ["Kosher", "Non-kosher", "Mehadrin", "Flexible"] }, { k: "servingStyle", l: "סגנון הגשה", en: "Serving style", opts: ["ישיבה", "עמידה", "סטיישנים", "מעורב"], optsEn: ["Seated", "Standing", "Stations", "Mixed"] }, { k: "cuisineType", l: "סוג מטבח", en: "Cuisine type", type: "text" }],
+  music: [{ k: "equipment", l: "ציוד", en: "Equipment", opts: ["כלול", "לא כלול"], optsEn: ["Included", "Not included"] }, { k: "style", l: "סגנון", en: "Music style", opts: ["מזרחית", "אלקטרונית", "פופ", "שנות 80", "חסידית", "מעורב"], optsEn: ["Mizrahi", "Electronic", "Pop", "80s", "Hassidic", "Mixed"] }, { k: "hours", l: "שעות", en: "Hours", type: "text" }],
+  lighting: [{ k: "equipment", l: "ציוד", en: "Equipment", opts: ["מלא", "בסיסי", "לפי בקשה"], optsEn: ["Full rig", "Basic", "On request"] }, { k: "includes", l: "כולל", en: "Includes", type: "text" }],
+  photo: [{ k: "type", l: "סוג", en: "Type", opts: ["סטילס", "וידאו", "שניהם"], optsEn: ["Stills", "Video", "Both"] }, { k: "sameDayEdit", l: "Same Day Edit", en: "Same Day Edit", opts: ["כן", "לא"], optsEn: ["Yes", "No"] }, { k: "album", l: "אלבום", en: "Album", opts: ["כלול", "בתוספת", "לא"], optsEn: ["Included", "Add-on", "No"] }],
+  beauty: [{ k: "specialty", l: "התמחות", en: "Specialty", opts: ["כלות", "אירועים", "שניהם"], optsEn: ["Brides", "Events", "Both"] }, { k: "location", l: "מיקום", en: "Location", opts: ["מגיעה אליכם", "בסטודיו", "שניהם"], optsEn: ["On-site", "Studio", "Both"] }],
+  entertainment: [{ k: "showType", l: "סוג מופע", en: "Show type", type: "text" }, { k: "duration", l: "משך", en: "Duration", type: "text" }],
+  design: [{ k: "specialty", l: "התמחות", en: "Specialty", type: "text" }, { k: "includes", l: "כולל", en: "Includes", type: "text" }],
+  logistics: [{ k: "vehicleType", l: "סוג רכב", en: "Vehicle type", opts: ["מיניבוס", "אוטובוס", "יוקרה", "משולב"], optsEn: ["Minibus", "Bus", "Luxury", "Mixed"] }, { k: "capacity", l: "נוסעים", en: "Passengers", type: "text" }],
+  ceremony: [{ k: "ceremonyType", l: "סוג טקס", en: "Ceremony type", opts: ["אורתודוקסי", "קונסרבטיבי", "רפורמי", "חילוני"], optsEn: ["Orthodox", "Conservative", "Reform", "Secular"] }, { k: "chuppah", l: "חופה", en: "Chuppah", opts: ["כלולה", "לא כלולה"], optsEn: ["Included", "Not included"] }],
+  digital: [{ k: "type", l: "סוג", en: "Type", type: "text" }],
 };
 
 export const T: Record<string, Record<string, string>> = {
