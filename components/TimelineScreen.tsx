@@ -43,7 +43,7 @@ export default function TimelineScreen() {
 
       {[...tlItems].sort((a, b) => (a.time || "99").localeCompare(b.time || "99")).map((item) => (
         <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          <input type="time" value={item.time ?? ""} onChange={(e) => setTlItems((p) => p.map((x) => x.id === item.id ? { ...x, time: e.target.value } : x))} style={{ width: 72, padding: "8px 4px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "rgba(255,255,255,.02)", color: "#00CED1", fontSize: 13, fontWeight: 600, textAlign: "center", fontFamily: "'Outfit'" }} />
+          <input type="time" value={item.time ?? ""} onChange={(e) => setTlItems((p) => p.map((x) => x.id === item.id ? { ...x, time: e.target.value } : x))} style={{ width: 72, padding: "8px 4px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "rgba(255,255,255,.02)", color: "#00CED1", fontSize: 13, fontWeight: 600, textAlign: "center", fontFamily: "'Manrope','Heebo'" }} />
           <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", flex: 1, border: "1px solid rgba(255,255,255,.03)" }}>
             <span style={{ color: "#fff", fontSize: 13, fontWeight: 500 }}>{item.label}</span>
           </div>

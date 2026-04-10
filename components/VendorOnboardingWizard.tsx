@@ -129,7 +129,7 @@ export default function VendorOnboardingWizard({ isHe, onComplete }: Props) {
                   value={localPrice}
                   onChange={(e) => setLocalPrice(e.target.value)}
                   placeholder={isHe ? "לדוגמה: ₪3,000–₪8,000 לאירוע" : "e.g. ₪3,000–₪8,000/event"}
-                  dir="rtl"
+                  dir="ltr"
                   style={{ width: "100%", padding: "14px 16px", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "#fff", fontSize: 15, fontFamily: "inherit", outline: "none" }}
                 />
               </div>
