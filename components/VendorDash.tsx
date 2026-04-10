@@ -490,7 +490,13 @@ export default function VendorDash() {
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <div style={{ fontSize: 40, marginBottom: 10 }}>📭</div>
                   <p style={{ color: "#555", fontSize: 13 }}>{isHe ? "עדיין אין לידים" : "No leads yet"}</p>
-                  <p style={{ color: "#333", fontSize: 11, marginTop: 4 }}>{isHe ? "לקוחות שיפנו אליך יופיעו כאן" : "Clients who contact you will appear here"}</p>
+                  <p style={{ color: "#333", fontSize: 11, marginTop: 4, marginBottom: 16 }}>{isHe ? "לקוחות שיפנו אליך יופיעו כאן" : "Clients who contact you will appear here"}</p>
+                  {publicLink && (
+                    <button onClick={() => { navigator.clipboard?.writeText(publicLink); showToast(isHe ? "✓ קישור הועתק!" : "✓ Link copied!"); }}
+                      style={{ padding: "10px 20px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                      🔗 {isHe ? "העתק קישור לפרופיל" : "Copy profile link"}
+                    </button>
+                  )}
                 </div>
               ) : myLeads.map((ct) => (
                 <div key={ct.id} style={{ background: ct.unreadVendor > 0 ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.02)", border: `1px solid ${ct.unreadVendor > 0 ? "rgba(0,206,209,.25)" : "rgba(255,255,255,.06)"}`, borderRadius: 14, padding: "14px 16px", marginBottom: 12 }}>
