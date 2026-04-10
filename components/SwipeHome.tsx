@@ -246,7 +246,7 @@ export default function SwipeHome() {
                 <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>
                   {isHe ? "נסה לשנות אזור, תאריך או קטגוריה" : "Try changing area, date or category"}
                 </p>
-                <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); setSortBy("default"); }} style={{ marginTop: 4, padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); setSortBy("default"); }} style={{ marginTop: 4, padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                   {isHe ? "נקה סינונים" : "Clear filters"}
                 </button>
               </>
@@ -457,7 +457,7 @@ export default function SwipeHome() {
               style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
               {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
             </button>
-            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); }}
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); setShowSidebar(false); }}
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {isHe ? "אפס הכל" : "Reset All"}
             </button>

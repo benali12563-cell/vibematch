@@ -22,9 +22,12 @@ export default function HomePage() {
         localStorage.setItem("vm_onboarded", "1");
         setHasSession(true);
         setOnboardingDone(true);
-        if (session.user.email) {
-          setUser({ name: session.user.email.split("@")[0], role: "owner" });
-        }
+        setUser({
+          name: (session.user.user_metadata?.full_name as string | undefined)
+            ?? session.user.email?.split("@")[0]
+            ?? "User",
+          role: "owner",
+        });
       }
       setChecking(false);
     });
