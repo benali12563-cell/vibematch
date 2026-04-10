@@ -2,7 +2,7 @@
 import { use, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { DV, CATS } from "@/lib/constants";
+import { DV, CATS, translateNicheVal } from "@/lib/constants";
 import { loadVendorBySlug, trackVendorView, makeSlug } from "@/lib/supabase/vendors";
 import { createClient } from "@/lib/supabase/client";
 import type { Vendor, CatKey } from "@/types";
@@ -133,7 +133,7 @@ export default function VendorPageClient({ params }: { params: Promise<{ id: str
       <div style={{ minHeight: "100dvh", background: "#000", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16, fontFamily: isHe ? "'Heebo',sans-serif" : "'Manrope','Heebo',sans-serif", direction: isHe ? "rtl" : "ltr" }}>
         <p style={{ color: "#555", fontSize: 15 }}>{isHe ? "הספק לא נמצא" : "Vendor not found"}</p>
         <a href="/" style={{ color: "#00CED1", fontSize: 13, padding: "10px 24px", borderRadius: 20, border: "1px solid rgba(0,206,209,.3)", textDecoration: "none" }}>
-          {isHe ? "← חזרה לדף הבית" : "← Back to Home"}
+          {isHe ? "→ חזרה לדף הבית" : "← Back to Home"}
         </a>
       </div>
     );
@@ -157,7 +157,7 @@ export default function VendorPageClient({ params }: { params: Promise<{ id: str
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a href="/" style={{ textDecoration: "none" }}><Logo sz={18} /></a>
           <a href="/" style={{ fontSize: 11, color: "rgba(255,255,255,.6)", textDecoration: "none", padding: "6px 14px", borderRadius: 20, border: "1px solid rgba(255,255,255,.15)", background: "rgba(0,0,0,.5)", backdropFilter: "blur(12px)" }}>
-            {isHe ? "← חזרה" : "← Back"}
+            {isHe ? "→ חזרה" : "← Back"}
           </a>
         </div>
 
@@ -229,7 +229,7 @@ export default function VendorPageClient({ params }: { params: Promise<{ id: str
             <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 8 }}>{isHe ? "פרטים" : "Details"}</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
               {Object.entries(vendor.niche).map(([k, v]) => (
-                <span key={k} style={{ padding: "5px 13px", borderRadius: 20, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", color: "rgba(255,255,255,.65)", fontSize: 12 }}>{v}</span>
+                <span key={k} style={{ padding: "5px 13px", borderRadius: 20, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", color: "rgba(255,255,255,.65)", fontSize: 12 }}>{translateNicheVal(v, lang)}</span>
               ))}
             </div>
           </div>

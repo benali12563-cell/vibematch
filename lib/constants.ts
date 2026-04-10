@@ -199,3 +199,22 @@ export function catName(k: CatKey, lang: Lang): string {
   return c ? (lang === "en" ? c.en : c.he) : k;
 }
 
+const HE_NICHE_TO_EN: Record<string, string> = {
+  "כשר": "Kosher", "לא כשר": "Non-kosher", "מהדרין": "Mehadrin", "גמיש": "Flexible",
+  "פנים": "Indoor", "חוץ": "Outdoor", "שניהם": "Both",
+  "כלולה": "Included", "לא כלולה": "Not incl.", "כלול": "Incl.", "לא כלול": "Not incl.",
+  "ישיבה": "Seated", "עמידה": "Standing", "סטיישנים": "Stations", "מעורב": "Mixed",
+  "סטילס": "Stills", "וידאו": "Video", "כן": "Yes", "לא": "No",
+  "מגיעה אליכם": "On-site", "בסטודיו": "Studio",
+  "אורתודוקסי": "Orthodox", "קונסרבטיבי": "Conservative", "רפורמי": "Reform", "חילוני": "Secular",
+  "מלא": "Full rig", "בסיסי": "Basic", "לפי בקשה": "On request",
+  "מיניבוס": "Minibus", "אוטובוס": "Bus", "יוקרה": "Luxury",
+  "כלות": "Brides", "אירועים": "Events",
+  "מזרחית": "Mizrahi", "אלקטרונית": "Electronic", "פופ": "Pop", "חסידית": "Hassidic",
+};
+
+export function translateNicheVal(v: string, lang: Lang): string {
+  if (lang === "he") return v;
+  return HE_NICHE_TO_EN[v] ?? v;
+}
+
