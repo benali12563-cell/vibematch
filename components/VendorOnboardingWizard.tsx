@@ -154,7 +154,7 @@ export default function VendorOnboardingWizard({ isHe, onComplete }: Props) {
               {isHe ? "המשך ←" : "Continue →"}
             </button>
             <button onClick={() => setStep(1)} style={{ display: "block", width: "100%", marginTop: 10, background: "none", border: "none", color: "#444", fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "8px 0" }}>
-              ← {isHe ? "חזרה" : "Back"}
+              {isHe ? "→ חזרה" : "← Back"}
             </button>
           </div>
         )}
@@ -207,7 +207,7 @@ export default function VendorOnboardingWizard({ isHe, onComplete }: Props) {
               {vGallery.length > 0 ? (isHe ? "🚀 בנו את הפרופיל שלי!" : "🚀 Build my profile!") : (isHe ? "דלגו — אוסיף אח\"כ ←" : "Skip — add later →")}
             </button>
             <button onClick={() => setStep(2)} style={{ display: "block", width: "100%", marginTop: 10, background: "none", border: "none", color: "#444", fontSize: 13, cursor: "pointer", fontFamily: "inherit", padding: "8px 0" }}>
-              ← {isHe ? "חזרה" : "Back"}
+              {isHe ? "→ חזרה" : "← Back"}
             </button>
           </div>
         )}

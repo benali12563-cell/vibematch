@@ -30,18 +30,16 @@ export default function PackageModal({ onClose }: Props) {
   // Build package: pick best vendor per category within budget + available on date
   const pkg = useMemo(() => {
     if (!generated) return [];
-    const allVendors = [
-      ...PACK_CATS.flatMap((cat) => DV[cat] ?? []),
-      ...publishedVendors,
-    ];
     const result: { cat: CatKey; vendor: Vendor }[] = [];
-    let remaining = budgetNum > 0 ? budgetNum : 999999;
     const catBudgets: Partial<Record<CatKey, number>> = {
       venues: 0.35, food: 0.25, music: 0.15, photo: 0.12, beauty: 0.08, lighting: 0.05,
     };
 
     for (const cat of PACK_CATS) {
-      const catVendors = allVendors.filter((v) => (v.catKey ?? cat) === cat || DV[cat]?.some((dv) => dv.name === v.name));
+      const catVendors = [
+        ...(DV[cat] ?? []),
+        ...publishedVendors.filter((v) => v.catKey === cat),
+      ];
       const available = date
         ? catVendors.filter((v) => !(vendorAvailability[v.name] ?? []).includes(date))
         : catVendors;

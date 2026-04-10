@@ -24,7 +24,7 @@ export default function OnboardingFlow() {
   const progress = ((step + 1) / STEPS) * 100;
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", direction: isHe ? "rtl" : "ltr", fontFamily: isHe ? "'Heebo'" : "'Outfit'" }}>
+    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", direction: isHe ? "rtl" : "ltr", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo',sans-serif" }}>
       {/* Progress bar */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,.05)" }}>
         <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#00CED1,#0099aa)", transition: "width .4s ease" }} />

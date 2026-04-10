@@ -3,11 +3,13 @@ import { useApp } from "@/lib/context";
 import { CATS, DV } from "@/lib/constants";
 
 export default function ReadinessScore() {
-  const { likes, lang, tlItems, budget } = useApp();
+  const { likes, lang, tlItems, budget, publishedVendors } = useApp();
   const isHe = lang === "he";
 
   // Calculate score out of 100
-  const catsWithLike = CATS.filter((c) => (DV[c.k] ?? []).some((v) => likes.includes(v.name))).length;
+  const catsWithLike = CATS.filter((c) =>
+    [...(DV[c.k] ?? []), ...publishedVendors.filter((v) => v.catKey === c.k)].some((v) => likes.includes(v.name))
+  ).length;
   const catScore = Math.round((catsWithLike / CATS.length) * 50);
   const budgetScore = budget.total > 0 ? 20 : 0;
   const tlScore = tlItems.length > 0 ? 15 : 0;
