@@ -52,6 +52,22 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
     }
   }
 
+  // Translate common Hebrew niche values for English display
+  const HE_TO_EN: Record<string, string> = {
+    "כשר": "Kosher", "לא כשר": "Non-kosher", "מהדרין": "Mehadrin", "גמיש": "Flexible",
+    "פנים": "Indoor", "חוץ": "Outdoor", "שניהם": "Both",
+    "כלולה": "Included", "לא כלולה": "Not incl.",
+    "ישיבה": "Seated", "עמידה": "Standing", "סטיישנים": "Stations", "מעורב": "Mixed",
+    "סטילס": "Stills", "וידאו": "Video", "כן": "Yes", "לא": "No",
+    "כלול": "Incl.", "לא כלול": "Not incl.",
+    "מגיעה אליכם": "On-site", "בסטודיו": "Studio",
+    "אורתודוקסי": "Orthodox", "קונסרבטיבי": "Conservative", "רפורמי": "Reform", "חילוני": "Secular",
+  };
+  function translateNiche(v: string): string {
+    if (isHe) return v;
+    return HE_TO_EN[v] ?? v;
+  }
+
   const src = imgs[imgIdx];
 
   return (
@@ -128,7 +144,7 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
               {Object.keys(ni).length > 0 && (
                 <div className="tr-3" style={{ display: "flex", gap: 5, marginTop: 8, flexWrap: "wrap" }}>
                   {Object.entries(ni).slice(0, 3).map(([k, v]) => (
-                    <span key={k} style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.09)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", fontSize: 10, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{v}</span>
+                    <span key={k} style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.09)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", fontSize: 10, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{translateNiche(v)}</span>
                   ))}
                 </div>
               )}
