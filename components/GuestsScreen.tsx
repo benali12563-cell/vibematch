@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, allVendors } from "@/lib/constants";
+import { T, allVendors, SITE_URL } from "@/lib/constants";
 import Nav from "./Nav";
 import B from "./B";
 import Inp from "./Inp";
@@ -25,7 +25,7 @@ export default function GuestsScreen() {
   const team = allVendors().filter((v) => likes.includes(v.name));
 
   const slug = encodeURIComponent((user?.name ?? "").replace(/\s+/g, "-"));
-  const inviteLink = `${typeof window !== "undefined" ? window.location.origin : "https://vibematch.co.il"}/invite/${slug}`;
+  const inviteLink = `${SITE_URL}/invite/${slug}`;
 
   // Load RSVPs from Supabase whenever we have a valid slug
   useEffect(() => {

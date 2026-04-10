@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DV, CATS } from "@/lib/constants";
+import { DV, CATS, SITE_URL } from "@/lib/constants";
 import { makeSlug } from "@/lib/supabase/vendors";
 import type { Vendor, CatKey } from "@/types";
 import VendorPageClient from "./VendorPageClient";
@@ -40,7 +40,7 @@ export async function generateMetadata(
   const description = vendor.desc
     ? vendor.desc.slice(0, 155)
     : `${vendor.name} · ${vendor.sub} · ${vendor.city} · ${vendor.price}`;
-  const image = vendor.imgs?.[0] ?? "https://vibematch-nine.vercel.app/og-default.png";
+  const image = vendor.imgs?.[0] ?? `${SITE_URL}/og-default.png`;
 
   return {
     title,
@@ -60,7 +60,7 @@ export async function generateMetadata(
       images: [image],
     },
     alternates: {
-      canonical: `https://vibematch-nine.vercel.app/v/${id}`,
+      canonical: `${SITE_URL}/v/${id}`,
     },
   };
 }

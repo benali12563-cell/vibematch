@@ -121,7 +121,7 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
 
   function sendMsg() {
     if (!msg.trim() || !thread) return;
-    const newMsg: ChatMessage = { id: uid(), from: "client", text: msg.trim(), ts: Date.now(), senderName: user?.name ?? (isHe ? "אתה" : "You") };
+    const newMsg: ChatMessage = { id: uid(), from: "client", text: msg.trim(), ts: Date.now(), senderName: user?.name ?? (isHe ? "אורח" : "Guest") };
     const updated: ChatThread = { ...thread, messages: [...thread.messages, newMsg], unreadVendor: thread.unreadVendor + 1 };
     sendLocalNotification(
       vendor.name,

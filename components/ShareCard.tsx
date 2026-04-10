@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
-import { CATS, DV } from "@/lib/constants";
+import { CATS, DV, SITE_URL } from "@/lib/constants";
 
 export default function ShareCard() {
   const { lang, likes, eventInfo, budget } = useApp();
@@ -11,13 +11,13 @@ export default function ShareCard() {
 
   const likedCats = CATS.filter((c) => (DV[c.k] ?? []).some((v) => likes.includes(v.name)));
   const totalLiked = likes.length;
-  const eventDate = eventInfo.date ? new Date(eventInfo.date).toLocaleDateString("he-IL") : "";
+  const eventDate = eventInfo.date ? new Date(eventInfo.date).toLocaleDateString(isHe ? "he-IL" : "en-US") : "";
   const days = eventInfo.date ? Math.ceil((new Date(eventInfo.date).getTime() - Date.now()) / 86400000) : null;
 
   function share() {
     const text = isHe
-      ? `🎉 אני מתכנן אירוע עם VibeMatch!\n❤️ ${totalLiked} ספקים שמורים\n📅 ${eventDate ? eventDate : "תאריך בקרוב"}\n\n👉 vibematch-nine.vercel.app\n\nבוא/י תעזרי לי לבחור!`
-      : `🎉 Planning my event with VibeMatch!\n❤️ ${totalLiked} vendors saved\n📅 ${eventDate || "Date TBD"}\n\n👉 vibematch-nine.vercel.app\n\nHelp me choose!`;
+      ? `🎉 אני מתכנן אירוע עם VibeMatch!\n❤️ ${totalLiked} ספקים שמורים\n📅 ${eventDate ? eventDate : "תאריך בקרוב"}\n\n👉 ${SITE_URL}\n\nבוא/י תעזרי לי לבחור!`
+      : `🎉 Planning my event with VibeMatch!\n❤️ ${totalLiked} vendors saved\n📅 ${eventDate || "Date TBD"}\n\n👉 ${SITE_URL}\n\nHelp me choose!`;
     if (navigator.share) {
       navigator.share({ title: "VibeMatch", text });
     } else {
@@ -68,7 +68,7 @@ export default function ShareCard() {
                 {likedCats.length === 0 && <span style={{ color: "#444", fontSize: 11 }}>{isHe ? "עדיין בתהליך..." : "Still planning..."}</span>}
               </div>
               <div style={{ padding: "10px 20px 14px", direction: isHe ? "rtl" : "ltr" }}>
-                <p style={{ color: "#333", fontSize: 10 }}>vibematch-nine.vercel.app</p>
+                <p style={{ color: "#333", fontSize: 10 }}>{SITE_URL.replace("https://", "")}</p>
               </div>
             </div>
 

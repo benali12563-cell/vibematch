@@ -165,7 +165,8 @@ export default function SwipeHome() {
               {v.niche?.ceremonyType && (activeCat === "ceremony" || ceremonyFilter) && (
                 <div style={{ position: "absolute", top: selectedDate ? 78 : 52, [isHe ? "right" : "left"]: 14, zIndex: 7, pointerEvents: "none" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 10, background: "rgba(0,206,209,.15)", border: "1px solid rgba(0,206,209,.35)", color: "#00e5e8", fontSize: 10, fontWeight: 700, backdropFilter: "blur(8px)" }}>
-                    {v.niche.ceremonyType === "אורתודוקסי" ? "🕍" : v.niche.ceremonyType === "חילוני" ? "⚖️" : v.niche.ceremonyType === "רפורמי" ? "🌿" : "✡️"} {v.niche.ceremonyType}
+                    {v.niche.ceremonyType === "אורתודוקסי" ? "🕍" : v.niche.ceremonyType === "חילוני" ? "⚖️" : v.niche.ceremonyType === "רפורמי" ? "🌿" : "✡️"}{" "}
+                    {isHe ? v.niche.ceremonyType : (v.niche.ceremonyType === "אורתודוקסי" ? "Orthodox" : v.niche.ceremonyType === "חילוני" ? "Secular" : v.niche.ceremonyType === "רפורמי" ? "Reform" : "Conservative")}
                   </span>
                 </div>
               )}

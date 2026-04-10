@@ -77,6 +77,8 @@ export default function Nav() {
           <button
             key={tab.path}
             onClick={() => router.push(tab.path)}
+            aria-label={isHe ? tab.labelHe : tab.labelEn}
+            aria-current={active ? "page" : undefined}
             style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
               background: "none", border: "none", cursor: "pointer",

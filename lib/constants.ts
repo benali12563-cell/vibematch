@@ -109,11 +109,11 @@ export const BUDGET_RANGES = [
 ];
 
 export const BADGES = [
-  { k: "first_like", label: "❤️ לייק ראשון", points: 10 },
-  { k: "five_likes", label: "🔥 5 לייקים", points: 50 },
-  { k: "event_created", label: "🎉 יצרת אירוע", points: 100 },
-  { k: "rsvp_sent", label: "📨 שלחת הזמנות", points: 75 },
-  { k: "profile_complete", label: "✅ פרופיל מלא", points: 25 },
+  { k: "first_like",       he: "❤️ לייק ראשון",      en: "❤️ First Like",         points: 10 },
+  { k: "five_likes",       he: "🔥 5 לייקים",          en: "🔥 5 Likes",            points: 50 },
+  { k: "event_created",   he: "🎉 יצרת אירוע",        en: "🎉 Event Created",       points: 100 },
+  { k: "rsvp_sent",       he: "📨 שלחת הזמנות",       en: "📨 RSVPs Sent",          points: 75 },
+  { k: "profile_complete",he: "✅ פרופיל מלא",         en: "✅ Profile Complete",    points: 25 },
 ];
 
 function mg(n: string, s: string, p: string, r: number, c: string, rv: number, d: string, cp: string, imgs: string[], ni: Record<string, string>, deal: { text: string; endsIn: number } | null, recs: string[], area: Area): Vendor {
