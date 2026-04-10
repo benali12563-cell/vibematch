@@ -20,7 +20,7 @@ import PackageModal from "./PackageModal";
 
 const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   venues: [
-    { he: "אולמות", en: "Halls" }, { he: "ווילות", en: "Villas" },
+    { he: "אולמות", en: "Halls" }, { he: "וילות", en: "Villas" },
     { he: "לופטים", en: "Lofts" }, { he: "מסעדות", en: "Restaurants" },
     { he: "מתחמי השכרה", en: "Venues for Rent" }, { he: "גינות אירועים", en: "Gardens" },
   ],
