@@ -6,9 +6,7 @@ import { T, CATS, NICHE_FIELDS, SITE_URL, translateNicheVal } from "@/lib/consta
 import B from "./B";
 import Inp from "./Inp";
 import Logo from "./Logo";
-import VLinks from "./VLinks";
 import AvailabilityCalendar from "./AvailabilityCalendar";
-import VendorOnboardingWizard from "./VendorOnboardingWizard";
 import VendorGoLiveModal from "./VendorGoLiveModal";
 import SwipeCardView from "./SwipeCardView";
 import { saveVendorProfile, loadVendorBySlug, makeSlug } from "@/lib/supabase/vendors";
@@ -45,7 +43,6 @@ export default function VendorDash() {
   const [dealText, setDealText] = useState("");
   const [dealHours, setDealHours] = useState(48);
   const [pIdx, setPIdx] = useState(0);
-  const [invC, setInvC] = useState(false);
   const [published, setPublished] = useState(false);
   const [vendorName, setVendorName] = useState("");
   const [vendorPin, setVendorPin] = useState("");
@@ -53,7 +50,6 @@ export default function VendorDash() {
   const [dbLeadsLoading, setDbLeadsLoading] = useState(false);
   const [dbLeadsError, setDbLeadsError] = useState(false);
   const [replyMsgs, setReplyMsgs] = useState<Record<string, string>>({});
-  const [showWizard, setShowWizard] = useState(false);
   const [wizardLoaded, setWizardLoaded] = useState(false);
   const [showGoLive, setShowGoLive] = useState(false);
   const fRef = useRef<HTMLInputElement>(null);
@@ -68,11 +64,10 @@ export default function VendorDash() {
   useEffect(() => {
     if (!user || user.role !== "vendor") { setWizardLoaded(true); return; }
     const slug = makeSlug(user.name);
-    if (!slug) { setWizardLoaded(true); setShowWizard(true); return; }
+    if (!slug) { setWizardLoaded(true); return; }
     loadVendorBySlug(slug).then((v) => {
       if (!v) {
-        // New vendor — show wizard unless businessName already set (returning session)
-        if (!vProfile.businessName) setShowWizard(true);
+        // New vendor — edit tab has completeness bar to guide them
       } else {
         // Returning vendor — hydrate state from Supabase
         if (v.desc && !vAbout) setVAbout(v.desc);
@@ -153,19 +148,6 @@ export default function VendorDash() {
           </p>
         </div>
       </div>
-    );
-  }
-
-  // Show wizard for new vendors
-  if (showWizard && wizardLoaded) {
-    return (
-      <VendorOnboardingWizard
-        isHe={isHe}
-        onComplete={() => {
-          setShowWizard(false);
-          setTab("edit");
-        }}
-      />
     );
   }
 
@@ -286,103 +268,72 @@ export default function VendorDash() {
         </div>
 
         {tab === "preview" && (
-          <div style={{ animation: "fadeIn .3s" }}>
+          /* Full-screen card — exact client feed experience */
+          <div style={{ position: "relative", height: "calc(100dvh - 92px)", overflow: "hidden", animation: "fadeIn .3s" }}>
+            <SwipeCardView
+              vendor={previewVendor}
+              imgIdx={pIdx}
+              setImgIdx={(fn) => setPIdx((i) => fn(i))}
+            />
 
-            {/* Action bar */}
-            {publicLink && (
-              <div style={{ padding: "10px 14px 0" }}>
-                <B s="sm" v="accent" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText(publicLink); showToast(isHe ? "🔗 לינק הועתק!" : "🔗 Link copied!"); }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 14 }}>link</span>
-                  {isHe ? "העתק לינק לפרופיל" : "Copy profile link"}
-                </B>
-              </div>
-            )}
-
-            {/* Live-preview label */}
-            <div style={{ padding: "10px 16px 4px", display: "flex", alignItems: "center", gap: 6 }}>
+            {/* Live/Draft badge */}
+            <div style={{
+              position: "absolute", top: 12,
+              ...(isHe ? { right: 14 } : { left: 14 }),
+              zIndex: 10, display: "flex", alignItems: "center", gap: 5,
+              background: "rgba(0,0,0,.6)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,.12)", borderRadius: 20, padding: "5px 11px",
+            }}>
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: published ? "#00e87a" : "#FF4444", animation: published ? "pulse 2s infinite" : "none" }} />
-              <p style={{ color: published ? "#00e87a" : "#FF4444", fontSize: 11, fontWeight: 700, margin: 0 }}>
-                {published ? (isHe ? "פרופיל חי — ככה הלקוחות רואים אותך" : "Live — this is what clients see") : (isHe ? "טיוטה — לחצו פרסם כדי לפרסם" : "Draft — press Publish to go live")}
-              </p>
+              <span style={{ color: published ? "#00e87a" : "#FF4444", fontSize: 10, fontWeight: 700 }}>
+                {published ? (isHe ? "חי" : "Live") : (isHe ? "טיוטה" : "Draft")}
+              </span>
             </div>
 
-            {/* Feed-exact preview using SwipeCardView — full width + tall like client view */}
-            <div style={{ position: "relative", height: "calc(100dvh - 196px)", overflow: "hidden" }}>
-              <SwipeCardView
-                vendor={previewVendor}
-                imgIdx={pIdx}
-                setImgIdx={(fn) => setPIdx((i) => fn(i))}
-              />
-              {/* Visual-only grey category chips floating at bottom */}
-              <div
-                style={{
-                  position: "absolute", bottom: 0, left: 0, right: 0,
-                  display: "flex", gap: 6, padding: "10px 14px 12px",
-                  overflowX: "auto", zIndex: 20,
-                  background: "linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 100%)",
-                }}
-                className="hide-scrollbar"
-              >
-                {CATS.map((c) => (
-                  <span
-                    key={c.k}
-                    style={{
-                      padding: "5px 14px", borderRadius: 20,
-                      border: "1px solid rgba(255,255,255,.1)",
-                      background: "rgba(0,0,0,.35)",
-                      backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                      color: "rgba(255,255,255,.3)",
-                      fontSize: 11, flexShrink: 0,
-                      pointerEvents: "none", userSelect: "none",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    {isHe ? c.he : c.en}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Stats */}
-            {(() => {
-              const leads = (dbLeads.length > 0 ? dbLeads : chatThreads.filter((ct) => ct.vendorName === vname)).length;
-              const busyDates = (vendorAvailability[vname] ?? []).length;
-              const stats = [
-                { l: isHe ? "💬 לידים" : "💬 Leads", v: leads, color: "#a855f7", real: true },
-                { l: isHe ? "📅 עסוק" : "📅 Busy", v: busyDates, color: "#FFD700", real: true },
-                { l: isHe ? "📸 תמונות" : "📸 Photos", v: vGallery.length, color: "#00CED1", real: true },
-                { l: isHe ? "✅ שדות" : "✅ Fields", v: Object.keys(builtNiche).length, color: "#00e87a", real: true },
-              ];
-              return (
-                <div style={{ margin: "0 14px 8px", padding: "12px 14px", background: "rgba(255,255,255,.02)", borderRadius: 14, border: "1px solid rgba(255,255,255,.05)" }}>
-                  <p style={{ color: "#555", fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", margin: "0 0 10px" }}>{isHe ? "סטטיסטיקות" : "Stats"}</p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
-                    {stats.map((s) => (
-                      <div key={s.l} style={{ textAlign: "center" }}>
-                        <div style={{ color: s.color, fontSize: 18, fontWeight: 900 }}>{s.v}</div>
-                        <div style={{ color: "#555", fontSize: 9, marginTop: 2 }}>{s.l}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {leads > 0 && <button onClick={() => setTab("leads")} style={{ marginTop: 10, width: "100%", padding: "7px 0", borderRadius: 8, border: "1px solid rgba(168,85,247,.3)", background: "rgba(168,85,247,.08)", color: "#a855f7", fontWeight: 700, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>💬 {isHe ? `ראה ${leads} לידים` : `View ${leads} leads`}</button>}
-                </div>
-              );
-            })()}
+            {/* Copy link button */}
             {publicLink && (
-              <div style={{ padding: "8px 14px" }}>
-                <B v="fire" style={{ width: "100%" }} onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: vProfile.businessName || user?.name || "VibeMatch", url: publicLink }).catch(() => {});
-                  } else {
-                    navigator.clipboard?.writeText(publicLink);
-                    setInvC(true);
-                    setTimeout(() => setInvC(false), 2000);
-                  }
-                }}>
-                  {invC ? (isHe ? "✓ הלינק הועתק!" : "✓ Link copied!") : (isHe ? "📤 שתף את הפרופיל שלך" : "📤 Share your profile")}
-                </B>
-              </div>
+              <button
+                onClick={() => { navigator.clipboard?.writeText(publicLink); showToast(isHe ? "🔗 לינק הועתק!" : "🔗 Link copied!"); }}
+                style={{
+                  position: "absolute", top: 12,
+                  ...(isHe ? { left: 14 } : { right: 14 }),
+                  zIndex: 10, background: "rgba(0,0,0,.6)",
+                  backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255,255,255,.12)", color: "#fff",
+                  borderRadius: 20, padding: "5px 12px",
+                  fontSize: 10, fontWeight: 700, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 4, fontFamily: "inherit",
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 12 }}>link</span>
+                {isHe ? "העתק לינק" : "Copy link"}
+              </button>
             )}
+
+            {/* Grey category chips row — visual only, floating at bottom */}
+            <div
+              style={{
+                position: "absolute", bottom: 0, left: 0, right: 0,
+                display: "flex", gap: 6, padding: "10px 14px 14px",
+                overflowX: "auto", zIndex: 20,
+                background: "linear-gradient(0deg,rgba(0,0,0,.7) 0%,transparent 100%)",
+              }}
+              className="hide-scrollbar"
+            >
+              {CATS.map((c) => (
+                <span key={c.k} style={{
+                  padding: "5px 14px", borderRadius: 20,
+                  border: "1px solid rgba(255,255,255,.1)",
+                  background: "rgba(0,0,0,.4)",
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                  color: "rgba(255,255,255,.3)",
+                  fontSize: 11, flexShrink: 0,
+                  pointerEvents: "none", userSelect: "none", fontFamily: "inherit",
+                }}>
+                  {isHe ? c.he : c.en}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
