@@ -306,33 +306,41 @@ export default function VendorDash() {
               </p>
             </div>
 
-            {/* Feed-exact preview using SwipeCardView */}
-            <div style={{ margin: "0 14px 0", height: "calc(100vw - 28px)", maxHeight: 500, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.07)" }}>
+            {/* Feed-exact preview using SwipeCardView — full width + tall like client view */}
+            <div style={{ position: "relative", height: "calc(100dvh - 196px)", overflow: "hidden" }}>
               <SwipeCardView
                 vendor={previewVendor}
                 imgIdx={pIdx}
                 setImgIdx={(fn) => setPIdx((i) => fn(i))}
               />
-            </div>
-
-            {/* Visual-only grey category chips (non-interactive) */}
-            <div style={{ display: "flex", gap: 6, padding: "10px 14px 12px", overflowX: "auto" }} className="hide-scrollbar">
-              {CATS.map((c) => (
-                <span
-                  key={c.k}
-                  style={{
-                    padding: "5px 14px", borderRadius: 20,
-                    border: "1px solid rgba(255,255,255,.07)",
-                    background: "rgba(255,255,255,.03)",
-                    color: "rgba(255,255,255,.18)",
-                    fontSize: 11, flexShrink: 0,
-                    pointerEvents: "none", userSelect: "none",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {isHe ? c.he : c.en}
-                </span>
-              ))}
+              {/* Visual-only grey category chips floating at bottom */}
+              <div
+                style={{
+                  position: "absolute", bottom: 0, left: 0, right: 0,
+                  display: "flex", gap: 6, padding: "10px 14px 12px",
+                  overflowX: "auto", zIndex: 20,
+                  background: "linear-gradient(0deg,rgba(0,0,0,.65) 0%,transparent 100%)",
+                }}
+                className="hide-scrollbar"
+              >
+                {CATS.map((c) => (
+                  <span
+                    key={c.k}
+                    style={{
+                      padding: "5px 14px", borderRadius: 20,
+                      border: "1px solid rgba(255,255,255,.1)",
+                      background: "rgba(0,0,0,.35)",
+                      backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                      color: "rgba(255,255,255,.3)",
+                      fontSize: 11, flexShrink: 0,
+                      pointerEvents: "none", userSelect: "none",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {isHe ? c.he : c.en}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Stats */}
