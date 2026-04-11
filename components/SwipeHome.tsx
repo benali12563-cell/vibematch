@@ -171,12 +171,6 @@ export default function SwipeHome() {
                 </div>
               )}
 
-              {/* Hot badge — real rating based */}
-              {isHot && (
-                <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, pointerEvents: "none" }}>
-                  <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>
-                </div>
-              )}
 
               {/* Right-side action column (TikTok/Reels style) */}
               {(() => {
