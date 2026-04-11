@@ -286,18 +286,14 @@ export default function VendorDash() {
           <div style={{ animation: "fadeIn .3s" }}>
 
             {/* Action bar */}
-            <div style={{ padding: "10px 14px 0", display: "flex", gap: 8, direction: dir }}>
-              <B s="sm" v="ghost" style={{ flex: 1 }} onClick={() => router.push("/")}>
-                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
-                {isHe ? "דפדף כלקוח" : "Browse as client"}
-              </B>
-              {publicLink && (
-                <B s="sm" v="accent" style={{ flex: 1 }} onClick={() => { navigator.clipboard?.writeText(publicLink); showToast(isHe ? "🔗 לינק הועתק!" : "🔗 Link copied!"); }}>
+            {publicLink && (
+              <div style={{ padding: "10px 14px 0" }}>
+                <B s="sm" v="accent" style={{ width: "100%" }} onClick={() => { navigator.clipboard?.writeText(publicLink); showToast(isHe ? "🔗 לינק הועתק!" : "🔗 Link copied!"); }}>
                   <span className="material-symbols-outlined" style={{ fontSize: 14 }}>link</span>
-                  {isHe ? "העתק לינק" : "Copy link"}
+                  {isHe ? "העתק לינק לפרופיל" : "Copy profile link"}
                 </B>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Live-preview label */}
             <div style={{ padding: "10px 16px 4px", display: "flex", alignItems: "center", gap: 6 }}>

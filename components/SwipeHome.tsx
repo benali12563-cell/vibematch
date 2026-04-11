@@ -286,12 +286,9 @@ export default function SwipeHome() {
             </span>
           </div>
 
-          {/* Right: hot + profile */}
+          {/* Right: hot */}
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
             <button onClick={() => setShowHotSheet(true)} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,68,68,.12)", border: "1px solid rgba(255,68,68,.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 10px rgba(255,68,68,.2)" }}>🔥</button>
-            <button onClick={() => router.push("/profile")} style={{ width: 34, height: 34, borderRadius: 10, background: user ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.1)", border: user ? "1.5px solid rgba(0,206,209,.4)" : "1.5px solid rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: user ? "0 2px 10px rgba(0,206,209,.2)" : "none" }}>
-              {user ? "👤" : "🙂"}
-            </button>
           </div>
         </div>
       </header>
