@@ -10,6 +10,7 @@ import VLinks from "./VLinks";
 import AvailabilityCalendar from "./AvailabilityCalendar";
 import VendorOnboardingWizard from "./VendorOnboardingWizard";
 import VendorGoLiveModal from "./VendorGoLiveModal";
+import SwipeCardView from "./SwipeCardView";
 import { saveVendorProfile, loadVendorBySlug, makeSlug } from "@/lib/supabase/vendors";
 import { loadVendorLeads, markLeadReadVendor, saveLeadMessage } from "@/lib/supabase/leads";
 import type { Vendor, ChatThread, ChatMessage } from "@/types";
@@ -305,76 +306,33 @@ export default function VendorDash() {
               </p>
             </div>
 
-            {/* Public-page style preview */}
-            <div style={{ margin: "0 14px 12px", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(255,255,255,.07)", background: "#0a0a0a" }}>
+            {/* Feed-exact preview using SwipeCardView */}
+            <div style={{ margin: "0 14px 0", height: "calc(100vw - 28px)", maxHeight: 500, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,.07)" }}>
+              <SwipeCardView
+                vendor={previewVendor}
+                imgIdx={pIdx}
+                setImgIdx={(fn) => setPIdx((i) => fn(i))}
+              />
+            </div>
 
-              {/* Hero */}
-              <div style={{ position: "relative", height: "52vw", maxHeight: 280, background: "#0a0a0a" }}>
-                {vGallery.length > 0 ? (
-                  <>
-                    <img src={vGallery[pIdx % vGallery.length]?.src} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                    {vGallery.length > 1 && (
-                      <>
-                        <div onClick={() => setPIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 2 }} />
-                        <div onClick={() => setPIdx((i) => Math.min(vGallery.length - 1, i + 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 2 }} />
-                        <div style={{ position: "absolute", top: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 4, zIndex: 3 }}>
-                          {vGallery.map((_, i) => (
-                            <div key={i} style={{ width: pIdx === i ? 20 : 4, height: 3, borderRadius: 2, background: pIdx === i ? "#00CED1" : "rgba(255,255,255,.3)", transition: "all .2s" }} />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer" }} onClick={() => setTab("edit")}>
-                    <span style={{ fontSize: 40, opacity: .3 }}>📷</span>
-                    <p style={{ color: "#444", fontSize: 12 }}>{isHe ? "לחצו \'עריכה\' להוספת תמונות" : "Tap 'Edit' to add photos"}</p>
-                  </div>
-                )}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 55%)", pointerEvents: "none", zIndex: 1 }} />
-                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "40px 16px 14px", zIndex: 2, direction: isHe ? "rtl" : "ltr" }}>
-                  {vProfile.category && (
-                    <span style={{ display: "inline-block", padding: "2px 10px", borderRadius: 8, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", fontSize: 10, fontWeight: 700, marginBottom: 6 }}>
-                      {CATS.find(c => c.k === vProfile.category)?.[isHe ? "he" : "en"] ?? vProfile.category}
-                    </span>
-                  )}
-                  <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 900, margin: "0 0 4px", lineHeight: 1.1 }}>{previewVendor.name || (isHe ? "שם העסק" : "Business Name")}</h3>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ color: "#FFD700", fontSize: 12 }}>★★★★★</span>
-                    {vProfile.businessPrice && <span style={{ color: "#00CED1", fontWeight: 900, fontSize: 15 }}>{vProfile.businessPrice}</span>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Gallery strip */}
-              {vGallery.length > 1 && (
-                <div style={{ display: "flex", gap: 5, padding: "8px 12px", overflowX: "auto", background: "#0a0a0a" }}>
-                  {vGallery.map((g, i) => (
-                    <img key={g.id} src={g.src} onClick={() => setPIdx(i)} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8, flexShrink: 0, border: `1.5px solid ${pIdx === i ? "#00CED1" : "rgba(255,255,255,.06)"}`, cursor: "pointer" }} alt="" />
-                  ))}
-                </div>
-              )}
-
-              {/* Info section */}
-              <div style={{ padding: "12px 16px 16px", direction: isHe ? "rtl" : "ltr" }}>
-                {vAbout && <p style={{ color: "rgba(255,255,255,.75)", fontSize: 13, lineHeight: 1.7, marginBottom: 12 }}>{vAbout}</p>}
-
-                {Object.keys(builtNiche).length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                    {Object.entries(builtNiche).map(([k, v]) => (
-                      <span key={k} style={{ padding: "4px 12px", borderRadius: 20, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)", color: "rgba(255,255,255,.65)", fontSize: 11 }}>{translateNicheVal(v, lang)}</span>
-                    ))}
-                  </div>
-                )}
-
-                <VLinks vendor={previewVendor} />
-
-                {!vProfile.businessName && (
-                  <button onClick={() => setTab("edit")} style={{ marginTop: 12, width: "100%", padding: "12px 0", borderRadius: 12, border: "2px dashed rgba(0,206,209,.3)", background: "transparent", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-                    ✏️ {isHe ? "השלם את הפרופיל" : "Complete your profile"}
-                  </button>
-                )}
-              </div>
+            {/* Visual-only grey category chips (non-interactive) */}
+            <div style={{ display: "flex", gap: 6, padding: "10px 14px 12px", overflowX: "auto" }} className="hide-scrollbar">
+              {CATS.map((c) => (
+                <span
+                  key={c.k}
+                  style={{
+                    padding: "5px 14px", borderRadius: 20,
+                    border: "1px solid rgba(255,255,255,.07)",
+                    background: "rgba(255,255,255,.03)",
+                    color: "rgba(255,255,255,.18)",
+                    fontSize: 11, flexShrink: 0,
+                    pointerEvents: "none", userSelect: "none",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {isHe ? c.he : c.en}
+                </span>
+              ))}
             </div>
 
             {/* Stats */}
