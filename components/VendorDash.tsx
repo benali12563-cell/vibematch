@@ -94,6 +94,7 @@ export default function VendorDash() {
           ...(v.website ? { website: v.website } : {}),
           ...(v.google ? { google: v.google } : {}),
           ...(v.waze ? { waze: v.waze } : {}),
+          ...(v.observance ? { observance: v.observance } : {}),
           // Niche fields (only restore if not already set in session)
           ...Object.fromEntries(
             Object.entries(v.niche ?? {}).filter(([k]) => !p[k])
@@ -231,6 +232,7 @@ export default function VendorDash() {
               website: vProfile.website, google: vProfile.google, waze: vProfile.waze,
               catKey: vProfile.category as import("@/types").CatKey,
               isPublished: true,
+              observance: vProfile.observance || undefined,
             };
             // Add to context deck immediately (in-session)
             setPublishedVendors((p) => [...p.filter((v) => v.name !== bizName), newVendor]);
@@ -661,6 +663,28 @@ export default function VendorDash() {
             <p style={{ color: "#666", fontSize: 12, marginBottom: 4 }}>{t.coupon}</p>
             <Inp value={coupon} onChange={setCoupon} style={{ marginBottom: 20 }} />
 
+            {/* ── OBSERVANCE ── */}
+            <div style={{ background: "rgba(255,255,255,.02)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 14, padding: "14px 16px", marginBottom: 20 }}>
+              <p style={{ color: "#00CED1", fontWeight: 800, fontSize: 13, margin: "0 0 4px" }}>{isHe ? "🌍 לאיזה קהל אתם מתאימים?" : "🌍 Which audience do you serve?"}</p>
+              <p style={{ color: "#555", fontSize: 11, marginBottom: 12 }}>{isHe ? "לקוחות יוכלו לסנן לפי אורח חיים — עוזר לכם להגיע לקהל הנכון" : "Clients filter by lifestyle — helps you reach the right audience"}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {[
+                  { v: "הכל",   labelHe: "🌍 כולם",   labelEn: "🌍 All" },
+                  { v: "חילוני", labelHe: "☀️ חילוני", labelEn: "☀️ Secular" },
+                  { v: "דתי",   labelHe: "✡️ דתי",    labelEn: "✡️ Religious" },
+                  { v: "חרדי",  labelHe: "🕍 חרדי",   labelEn: "🕍 Haredi" },
+                ].map((opt) => {
+                  const sel = vProfile.observance === opt.v;
+                  return (
+                    <button key={opt.v} onClick={() => setVProfile((p) => ({ ...p, observance: opt.v }))}
+                      style={{ padding: "8px 16px", borderRadius: 20, border: `1.5px solid ${sel ? "rgba(0,229,232,.55)" : "rgba(255,255,255,.12)"}`, background: sel ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", color: sel ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: sel ? 700 : 500, cursor: "pointer", fontFamily: "inherit", transition: "all .12s" }}>
+                      {isHe ? opt.labelHe : opt.labelEn}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* ── LAST-MINUTE DEAL ── */}
             <div style={{ background: "rgba(255,68,68,.04)", border: "1px solid rgba(255,68,68,.12)", borderRadius: 14, padding: "14px 16px", marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -737,6 +761,7 @@ export default function VendorDash() {
                 waze: vProfile.waze,
                 videoUrl: videoUrl.trim() || undefined,
                 deal: dealText.trim() ? { text: dealText.trim(), endsIn: dealHours } : null,
+                observance: vProfile.observance || undefined,
               };
               const { error } = await saveVendorProfile(saveVendor);
               showToast(error ? (isHe ? "✅ נשמר (לא מחובר)" : "✅ Saved (offline)") : (isHe ? "✅ הפרופיל נשמר!" : "✅ Profile saved!"));

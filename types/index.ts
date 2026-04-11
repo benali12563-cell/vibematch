@@ -39,6 +39,7 @@ export interface Vendor {
   videoUrl?: string;   // Pro feature — 15-30s reel
   isPro?: boolean;
   eventType?: string;  // e.g. "wedding" | "birthday" — null means serves all types
+  observance?: string; // "חילוני" | "דתי" | "חרדי" | "הכל" — null means serves all
 }
 
 export interface ChatMessage {

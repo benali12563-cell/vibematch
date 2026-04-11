@@ -35,6 +35,7 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
     waze: (row.waze as string) || undefined,
     catKey: (row.category as CatKey) || undefined,
     isPublished: true,
+    observance: (row.observance as string) || undefined,
   };
 }
 
@@ -77,6 +78,7 @@ export async function saveVendorProfile(vendor: Vendor) {
         waze: vendor.waze || null,
         gallery: vendor.imgs,
         niche: vendor.niche,
+        observance: vendor.observance || null,
         published: true,
         updated_at: new Date().toISOString(),
       },

@@ -56,6 +56,7 @@ export default function SwipeHome() {
   const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
   const [ceremonyFilter, setCeremonyFilter] = useState<string | null>(null);
+  const [observanceFilter, setObservanceFilter] = useState<string | null>(null);
   const [dealsOnly, setDealsOnly] = useState(false);
   const [infoVendor, setInfoVendor] = useState<Vendor | null>(null);
   const [leadVendor, setLeadVendor] = useState<Vendor | null>(null);
@@ -97,10 +98,14 @@ export default function SwipeHome() {
   const ceremonyFiltered = ceremonyFilter
     ? dateFiltered.filter((v) => !v.niche?.ceremonyType || v.niche.ceremonyType === ceremonyFilter)
     : dateFiltered;
+  // Observance: vendors without observance set serve all audiences
+  const observanceFiltered = observanceFilter
+    ? ceremonyFiltered.filter((v) => !v.observance || v.observance === observanceFilter || v.observance === "הכל")
+    : ceremonyFiltered;
   // Sub-category: partial match so "אולמות" hits "אולמות אירועים", "DJ" hits "DJ", etc.
   const subFiltered = activeSub
-    ? ceremonyFiltered.filter((v) => v.sub.toLowerCase().includes(activeSub.toLowerCase()))
-    : ceremonyFiltered;
+    ? observanceFiltered.filter((v) => v.sub.toLowerCase().includes(activeSub.toLowerCase()))
+    : observanceFiltered;
   // Event type: vendors with no eventType declared are shown for all event types.
   const eventFiltered = eventTypeFilter
     ? subFiltered.filter((v) => !v.eventType || v.eventType === eventTypeFilter)
@@ -407,7 +412,26 @@ export default function SwipeHome() {
             </>
           )}
 
-          {/* ── 7. DEALS ONLY ── */}
+          {/* ── 7. OBSERVANCE ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "אורח חיים" : "Lifestyle"}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
+            {[
+              { k: null,      label: isHe ? "🌍 הכל"       : "🌍 All"          },
+              { k: "חילוני",  label: isHe ? "☀️ חילוני"    : "☀️ Secular"     },
+              { k: "דתי",     label: isHe ? "✡️ דתי"       : "✡️ Religious"   },
+              { k: "חרדי",    label: isHe ? "🕍 חרדי"      : "🕍 Haredi"      },
+            ].map((opt) => {
+              const active = observanceFilter === opt.k;
+              return (
+                <button key={String(opt.k)} onClick={() => setObservanceFilter(opt.k)}
+                  style={{ padding: "8px 14px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ── 8. DEALS ONLY ── */}
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מבצעים" : "Deals"}</p>
           <div style={{ marginBottom: 24 }}>
             <button onClick={() => setDealsOnly((p) => !p)}
@@ -448,7 +472,7 @@ export default function SwipeHome() {
               style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
               {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
             </button>
-            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); setShowSidebar(false); }}
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCeremonyFilter(null); setObservanceFilter(null); setDealsOnly(false); setShowSidebar(false); }}
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {isHe ? "אפס הכל" : "Reset All"}
             </button>
