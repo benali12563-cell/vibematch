@@ -6,6 +6,7 @@ const TABS = [
   { path: "/",         icon: "home",         labelHe: "בית",      labelEn: "Home" },
   { path: "/manage",   icon: "checklist",    labelHe: "ניהול",    labelEn: "Manage" },
   { path: "/messages", icon: "forum",        labelHe: "הודעות",   labelEn: "Chats" },
+  { path: "/guests",   icon: "group",        labelHe: "אורחים",   labelEn: "Guests" },
   { path: "/profile",  icon: "person",       labelHe: "פרופיל",   labelEn: "Profile" },
 ];
 
