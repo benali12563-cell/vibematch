@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, CATS, DV, catName, findCat } from "@/lib/constants";
+import { T, CATS, DV, catName } from "@/lib/constants";
 import type { CatKey, Vendor } from "@/types";
 import Nav from "./Nav";
 import VendorCard from "./VendorCard";
