@@ -43,25 +43,27 @@ export default function ClientInbox() {
 
   const [dbThreads, setDbThreads] = useState<ChatThread[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [openThread, setOpenThread] = useState<ChatThread | null>(null);
 
-  // Load from Supabase when user is known
-  useEffect(() => {
+  function fetchLeads() {
     if (!user || user.role === "vendor") return;
     setLoading(true);
+    setLoadError(false);
     loadClientLeads(user.name)
       .then((threads) => {
         setDbThreads(threads);
-        // Merge into global context (DB wins for existing IDs)
         setChatThreads((prev) => {
           const dbIds = new Set(threads.map((t) => t.id));
           const localOnly = prev.filter((t) => !dbIds.has(t.id));
           return [...localOnly, ...threads];
         });
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
+  }
+
+  useEffect(() => { fetchLeads(); }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Displayed threads: DB if loaded, else from context
   const myThreads: ChatThread[] = (
@@ -129,8 +131,24 @@ export default function ClientInbox() {
           </div>
         )}
 
+        {/* Error state */}
+        {user && !loading && loadError && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "55vh", padding: "0 32px", textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+            <p style={{ color: "#FF6666", fontSize: 14, fontWeight: 700, marginBottom: 8 }}>
+              {isHe ? "שגיאה בטעינת השיחות" : "Failed to load conversations"}
+            </p>
+            <p style={{ color: "#555", fontSize: 12, marginBottom: 20 }}>
+              {isHe ? "בדוק חיבור לאינטרנט ונסה שוב" : "Check your connection and try again"}
+            </p>
+            <button onClick={fetchLeads} style={{ padding: "12px 28px", borderRadius: 14, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
+              {isHe ? "🔄 נסה שוב" : "🔄 Retry"}
+            </button>
+          </div>
+        )}
+
         {/* Empty state */}
-        {user && !loading && myThreads.length === 0 && (
+        {user && !loading && !loadError && myThreads.length === 0 && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "55vh", padding: "0 32px", textAlign: "center" }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>📭</div>
             <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 800, marginBottom: 8 }}>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
+import { saveBusyDates, makeSlug } from "@/lib/supabase/vendors";
 
 const HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
 const HE_DAYS   = ["א","ב","ג","ד","ה","ו","ש"];
@@ -35,6 +36,9 @@ export default function AvailabilityCalendar({ vendorName, readOnly = false }: P
       const next = existing.includes(iso)
         ? existing.filter((d) => d !== iso)
         : [...existing, iso];
+      // Persist to Supabase (fire-and-forget)
+      const slug = makeSlug(vendorName);
+      if (slug) void saveBusyDates(slug, next);
       return { ...prev, [vendorName]: next };
     });
   }

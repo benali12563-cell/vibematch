@@ -94,6 +94,25 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     ].filter(Boolean).join("\n");
 
     const sysMsg: ChatMessage = { id: uid(), from: "system", text: systemText, ts: Date.now() };
+
+    if (thread) {
+      // Editing existing thread — update lead details, append system message
+      const updated: ChatThread = {
+        ...thread,
+        lead: { date, guests, budget },
+        messages: [...thread.messages, sysMsg],
+        unreadVendor: thread.unreadVendor + 1,
+      };
+      setThread(updated);
+      setChatThreads((p) => p.map((t) => t.id === thread.id ? updated : t));
+      setStep("chat");
+      showToast(isHe ? "✅ הליד עודכן!" : "✅ Lead updated!");
+      saveLeadMessage(thread.id, sysMsg).catch(() => {});
+      setSending(false);
+      return;
+    }
+
+    // New thread
     const newThread: ChatThread = {
       id: uid(),
       vendorName: vendor.name,
@@ -114,7 +133,6 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
       isHe ? `פנייה חדשה מ-${user?.name ?? "לקוח"}` : `New lead from ${user?.name ?? "a client"}`,
       "/"
     );
-    // Persist to Supabase (fire-and-forget)
     saveLead(newThread).catch(() => {/* offline — context already has it */});
     setSending(false);
   }
@@ -157,7 +175,15 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
           <p style={{ color: "rgba(255,255,255,.4)", fontSize: 11, margin: 0 }}>{vendor.sub} · {vendor.city}</p>
         </div>
         {step === "chat" && (
-          <button onClick={() => setStep("form")} style={{ fontSize: 10, padding: "5px 10px", borderRadius: 8, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => {
+            // Prepopulate form with existing lead data
+            if (thread?.lead) {
+              setDate(thread.lead.date ?? "");
+              setGuests(thread.lead.guests ?? "");
+              setBudget(thread.lead.budget ?? "");
+            }
+            setStep("form");
+          }} style={{ fontSize: 10, padding: "5px 10px", borderRadius: 8, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", cursor: "pointer", fontFamily: "inherit" }}>
             {isHe ? "✏️ ערוך ליד" : "✏️ Edit Lead"}
           </button>
         )}

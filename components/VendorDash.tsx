@@ -9,7 +9,7 @@ import Logo from "./Logo";
 import AvailabilityCalendar from "./AvailabilityCalendar";
 import VendorGoLiveModal from "./VendorGoLiveModal";
 import SwipeCardView from "./SwipeCardView";
-import { saveVendorProfile, loadVendorBySlug, makeSlug } from "@/lib/supabase/vendors";
+import { saveVendorProfile, loadVendorBySlug, makeSlug, loadBusyDates } from "@/lib/supabase/vendors";
 import { loadVendorLeads, markLeadReadVendor, saveLeadMessage } from "@/lib/supabase/leads";
 import type { Vendor, ChatThread, ChatMessage } from "@/types";
 
@@ -31,7 +31,7 @@ function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean
 }
 
 export default function VendorDash() {
-  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors, chatThreads, setChatThreads, vendorAvailability } = useApp();
+  const { lang, user, setUser, vGallery, setVGallery, vPic, setVPic, vAbout, setVAbout, vProfile, setVProfile, showToast, setPublishedVendors, chatThreads, setChatThreads, vendorAvailability, setVendorAvailability } = useApp();
   const t = T[lang];
   const dir = lang === "he" ? "rtl" : "ltr";
   const router = useRouter();
@@ -76,6 +76,13 @@ export default function VendorDash() {
         if (v.coupon) setCoupon(v.coupon);
         if (v.deal?.text) { setDealText(v.deal.text); setDealHours(v.deal.endsIn ?? 48); }
         if (v.videoUrl) setVideoUrl(v.videoUrl);
+        // Load busy dates from DB into vendorAvailability
+        const vendorSlugForDates = makeSlug(v.name);
+        if (vendorSlugForDates) {
+          loadBusyDates(vendorSlugForDates).then((dates) => {
+            if (dates.length) setVendorAvailability((prev) => ({ ...prev, [v.name]: dates }));
+          }).catch(() => {});
+        }
         // Restore all vProfile fields at once
         setVProfile((p) => ({
           ...p,
@@ -189,7 +196,7 @@ export default function VendorDash() {
           {isHe ? "בית" : "Home"}
         </button>
         <Logo sz={18} />
-        <button onClick={() => {
+        <button onClick={async () => {
           const catLabel = CATS.find((c) => c.k === vProfile.category)?.[isHe ? "he" : "en"] ?? vProfile.category;
           const bizName = vProfile.businessName || user?.name || "";
           if (!vGallery.length) {
@@ -197,36 +204,38 @@ export default function VendorDash() {
             setTab("edit");
             return;
           }
-          if (bizName && vProfile.category) {
-            const newVendor: Vendor = {
-              name: bizName,
-              sub: catLabel,
-              price: vProfile.businessPrice || "",
-              rating: 5, city: "", reviews: 0,
-              desc: vAbout,
-              coupon: coupon,
-              area: "center" as import("@/types").Area,
-              imgs: vGallery.map((g) => g.src),
-              niche: builtNiche,
-              deal: dealText.trim() ? { text: dealText.trim(), endsIn: dealHours } : null,
-              recommends: [], vendorReviews: [],
-              whatsapp: vProfile.whatsapp, phone: vProfile.phone,
-              instagram: vProfile.instagram, tiktok: vProfile.tiktok,
-              website: vProfile.website, google: vProfile.google, waze: vProfile.waze,
-              catKey: vProfile.category as import("@/types").CatKey,
-              isPublished: true,
-              observance: vProfile.observance || undefined,
-            };
-            // Add to context deck immediately (in-session)
-            setPublishedVendors((p) => [...p.filter((v) => v.name !== bizName), newVendor]);
-            // Persist to Supabase (async, fire-and-forget with toast feedback)
-            saveVendorProfile(newVendor).then(({ error }) => {
-              if (!error) {
-                showToast(isHe ? "✅ הפרופיל פורסם! לקוחות רואים אותך" : "✅ Published! Clients can see you");
-              } else {
-                showToast(isHe ? "✅ פורסם (מצב מקומי)" : "✅ Published (local mode)");
-              }
-            });
+          if (!bizName || !vProfile.category) {
+            showToast(isHe ? "📝 מלא שם עסק וקטגוריה" : "📝 Fill business name and category");
+            setTab("edit");
+            return;
+          }
+          const newVendor: Vendor = {
+            name: bizName,
+            sub: catLabel,
+            price: vProfile.businessPrice || "",
+            rating: 5, city: "", reviews: 0,
+            desc: vAbout,
+            coupon: coupon,
+            area: "center" as import("@/types").Area,
+            imgs: vGallery.map((g) => g.src),
+            niche: builtNiche,
+            deal: dealText.trim() ? { text: dealText.trim(), endsIn: dealHours } : null,
+            recommends: [], vendorReviews: [],
+            whatsapp: vProfile.whatsapp, phone: vProfile.phone,
+            instagram: vProfile.instagram, tiktok: vProfile.tiktok,
+            website: vProfile.website, google: vProfile.google, waze: vProfile.waze,
+            catKey: vProfile.category as import("@/types").CatKey,
+            isPublished: true,
+            videoUrl: videoUrl.trim() || undefined,
+            observance: vProfile.observance || undefined,
+          };
+          // Optimistically update context feed
+          setPublishedVendors((p) => [...p.filter((v) => v.name !== bizName), newVendor]);
+          // Persist to Supabase — only mark as published on success
+          const { error } = await saveVendorProfile(newVendor);
+          if (error) {
+            showToast(isHe ? "⚠️ שגיאה בפרסום — בדוק חיבור" : "⚠️ Publish failed — check connection");
+            return;
           }
           setPublished(true);
           setShowGoLive(true);
@@ -519,7 +528,7 @@ export default function VendorDash() {
               {vGallery.map((g) => (
                 <div key={g.id} style={{ width: 66, height: 66, borderRadius: 8, overflow: "hidden", flexShrink: 0, position: "relative" }}>
                   <img src={g.src} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                  <button onClick={() => setVGallery((p) => p.filter((x) => x.id !== g.id))} style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,.6)", border: "none", color: "#FF4444", fontSize: 10, cursor: "pointer", width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                  <button onClick={() => setVGallery((p) => p.filter((x) => x.id !== g.id))} style={{ position: "absolute", top: 2, ...(isHe ? { left: 2 } : { right: 2 }), background: "rgba(0,0,0,.6)", border: "none", color: "#FF4444", fontSize: 10, cursor: "pointer", width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
                 </div>
               ))}
               {vGallery.length < 5 && (
@@ -634,12 +643,15 @@ export default function VendorDash() {
               </div>
               <button
                 disabled={!dealText.trim()}
-                onClick={() => {
+                onClick={async () => {
                   if (!dealText.trim()) return;
                   const deal = { text: dealText.trim(), endsIn: dealHours };
                   const bizName = vProfile.businessName || user?.name || "";
                   setPublishedVendors((p) => p.map((v) => v.name === bizName ? { ...v, deal } : v));
                   showToast(isHe ? "🔥 המבצע פורסם!" : "🔥 Deal published!");
+                  // Persist deal to Supabase alongside the full profile
+                  const dealVendor: Vendor = { ...previewVendor, deal, catKey: vProfile.category as import("@/types").CatKey, isPublished: published, videoUrl: videoUrl.trim() || undefined, observance: vProfile.observance || undefined };
+                  saveVendorProfile(dealVendor).catch(() => {});
                 }}
                 style={{ width: "100%", padding: "10px 0", borderRadius: 10, border: "none", background: dealText.trim() ? "linear-gradient(135deg,#FF4444,#cc2200)" : "rgba(255,255,255,.05)", color: dealText.trim() ? "#fff" : "#555", fontWeight: 700, fontSize: 13, cursor: dealText.trim() ? "pointer" : "default", fontFamily: "inherit", transition: "all .12s" }}>
                 🔥 {isHe ? "פרסם מבצע" : "Publish Deal"}

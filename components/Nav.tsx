@@ -18,7 +18,7 @@ export default function Nav() {
 
   // Total unread messages for the client
   const totalUnread = user && user.role !== "vendor"
-    ? chatThreads.filter((t) => !user || t.clientName === user.name).reduce((s, t) => s + t.unreadClient, 0)
+    ? chatThreads.filter((t) => !user || t.clientName?.toLowerCase() === user.name?.toLowerCase()).reduce((s, t) => s + t.unreadClient, 0)
     : 0;
 
   const activeIdx = TABS.findIndex((t) =>

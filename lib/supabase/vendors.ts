@@ -23,7 +23,7 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
     area: ((row.area as Area) || "center"),
     imgs: Array.isArray(row.gallery) ? (row.gallery as string[]) : [],
     niche: (row.niche as Record<string, string>) || {},
-    deal: null,
+    deal: (() => { try { const d = row.deal; if (d && typeof d === "object") return d as import("@/types").Deal; } catch { /* */ } return null; })(),
     recommends: [],
     vendorReviews: [],
     whatsapp: (row.whatsapp as string) || undefined,
@@ -35,6 +35,7 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
     waze: (row.waze as string) || undefined,
     catKey: (row.category as CatKey) || undefined,
     isPublished: true,
+    videoUrl: (row.video_url as string) || undefined,
     observance: (row.observance as string) || undefined,
   };
 }
@@ -79,6 +80,8 @@ export async function saveVendorProfile(vendor: Vendor) {
         gallery: vendor.imgs,
         niche: vendor.niche,
         observance: vendor.observance || null,
+        deal: vendor.deal ?? null,
+        video_url: vendor.videoUrl || null,
         published: true,
         updated_at: new Date().toISOString(),
       },
@@ -145,10 +148,30 @@ export async function loadVendorStats(slug: string): Promise<{ views: number; li
   return { views: (data?.view_count as number) ?? 0, likes: (data?.like_count as number) ?? 0 };
 }
 
+/** Save vendor busy dates to Supabase */
+export async function saveBusyDates(slug: string, dates: string[]): Promise<void> {
+  const sb = createClient();
+  await sb.from("vendor_profiles").update({ busy_dates: dates }).eq("slug", slug.toLowerCase());
+}
+
+/** Load vendor busy dates from Supabase */
+export async function loadBusyDates(slug: string): Promise<string[]> {
+  const sb = createClient();
+  const { data } = await sb
+    .from("vendor_profiles")
+    .select("busy_dates")
+    .eq("slug", slug.toLowerCase())
+    .single();
+  return Array.isArray(data?.busy_dates) ? (data.busy_dates as string[]) : [];
+}
+
 /*
 ── SQL to run in Supabase (once) ─────────────────────────────────────────────
 alter table vendor_profiles add column if not exists view_count int default 0;
 alter table vendor_profiles add column if not exists like_count  int default 0;
+alter table vendor_profiles add column if not exists busy_dates text[] default '{}';
+alter table vendor_profiles add column if not exists deal jsonb;
+alter table vendor_profiles add column if not exists video_url text;
 
 create or replace function increment_vendor_view(vendor_slug text)
 returns void language sql security definer as $$

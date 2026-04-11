@@ -53,6 +53,7 @@ export default function SwipeHome() {
   const [showHotSheet, setShowHotSheet] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
   const [ceremonyFilter, setCeremonyFilter] = useState<string | null>(null);
@@ -65,7 +66,10 @@ export default function SwipeHome() {
 
   // Load live published vendors from Supabase once on mount
   useEffect(() => {
-    loadPublishedVendors().then(setDbVendors).catch(() => {});
+    loadPublishedVendors()
+      .then(setDbVendors)
+      .catch(() => {})
+      .finally(() => setVendorsLoading(false));
   }, []);
 
   // Apply onboarding event type to filter (only on first mount, only if not already set)
@@ -135,7 +139,7 @@ export default function SwipeHome() {
   // (sorting is safe — vs is a fresh copy when sortBy !== "default")
 
   const subs = activeCat === "all" ? [] : (SUB[activeCat] ?? []);
-  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (ceremonyFilter ? 1 : 0) + (dealsOnly ? 1 : 0);
+  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (ceremonyFilter ? 1 : 0) + (dealsOnly ? 1 : 0) + (observanceFilter ? 1 : 0);
   const activeCatLabel = activeCat === "all" ? { he: "הכל", en: "All" } : CATS.find((c) => c.k === activeCat);
 
   const CAT_ICONS: Record<string, string> = { all: "✨", venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
@@ -147,6 +151,13 @@ export default function SwipeHome() {
 
       {/* ── INSTAGRAM SCROLL FEED ── */}
       <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
+        {/* Loading spinner while fetching from Supabase */}
+        {vendorsLoading && vs.length === 0 && (
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(0,206,209,.2)", borderTopColor: "#00CED1", animation: "spin 1s linear infinite" }} />
+            <p style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>{isHe ? "טוען ספקים..." : "Loading vendors..."}</p>
+          </div>
+        )}
         {vs.length > 0 ? vs.map((v) => {
           const imgIdx = photoIdxMap[v.name] ?? 0;
           const isHot = v.rating >= 4.7;
