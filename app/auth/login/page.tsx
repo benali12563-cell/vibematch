@@ -22,7 +22,7 @@ export default function LoginPage() {
           {isHe ? "כניסה ל-VibeMatch" : "Sign in to VibeMatch"}
         </h2>
         <p style={{ color: "#555", fontSize: 13, textAlign: "center", marginBottom: 28 }}>
-          {isHe ? "ללא סיסמה — קוד אימות למייל בלבד" : "No password — verification code by email"}
+          {isHe ? "ללא סיסמה — לינק כניסה ישירות למייל" : "No password — sign-in link sent to your email"}
         </p>
 
         <OTPLoginForm
