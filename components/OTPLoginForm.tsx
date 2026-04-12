@@ -188,7 +188,7 @@ export default function OTPLoginForm({ isHe, onSuccess, onTrack, compact = false
             <span style={{ color: "#00CED1", fontWeight: 700 }}>{email.trim()}</span>
             <br />
             <span style={{ color: "#444", fontSize: 11 }}>
-              {isHe ? "הקוד תקף ל-10 דקות" : "Valid for 10 minutes"}
+              {isHe ? "הקוד תקף ל-10 דקות · לא מצאת? בדוק ספאם 📁" : "Valid 10 min · Not found? Check spam 📁"}
             </span>
           </p>
 
