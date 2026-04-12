@@ -54,9 +54,7 @@ export default function SwipeHome() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
-  const [ceremonyFilter, setCeremonyFilter] = useState<string | null>(null);
   const [observanceFilter, setObservanceFilter] = useState<string | null>(null);
   const [dealsOnly, setDealsOnly] = useState(false);
   const [infoVendor, setInfoVendor] = useState<Vendor | null>(null);
@@ -97,15 +95,10 @@ export default function SwipeHome() {
   const dateFiltered = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))
     : areaFiltered;
-  // QA-004/QA-009: vendors with no ceremonyType set serve all ceremony types — keep them visible.
-  // Only hide vendors that explicitly declare a DIFFERENT ceremonyType.
-  const ceremonyFiltered = ceremonyFilter
-    ? dateFiltered.filter((v) => !v.niche?.ceremonyType || v.niche.ceremonyType === ceremonyFilter)
-    : dateFiltered;
   // Observance: vendors without observance set serve all audiences
   const observanceFiltered = observanceFilter
-    ? ceremonyFiltered.filter((v) => !v.observance || v.observance === observanceFilter || v.observance === "הכל")
-    : ceremonyFiltered;
+    ? dateFiltered.filter((v) => !v.observance || v.observance === observanceFilter || v.observance === "הכל")
+    : dateFiltered;
   // Sub-category: partial match so "אולמות" hits "אולמות אירועים", "DJ" hits "DJ", etc.
   const subFiltered = activeSub
     ? observanceFiltered.filter((v) => v.sub.toLowerCase().includes(activeSub.toLowerCase()))
@@ -114,9 +107,8 @@ export default function SwipeHome() {
   const eventFiltered = eventTypeFilter
     ? subFiltered.filter((v) => !v.eventType || v.eventType === eventTypeFilter)
     : subFiltered;
-  const vsBase = dealsOnly ? eventFiltered.filter((v) => v.deal !== null) : eventFiltered;
-  // Copy before sorting to avoid mutating the reactive array.
-  const vs = sortBy !== "default" ? [...vsBase] : vsBase;
+  const vs = dealsOnly ? eventFiltered.filter((v) => v.deal !== null) : eventFiltered;
+
   function setPhotoIdx(name: string, fn: (i: number) => number) {
     setPhotoIdxMap((m) => ({ ...m, [name]: fn(m[name] ?? 0) }));
   }
@@ -140,14 +132,8 @@ export default function SwipeHome() {
     }
   }
 
-  function parsePriceNum(p: string) { const m = p.replace(/,/g, "").match(/\d+/); return m ? parseInt(m[0]) : 0; }
-  if (sortBy === "rating") vs.sort((a, b) => b.rating - a.rating);
-  else if (sortBy === "price_asc") vs.sort((a, b) => parsePriceNum(a.price) - parsePriceNum(b.price));
-  else if (sortBy === "price_desc") vs.sort((a, b) => parsePriceNum(b.price) - parsePriceNum(a.price));
-  // (sorting is safe — vs is a fresh copy when sortBy !== "default")
-
   const subs = activeCat === "all" ? [] : (SUB[activeCat] ?? []);
-  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (ceremonyFilter ? 1 : 0) + (dealsOnly ? 1 : 0) + (observanceFilter ? 1 : 0);
+  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (dealsOnly ? 1 : 0) + (observanceFilter ? 1 : 0);
   const activeCatLabel = activeCat === "all" ? { he: "הכל", en: "All" } : CATS.find((c) => c.k === activeCat);
 
   const CAT_ICONS: Record<string, string> = { all: "✨", venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
@@ -186,7 +172,7 @@ export default function SwipeHome() {
               )}
 
               {/* Ceremony type badge */}
-              {v.niche?.ceremonyType && (activeCat === "ceremony" || ceremonyFilter) && (
+              {v.niche?.ceremonyType && activeCat === "ceremony" && (
                 <div style={{ position: "absolute", top: selectedDate ? 78 : 52, [isHe ? "right" : "left"]: 14, zIndex: 7, pointerEvents: "none" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 10, background: "rgba(0,206,209,.15)", border: "1px solid rgba(0,206,209,.35)", color: "#00e5e8", fontSize: 10, fontWeight: 700, backdropFilter: "blur(8px)" }}>
                     {v.niche.ceremonyType === "אורתודוקסי" ? "🕍" : v.niche.ceremonyType === "חילוני" ? "⚖️" : v.niche.ceremonyType === "רפורמי" ? "🌿" : "✡️"}{" "}
@@ -264,7 +250,7 @@ export default function SwipeHome() {
                 <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>
                   {isHe ? "נסה לשנות אזור, תאריך או קטגוריה" : "Try changing area, date or category"}
                 </p>
-                <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setEventTypeFilter(null); setCeremonyFilter(null); setDealsOnly(false); setSortBy("default"); }} style={{ marginTop: 4, padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setEventTypeFilter(null); setObservanceFilter(null); setDealsOnly(false); }} style={{ marginTop: 4, padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                   {isHe ? "נקה סינונים" : "Clear filters"}
                 </button>
               </>
@@ -312,10 +298,12 @@ export default function SwipeHome() {
       </header>
 
       {/* ── SIDE PANEL BACKDROP ── */}
-      <div onClick={() => setShowSidebar(false)} style={{ position: "fixed", inset: 0, zIndex: 380, background: "rgba(0,0,0,.72)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? "auto" : "none", transition: "opacity .3s" }} />
+      {showSidebar && (
+        <div onClick={() => setShowSidebar(false)} style={{ position: "fixed", inset: 0, zIndex: 380, background: "rgba(0,0,0,.72)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }} />
+      )}
 
       {/* ── SIDE PANEL ── */}
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 390, width: "min(90%, 380px)", background: "rgba(7,7,10,.97)", backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)", borderLeft: "1px solid rgba(255,255,255,.07)", transform: showSidebar ? "translateX(0)" : "translateX(100%)", transition: "transform .32s cubic-bezier(.32,0,.67,0)", overflowY: "auto", direction: isHe ? "rtl" : "ltr" }}>
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 390, width: "min(90%, 380px)", background: "#070709", borderLeft: "1px solid rgba(255,255,255,.07)", transform: showSidebar ? "translateX(0)" : "translateX(100%)", transition: "transform .32s cubic-bezier(.32,0,.67,0)", overflowY: "auto", direction: isHe ? "rtl" : "ltr", willChange: "transform" }}>
 
         {/* Panel header */}
         <div style={{ position: "sticky", top: 0, background: "rgba(7,7,10,.95)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,.06)", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 1 }}>
@@ -407,31 +395,7 @@ export default function SwipeHome() {
             })}
           </div>
 
-          {/* ── 6. CEREMONY TYPE (only for ceremony cat or all) ── */}
-          {(activeCat === "ceremony" || activeCat === "all") && (
-            <>
-              <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "סוג טקס" : "Ceremony Type"}</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
-                {[
-                  { k: null, label: isHe ? "🕊️ הכל" : "🕊️ All" },
-                  { k: "אורתודוקסי", label: "🕍 " + (isHe ? "אורתודוקסי" : "Orthodox") },
-                  { k: "קונסרבטיבי", label: "✡️ " + (isHe ? "קונסרבטיבי" : "Conservative") },
-                  { k: "רפורמי", label: "🌿 " + (isHe ? "רפורמי" : "Reform") },
-                  { k: "חילוני", label: "⚖️ " + (isHe ? "חילוני" : "Secular") },
-                ].map((opt) => {
-                  const active = ceremonyFilter === opt.k;
-                  return (
-                    <button key={String(opt.k)} onClick={() => setCeremonyFilter(opt.k)}
-                      style={{ padding: "8px 14px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-
-          {/* ── 7. OBSERVANCE ── */}
+          {/* ── 6. OBSERVANCE ── */}
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "אורח חיים" : "Lifestyle"}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
             {[
@@ -466,32 +430,13 @@ export default function SwipeHome() {
             </button>
           </div>
 
-          {/* ── 8. SORT ── */}
-          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מיון" : "Sort By"}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginBottom: 28 }}>
-            {[
-              { k: "default" as const, label: isHe ? "🎯 מומלץ" : "🎯 Recommended" },
-              { k: "rating" as const, label: isHe ? "⭐ דירוג" : "⭐ Rating" },
-              { k: "price_asc" as const, label: isHe ? "💰 מחיר ↑" : "💰 Price ↑" },
-              { k: "price_desc" as const, label: isHe ? "💎 מחיר ↓" : "💎 Price ↓" },
-            ].map((s) => {
-              const active = sortBy === s.k;
-              return (
-                <button key={s.k} onClick={() => setSortBy(s.k)}
-                  style={{ padding: "10px 14px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.08)", background: active ? "rgba(0,206,209,.12)" : "rgba(255,255,255,.03)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 800 : 500, fontFamily: "inherit", transition: "all .12s", textAlign: "center" }}>
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-
           {/* ── CTAs ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button onClick={() => { setShowSidebar(false); }}
               style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
               {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
             </button>
-            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); setCeremonyFilter(null); setObservanceFilter(null); setDealsOnly(false); setShowSidebar(false); }}
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setEventTypeFilter(null); setObservanceFilter(null); setDealsOnly(false); setShowSidebar(false); }}
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {isHe ? "אפס הכל" : "Reset All"}
             </button>
