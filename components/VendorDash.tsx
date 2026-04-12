@@ -9,7 +9,7 @@ import Logo from "./Logo";
 import AvailabilityCalendar from "./AvailabilityCalendar";
 import VendorGoLiveModal from "./VendorGoLiveModal";
 import SwipeCardView from "./SwipeCardView";
-import { saveVendorProfile, loadVendorBySlug, makeSlug, loadBusyDates } from "@/lib/supabase/vendors";
+import { saveVendorProfile, loadVendorBySlug, makeSlug, loadBusyDates, saveBusyDates } from "@/lib/supabase/vendors";
 import { loadVendorLeads, markLeadReadVendor, saveLeadMessage } from "@/lib/supabase/leads";
 import { loadVendorReviews } from "@/lib/supabase/reviews";
 import type { Vendor, ChatThread, ChatMessage, VendorReview } from "@/types";
@@ -23,7 +23,12 @@ function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean
       {dates.sort().map((d) => (
         <span key={d} style={{ background: "rgba(255,68,68,.1)", border: "1px solid rgba(255,68,68,.2)", borderRadius: 6, padding: "3px 9px", fontSize: 11, color: "#FF6666", display: "flex", alignItems: "center", gap: 5 }}>
           {d}
-          <button onClick={() => setVendorAvailability((p) => ({ ...p, [vendorName]: (p[vendorName] ?? []).filter((x) => x !== d) }))}
+          <button onClick={() => {
+            const next = (vendorAvailability[vendorName] ?? []).filter((x) => x !== d);
+            setVendorAvailability((p) => ({ ...p, [vendorName]: next }));
+            const slug = makeSlug(vendorName);
+            if (slug) void saveBusyDates(slug, next);
+          }}
             style={{ background: "none", border: "none", color: "#FF4444", cursor: "pointer", fontSize: 11, padding: 0, lineHeight: 1 }}>✕</button>
         </span>
       ))}
@@ -741,7 +746,7 @@ export default function VendorDash() {
                 observance: vProfile.observance || undefined,
               };
               const { error } = await saveVendorProfile(saveVendor);
-              showToast(error ? (isHe ? "✅ נשמר (לא מחובר)" : "✅ Saved (offline)") : (isHe ? "✅ הפרופיל נשמר!" : "✅ Profile saved!"));
+              showToast(error ? (isHe ? "⚠️ שגיאה — בדוק חיבור" : "⚠️ Save failed — check connection") : (isHe ? "✅ הפרופיל נשמר!" : "✅ Profile saved!"));
             }}>{t.saveAll}</B>
           </div>
         )}
