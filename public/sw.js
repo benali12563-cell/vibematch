@@ -1,5 +1,5 @@
 // VibeMatch Service Worker — PWA + Push Notifications
-const CACHE = "vibematch-v1";
+const CACHE = "vibematch-v2";
 const PRECACHE = ["/", "/manage", "/profile", "/timeline"];
 
 // ── Install: pre-cache shell ──────────────────────────────────────────────────
