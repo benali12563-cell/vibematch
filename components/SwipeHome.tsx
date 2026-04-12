@@ -190,14 +190,14 @@ export default function SwipeHome() {
                   <div style={{ position: "absolute", [isHe ? "left" : "right"]: 12, bottom: 155, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
                     {/* Like */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                      <button onClick={() => doLike(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}>
+                      <button onClick={() => doLike(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 26, fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
                       </button>
                       <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שמור" : "Save"}</span>
                     </div>
                     {/* Lead / Chat */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative" }}>
-                      <button onClick={() => setLeadVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: existingThread ? "rgba(0,206,209,.18)" : "rgba(0,0,0,.6)", border: `2px solid ${existingThread ? "rgba(0,229,232,.6)" : "rgba(255,255,255,.22)"}`, color: existingThread ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                      <button onClick={() => setLeadVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: existingThread ? "rgba(0,206,209,.18)" : "rgba(0,0,0,.6)", border: `2px solid ${existingThread ? "rgba(0,229,232,.6)" : "rgba(255,255,255,.22)"}`, color: existingThread ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 24 }}>chat_bubble</span>
                       </button>
                       {hasUnread && <div style={{ position: "absolute", top: 0, right: 0, width: 14, height: 14, borderRadius: "50%", background: "#FF4444", border: "2px solid #000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 900 }}>{existingThread!.unreadClient}</div>}
@@ -205,7 +205,7 @@ export default function SwipeHome() {
                     </div>
                     {/* Info */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                      <button onClick={() => setInfoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                      <button onClick={() => setInfoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 24 }}>info</span>
                       </button>
                       <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "פרטים" : "Info"}</span>
@@ -213,7 +213,7 @@ export default function SwipeHome() {
                     {/* Video (Pro) */}
                     {v.videoUrl && (
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                        <button onClick={() => setVideoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(168,85,247,.18)", border: "2px solid rgba(168,85,247,.55)", color: "#a855f7", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 16px rgba(168,85,247,.3)" }}>
+                        <button onClick={() => setVideoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(168,85,247,.18)", border: "2px solid rgba(168,85,247,.55)", color: "#a855f7", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(168,85,247,.3)" }}>
                           <span className="material-symbols-outlined" style={{ fontSize: 24 }}>play_circle</span>
                         </button>
                         <span style={{ fontSize: 10, color: "#a855f7", fontWeight: 700 }}>{isHe ? "סרטון" : "Video"}</span>
@@ -229,7 +229,7 @@ export default function SwipeHome() {
                           navigator.clipboard?.writeText(url);
                           showToast(isHe ? "🔗 לינק הועתק" : "🔗 Link copied");
                         }
-                      }} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                      }} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 22 }}>share</span>
                       </button>
                       <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שתף" : "Share"}</span>

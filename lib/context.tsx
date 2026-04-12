@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry, ChatThread } from "@/types";
 import { createClient } from "@/lib/supabase/client";
 import { loadUserLikes } from "@/lib/supabase/vendors";
@@ -106,9 +106,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
   }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = useCallback((msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    toastTimer.current = setTimeout(() => setToast(""), 3000);
   }, []);
 
   return (

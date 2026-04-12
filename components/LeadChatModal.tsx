@@ -82,7 +82,7 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     }
   }, [thread?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function submitLead() {
+  async function submitLead() {
     if (!note.trim() && !date && !guests && !budget) return;
     setSending(true);
     const systemText = [
@@ -124,17 +124,22 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
       unreadClient: 0,
       unreadVendor: 1,
     };
+    // Optimistic UI
     setChatThreads((p) => [...p, newThread]);
     setThread(newThread);
     setStep("chat");
-    showToast(isHe ? "✅ הליד נשלח!" : "✅ Lead sent!");
     sendLocalNotification(
       vendor.name,
       isHe ? `פנייה חדשה מ-${user?.name ?? "לקוח"}` : `New lead from ${user?.name ?? "a client"}`,
       "/"
     );
-    saveLead(newThread).catch(() => {/* offline — context already has it */});
+    const { error: saveError } = await saveLead(newThread);
     setSending(false);
+    if (saveError) {
+      showToast(isHe ? "⚠️ שגיאת רשת — הפנייה נשמרה זמנית" : "⚠️ Network error — lead saved locally");
+    } else {
+      showToast(isHe ? "✅ הליד נשלח!" : "✅ Lead sent!");
+    }
   }
 
   function sendMsg() {
