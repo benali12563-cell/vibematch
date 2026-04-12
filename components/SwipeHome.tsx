@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApp } from "@/lib/context";
-import { T, CATS, AREAS, DV, EVENT_TYPES } from "@/lib/constants";
+import { T, CATS, AREAS, DV, EVENT_TYPES, SITE_URL } from "@/lib/constants";
 import type { Vendor, CatKey } from "@/types";
 import SwipeCardView from "./SwipeCardView";
 import Nav from "./Nav";
@@ -14,13 +14,13 @@ import SwipeTogetherModal from "./SwipeTogetherModal";
 import VendorCard from "./VendorCard";
 import AuroraBg from "./AuroraBg";
 import B from "./B";
-import { loadPublishedVendors } from "@/lib/supabase/vendors";
+import { loadPublishedVendors, trackVendorLike, makeSlug, saveUserLike } from "@/lib/supabase/vendors";
 import LeadChatModal, { VideoModal } from "./LeadChatModal";
 import PackageModal from "./PackageModal";
 
 const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   venues: [
-    { he: "אולמות", en: "Halls" }, { he: "ווילות", en: "Villas" },
+    { he: "אולמות", en: "Halls" }, { he: "וילות", en: "Villas" },
     { he: "לופטים", en: "Lofts" }, { he: "מסעדות", en: "Restaurants" },
     { he: "מתחמי השכרה", en: "Venues for Rent" }, { he: "גינות אירועים", en: "Gardens" },
   ],
@@ -38,14 +38,9 @@ const SUB: Partial<Record<CatKey, { he: string; en: string }[]>> = {
   ],
 };
 
-function sp(name: string, min: number, max: number) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
-  return min + (Math.abs(h) % (max - min + 1));
-}
 
 export default function SwipeHome() {
-  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors, chatThreads } = useApp();
+  const { lang, activeCat, setActiveCat, areaFilter, setAreaFilter, likes, setLikes, user, setUser, showToast, vendorAvailability, selectedDate, setSelectedDate, publishedVendors, chatThreads, eventInfo, onboardingDone } = useApp();
   const t = T[lang];
   const router = useRouter();
   const isHe = lang === "he";
@@ -58,8 +53,10 @@ export default function SwipeHome() {
   const [showHotSheet, setShowHotSheet] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
   const [dbVendors, setDbVendors] = useState<Vendor[]>([]);
-  const [sortBy, setSortBy] = useState<"default" | "rating" | "price_asc" | "price_desc">("default");
+  const [vendorsLoading, setVendorsLoading] = useState(true);
   const [eventTypeFilter, setEventTypeFilter] = useState<string | null>(null);
+  const [observanceFilter, setObservanceFilter] = useState<string | null>(null);
+  const [dealsOnly, setDealsOnly] = useState(false);
   const [infoVendor, setInfoVendor] = useState<Vendor | null>(null);
   const [leadVendor, setLeadVendor] = useState<Vendor | null>(null);
   const [videoVendor, setVideoVendor] = useState<Vendor | null>(null);
@@ -67,8 +64,18 @@ export default function SwipeHome() {
 
   // Load live published vendors from Supabase once on mount
   useEffect(() => {
-    loadPublishedVendors().then(setDbVendors).catch(() => {});
+    loadPublishedVendors()
+      .then(setDbVendors)
+      .catch(() => {})
+      .finally(() => setVendorsLoading(false));
   }, []);
+
+  // Apply onboarding event type to filter (only on first mount, only if not already set)
+  useEffect(() => {
+    if (onboardingDone && eventInfo.type && !eventTypeFilter) {
+      setEventTypeFilter(eventInfo.type);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Merge: DV hardcoded + context (just published) + Supabase DB
   // Deduplicate by name so a vendor who just published doesn't appear twice
@@ -85,28 +92,48 @@ export default function SwipeHome() {
     : (DV[activeCat] ?? []);
   const rawVs = [...dvVendors, ...liveVendors];
   const areaFiltered = areaFilter === "allAreas" ? rawVs : rawVs.filter((v) => v.area === areaFilter);
-  const vs = selectedDate
+  const dateFiltered = selectedDate
     ? areaFiltered.filter((v) => !(vendorAvailability[v.name] ?? []).includes(selectedDate))
     : areaFiltered;
+  // Observance: vendors without observance set serve all audiences
+  const observanceFiltered = observanceFilter
+    ? dateFiltered.filter((v) => !v.observance || v.observance === observanceFilter || v.observance === "הכל")
+    : dateFiltered;
+  // Sub-category: partial match so "אולמות" hits "אולמות אירועים", "DJ" hits "DJ", etc.
+  const subFiltered = activeSub
+    ? observanceFiltered.filter((v) => v.sub.toLowerCase().includes(activeSub.toLowerCase()))
+    : observanceFiltered;
+  // Event type: vendors with no eventType declared are shown for all event types.
+  const eventFiltered = eventTypeFilter
+    ? subFiltered.filter((v) => !v.eventType || v.eventType === eventTypeFilter)
+    : subFiltered;
+  const vs = dealsOnly ? eventFiltered.filter((v) => v.deal !== null) : eventFiltered;
+
   function setPhotoIdx(name: string, fn: (i: number) => number) {
     setPhotoIdxMap((m) => ({ ...m, [name]: fn(m[name] ?? 0) }));
   }
 
   function doLike(v: Vendor) {
-    if (likes.includes(v.name)) return;
-    setLikes((p) => [...p, v.name]);
-    setLikedName(v.name);
-    setTimeout(() => setLikedName(null), 600);
-    showToast("❤️ " + v.name + (isHe ? " נשמר" : " saved"));
+    const isLiked = likes.includes(v.name);
+    if (isLiked) {
+      // Toggle off — unlike
+      setLikes((p) => p.filter((n) => n !== v.name));
+      showToast("🤍 " + v.name + (isHe ? " הוסר" : " removed"));
+      if (user?.name) void saveUserLike(user.name, v.name, false);
+    } else {
+      // Like
+      setLikes((p) => [...p, v.name]);
+      setLikedName(v.name);
+      setTimeout(() => setLikedName(null), 600);
+      showToast("❤️ " + v.name + (isHe ? " נשמר" : " saved"));
+      if (user?.name) void saveUserLike(user.name, v.name, true);
+      const slug = makeSlug(v.name);
+      if (slug) void trackVendorLike(slug);
+    }
   }
 
-  function parsePriceNum(p: string) { const m = p.replace(/,/g, "").match(/\d+/); return m ? parseInt(m[0]) : 0; }
-  if (sortBy === "rating") vs.sort((a, b) => b.rating - a.rating);
-  else if (sortBy === "price_asc") vs.sort((a, b) => parsePriceNum(a.price) - parsePriceNum(b.price));
-  else if (sortBy === "price_desc") vs.sort((a, b) => parsePriceNum(b.price) - parsePriceNum(a.price));
-
   const subs = activeCat === "all" ? [] : (SUB[activeCat] ?? []);
-  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (sortBy !== "default" ? 1 : 0) + (eventTypeFilter ? 1 : 0);
+  const activeFilterCount = (areaFilter !== "allAreas" ? 1 : 0) + (selectedDate ? 1 : 0) + (activeSub ? 1 : 0) + (eventTypeFilter ? 1 : 0) + (dealsOnly ? 1 : 0) + (observanceFilter ? 1 : 0);
   const activeCatLabel = activeCat === "all" ? { he: "הכל", en: "All" } : CATS.find((c) => c.k === activeCat);
 
   const CAT_ICONS: Record<string, string> = { all: "✨", venues: "🏛️", food: "🍽️", music: "🎵", lighting: "💡", photo: "📸", beauty: "💄", entertainment: "🎪", design: "🎨", logistics: "🚌", ceremony: "💒", digital: "📱" };
@@ -118,11 +145,16 @@ export default function SwipeHome() {
 
       {/* ── INSTAGRAM SCROLL FEED ── */}
       <div style={{ position: "fixed", top: 0, bottom: 62, left: 0, right: 0, maxWidth: 480, margin: "0 auto", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
+        {/* Loading spinner while fetching from Supabase */}
+        {vendorsLoading && vs.length === 0 && (
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", border: "3px solid rgba(0,206,209,.2)", borderTopColor: "#00CED1", animation: "spin 1s linear infinite" }} />
+            <p style={{ color: "rgba(255,255,255,.3)", fontSize: 13 }}>{isHe ? "טוען ספקים..." : "Loading vendors..."}</p>
+          </div>
+        )}
         {vs.length > 0 ? vs.map((v) => {
           const imgIdx = photoIdxMap[v.name] ?? 0;
-          const looked = sp(v.name, 8, 63);
-          const liveNow = sp(v.name + "x", 1, 9);
-          const isHot = sp(v.name, 0, 10) > 7;
+          const isHot = v.rating >= 4.7;
           const isLiked = likes.includes(v.name);
           const isLikeAnim = likedName === v.name;
 
@@ -139,12 +171,16 @@ export default function SwipeHome() {
                 </div>
               )}
 
-              {/* Social proof badges */}
-              <div style={{ position: "absolute", bottom: 148, left: 14, right: isHe ? 80 : 80, zIndex: 6, display: "flex", alignItems: "center", gap: 7, direction: isHe ? "rtl" : "ltr", pointerEvents: "none" }}>
-                <span style={{ fontSize: 10, color: "rgba(255,255,255,.55)", background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)" }}>👁 {looked}</span>
-                {liveNow > 4 && <span style={{ fontSize: 10, color: "#FF4444", fontWeight: 600, background: "rgba(0,0,0,.45)", borderRadius: 8, padding: "2px 8px", backdropFilter: "blur(8px)", animation: "pulse 2s infinite" }}>🔴 {liveNow} {isHe ? "עכשיו" : "now"}</span>}
-                {isHot && <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 10, background: "rgba(255,215,0,.07)", color: "#FFD700", border: "1px solid rgba(255,215,0,.15)", fontWeight: 700 }}>⭐ {isHe ? "מבוקש" : "Hot"}</span>}
-              </div>
+              {/* Ceremony type badge */}
+              {v.niche?.ceremonyType && activeCat === "ceremony" && (
+                <div style={{ position: "absolute", top: selectedDate ? 78 : 52, [isHe ? "right" : "left"]: 14, zIndex: 7, pointerEvents: "none" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 10, background: "rgba(0,206,209,.15)", border: "1px solid rgba(0,206,209,.35)", color: "#00e5e8", fontSize: 10, fontWeight: 700, backdropFilter: "blur(8px)" }}>
+                    {v.niche.ceremonyType === "אורתודוקסי" ? "🕍" : v.niche.ceremonyType === "חילוני" ? "⚖️" : v.niche.ceremonyType === "רפורמי" ? "🌿" : "✡️"}{" "}
+                    {isHe ? v.niche.ceremonyType : (v.niche.ceremonyType === "אורתודוקסי" ? "Orthodox" : v.niche.ceremonyType === "חילוני" ? "Secular" : v.niche.ceremonyType === "רפורמי" ? "Reform" : "Conservative")}
+                  </span>
+                </div>
+              )}
+
 
               {/* Right-side action column (TikTok/Reels style) */}
               {(() => {
@@ -154,14 +190,14 @@ export default function SwipeHome() {
                   <div style={{ position: "absolute", [isHe ? "left" : "right"]: 12, bottom: 155, zIndex: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
                     {/* Like */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                      <button onClick={() => doLike(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}>
+                      <button onClick={() => doLike(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: isLikeAnim ? "linear-gradient(160deg,#00e5e8,#00CED1)" : isLiked ? "rgba(0,206,209,.22)" : "rgba(0,0,0,.6)", border: `2px solid ${isLiked ? "rgba(0,229,232,.7)" : "rgba(255,255,255,.22)"}`, color: isLikeAnim ? "#000" : isLiked ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s", boxShadow: isLiked ? "0 4px 20px rgba(0,206,209,.4)" : "0 2px 12px rgba(0,0,0,.55)", transform: isLikeAnim ? "scale(1.2)" : "scale(1)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 26, fontVariationSettings: isLiked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
                       </button>
                       <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שמור" : "Save"}</span>
                     </div>
                     {/* Lead / Chat */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, position: "relative" }}>
-                      <button onClick={() => setLeadVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: existingThread ? "rgba(0,206,209,.18)" : "rgba(0,0,0,.6)", border: `2px solid ${existingThread ? "rgba(0,229,232,.6)" : "rgba(255,255,255,.22)"}`, color: existingThread ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                      <button onClick={() => setLeadVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: existingThread ? "rgba(0,206,209,.18)" : "rgba(0,0,0,.6)", border: `2px solid ${existingThread ? "rgba(0,229,232,.6)" : "rgba(255,255,255,.22)"}`, color: existingThread ? "#00e5e8" : "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 24 }}>chat_bubble</span>
                       </button>
                       {hasUnread && <div style={{ position: "absolute", top: 0, right: 0, width: 14, height: 14, borderRadius: "50%", background: "#FF4444", border: "2px solid #000", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 900 }}>{existingThread!.unreadClient}</div>}
@@ -169,7 +205,7 @@ export default function SwipeHome() {
                     </div>
                     {/* Info */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                      <button onClick={() => setInfoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                      <button onClick={() => setInfoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
                         <span className="material-symbols-outlined" style={{ fontSize: 24 }}>info</span>
                       </button>
                       <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "פרטים" : "Info"}</span>
@@ -177,22 +213,54 @@ export default function SwipeHome() {
                     {/* Video (Pro) */}
                     {v.videoUrl && (
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                        <button onClick={() => setVideoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(168,85,247,.18)", border: "2px solid rgba(168,85,247,.55)", color: "#a855f7", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 2px 16px rgba(168,85,247,.3)" }}>
+                        <button onClick={() => setVideoVendor(v)} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(168,85,247,.18)", border: "2px solid rgba(168,85,247,.55)", color: "#a855f7", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 16px rgba(168,85,247,.3)" }}>
                           <span className="material-symbols-outlined" style={{ fontSize: 24 }}>play_circle</span>
                         </button>
                         <span style={{ fontSize: 10, color: "#a855f7", fontWeight: 700 }}>{isHe ? "סרטון" : "Video"}</span>
                       </div>
                     )}
+                    {/* Share */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                      <button onClick={() => {
+                        const url = `${SITE_URL}/v/${makeSlug(v.name)}`;
+                        if (navigator.share) {
+                          navigator.share({ title: v.name, text: `${v.name} — ${v.sub} | VibeMatch`, url });
+                        } else {
+                          navigator.clipboard?.writeText(url);
+                          showToast(isHe ? "🔗 לינק הועתק" : "🔗 Link copied");
+                        }
+                      }} style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "2px solid rgba(255,255,255,.22)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,.55)" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 22 }}>share</span>
+                      </button>
+                      <span style={{ fontSize: 10, color: "rgba(255,255,255,.6)", fontWeight: 600 }}>{isHe ? "שתף" : "Share"}</span>
+                    </div>
                   </div>
                 );
               })()}
             </div>
           );
         }) : (
-          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14 }}>
-            <div style={{ fontSize: 48 }}>🎉</div>
-            <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
-            <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, padding: "0 32px", textAlign: "center" }}>
+            {activeFilterCount > 0 ? (
+              <>
+                <div style={{ fontSize: 48 }}>🔍</div>
+                <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>
+                  {isHe ? "אין תוצאות לסינון הנוכחי" : "No results for current filters"}
+                </p>
+                <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>
+                  {isHe ? "נסה לשנות אזור, תאריך או קטגוריה" : "Try changing area, date or category"}
+                </p>
+                <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setEventTypeFilter(null); setObservanceFilter(null); setDealsOnly(false); }} style={{ marginTop: 4, padding: "10px 22px", borderRadius: 12, border: "1px solid rgba(0,206,209,.3)", background: "rgba(0,206,209,.08)", color: "#00CED1", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+                  {isHe ? "נקה סינונים" : "Clear filters"}
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 48 }}>🎉</div>
+                <p style={{ color: "#fff", fontSize: 17, fontWeight: 700 }}>{t.noMore}</p>
+                <p style={{ color: "rgba(255,255,255,.35)", fontSize: 13 }}>{t.pickCat}</p>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -222,21 +290,20 @@ export default function SwipeHome() {
             </span>
           </div>
 
-          {/* Right: hot + profile */}
+          {/* Right: hot */}
           <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
             <button onClick={() => setShowHotSheet(true)} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(255,68,68,.12)", border: "1px solid rgba(255,68,68,.3)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, boxShadow: "0 2px 10px rgba(255,68,68,.2)" }}>🔥</button>
-            <button onClick={() => router.push("/profile")} style={{ width: 34, height: 34, borderRadius: 10, background: user ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.1)", border: user ? "1.5px solid rgba(0,206,209,.4)" : "1.5px solid rgba(255,255,255,.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, boxShadow: user ? "0 2px 10px rgba(0,206,209,.2)" : "none" }}>
-              {user ? "👤" : "🙂"}
-            </button>
           </div>
         </div>
       </header>
 
       {/* ── SIDE PANEL BACKDROP ── */}
-      <div onClick={() => setShowSidebar(false)} style={{ position: "fixed", inset: 0, zIndex: 380, background: "rgba(0,0,0,.72)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", opacity: showSidebar ? 1 : 0, pointerEvents: showSidebar ? "auto" : "none", transition: "opacity .3s" }} />
+      {showSidebar && (
+        <div onClick={() => setShowSidebar(false)} style={{ position: "fixed", inset: 0, zIndex: 380, background: "rgba(0,0,0,.72)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }} />
+      )}
 
       {/* ── SIDE PANEL ── */}
-      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 390, width: "min(90%, 380px)", background: "rgba(7,7,10,.97)", backdropFilter: "blur(28px)", WebkitBackdropFilter: "blur(28px)", borderLeft: "1px solid rgba(255,255,255,.07)", transform: showSidebar ? "translateX(0)" : "translateX(100%)", transition: "transform .32s cubic-bezier(.32,0,.67,0)", overflowY: "auto", direction: isHe ? "rtl" : "ltr" }}>
+      <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 390, width: "min(90%, 380px)", background: "#070709", borderLeft: "1px solid rgba(255,255,255,.07)", transform: showSidebar ? "translateX(0)" : "translateX(100%)", transition: "transform .32s cubic-bezier(.32,0,.67,0)", overflowY: "auto", direction: isHe ? "rtl" : "ltr", willChange: "transform" }}>
 
         {/* Panel header */}
         <div style={{ position: "sticky", top: 0, background: "rgba(7,7,10,.95)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,.06)", padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 1 }}>
@@ -308,7 +375,7 @@ export default function SwipeHome() {
           <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "תאריך האירוע" : "Event Date"}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
             <span className="material-symbols-outlined" style={{ fontSize: 18, color: selectedDate ? "#00CED1" : "rgba(255,255,255,.2)" }}>calendar_month</span>
-            <input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); }}
+            <input type="date" value={selectedDate} min={new Date().toISOString().split("T")[0]} onChange={(e) => { setSelectedDate(e.target.value); }}
               style={{ flex: 1, background: selectedDate ? "rgba(0,206,209,.06)" : "rgba(255,255,255,.03)", border: `1px solid ${selectedDate ? "rgba(0,206,209,.35)" : "rgba(255,255,255,.08)"}`, borderRadius: 12, padding: "10px 14px", color: selectedDate ? "#00CED1" : "rgba(255,255,255,.3)", fontSize: 13, fontFamily: "inherit", outline: "none" }} />
             {selectedDate && <button onClick={() => { setSelectedDate(""); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,.07)", border: "none", color: "rgba(255,255,255,.5)", cursor: "pointer", fontSize: 13 }}>✕</button>}
           </div>
@@ -322,29 +389,45 @@ export default function SwipeHome() {
                 <button key={e.k} onClick={() => setEventTypeFilter(active ? null : e.k)}
                   style={{ padding: "10px 12px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.08)", background: active ? "rgba(0,206,209,.12)" : "rgba(255,255,255,.03)", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all .12s", fontFamily: "inherit" }}>
                   <span style={{ fontSize: 18 }}>{e.emoji}</span>
-                  <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500 }}>{e.he}</span>
+                  <span style={{ color: active ? "#00e5e8" : "rgba(255,255,255,.6)", fontSize: 12, fontWeight: active ? 700 : 500 }}>{isHe ? e.he : e.en}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* ── 6. SORT ── */}
-          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מיון" : "Sort By"}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8, marginBottom: 28 }}>
+          {/* ── 6. OBSERVANCE ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "אורח חיים" : "Lifestyle"}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 24 }}>
             {[
-              { k: "default" as const, label: isHe ? "🎯 מומלץ" : "🎯 Recommended" },
-              { k: "rating" as const, label: isHe ? "⭐ דירוג" : "⭐ Rating" },
-              { k: "price_asc" as const, label: isHe ? "💰 מחיר ↑" : "💰 Price ↑" },
-              { k: "price_desc" as const, label: isHe ? "💎 מחיר ↓" : "💎 Price ↓" },
-            ].map((s) => {
-              const active = sortBy === s.k;
+              { k: null,      label: isHe ? "🌍 הכל"       : "🌍 All"          },
+              { k: "חילוני",  label: isHe ? "☀️ חילוני"    : "☀️ Secular"     },
+              { k: "דתי",     label: isHe ? "✡️ דתי"       : "✡️ Religious"   },
+              { k: "חרדי",    label: isHe ? "🕍 חרדי"      : "🕍 Haredi"      },
+            ].map((opt) => {
+              const active = observanceFilter === opt.k;
               return (
-                <button key={s.k} onClick={() => setSortBy(s.k)}
-                  style={{ padding: "10px 14px", borderRadius: 14, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.08)", background: active ? "rgba(0,206,209,.12)" : "rgba(255,255,255,.03)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 800 : 500, fontFamily: "inherit", transition: "all .12s", textAlign: "center" }}>
-                  {s.label}
+                <button key={String(opt.k)} onClick={() => setObservanceFilter(opt.k)}
+                  style={{ padding: "8px 14px", borderRadius: 20, border: active ? "1.5px solid rgba(0,229,232,.6)" : "1px solid rgba(255,255,255,.1)", background: active ? "rgba(0,206,209,.15)" : "rgba(255,255,255,.04)", cursor: "pointer", color: active ? "#00e5e8" : "rgba(255,255,255,.55)", fontSize: 12, fontWeight: active ? 700 : 500, fontFamily: "inherit", transition: "all .12s" }}>
+                  {opt.label}
                 </button>
               );
             })}
+          </div>
+
+          {/* ── 8. DEALS ONLY ── */}
+          <p style={{ color: "rgba(255,255,255,.3)", fontSize: 10, fontWeight: 700, letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 10 }}>{isHe ? "מבצעים" : "Deals"}</p>
+          <div style={{ marginBottom: 24 }}>
+            <button onClick={() => setDealsOnly((p) => !p)}
+              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 16px", borderRadius: 14, border: dealsOnly ? "1.5px solid rgba(255,68,68,.5)" : "1px solid rgba(255,255,255,.08)", background: dealsOnly ? "rgba(255,68,68,.1)" : "rgba(255,255,255,.03)", cursor: "pointer", fontFamily: "inherit", transition: "all .12s" }}>
+              <span style={{ fontSize: 20 }}>🔥</span>
+              <div style={{ flex: 1, textAlign: isHe ? "right" : "left" }}>
+                <p style={{ color: dealsOnly ? "#FF6666" : "rgba(255,255,255,.7)", fontSize: 13, fontWeight: 700, margin: 0 }}>{isHe ? "מבצעי רגע אחרון בלבד" : "Last-Minute Deals Only"}</p>
+                <p style={{ color: "#555", fontSize: 11, margin: "2px 0 0" }}>{isHe ? "ספקים עם הנחה לתאריכים פתוחים" : "Vendors with discounts on open dates"}</p>
+              </div>
+              <div style={{ width: 40, height: 22, borderRadius: 11, background: dealsOnly ? "#FF4444" : "rgba(255,255,255,.1)", border: `1px solid ${dealsOnly ? "#FF4444" : "rgba(255,255,255,.1)"}`, position: "relative", transition: "all .2s", flexShrink: 0 }}>
+                <div style={{ position: "absolute", top: 2, left: dealsOnly ? 20 : 2, width: 16, height: 16, borderRadius: "50%", background: "#fff", transition: "left .2s", boxShadow: "0 1px 4px rgba(0,0,0,.4)" }} />
+              </div>
+            </button>
           </div>
 
           {/* ── CTAs ── */}
@@ -353,7 +436,7 @@ export default function SwipeHome() {
               style={{ width: "100%", padding: "15px 0", borderRadius: 16, border: "none", background: "linear-gradient(160deg,#00e5e8,#00b8ba)", color: "#000", fontWeight: 900, fontSize: 15, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 24px rgba(0,206,209,.35)" }}>
               {isHe ? `הצג תוצאות (${vs.length})` : `Show Results (${vs.length})`}
             </button>
-            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setSortBy("default"); setEventTypeFilter(null); }}
+            <button onClick={() => { setAreaFilter("allAreas"); setSelectedDate(""); setActiveSub(null); setEventTypeFilter(null); setObservanceFilter(null); setDealsOnly(false); setShowSidebar(false); }}
               style={{ width: "100%", padding: "12px 0", borderRadius: 14, border: "1px solid rgba(255,255,255,.1)", background: "rgba(255,255,255,.04)", color: "rgba(255,255,255,.5)", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
               {isHe ? "אפס הכל" : "Reset All"}
             </button>

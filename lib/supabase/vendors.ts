@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { CATS } from "@/lib/constants";
 import type { Vendor, CatKey, Area } from "@/types";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -12,7 +13,7 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
   return {
     id: row.id as string,
     name: row.business_name as string,
-    sub: (row.category as string) || "",
+    sub: (() => { const ck = row.category as string; const c = CATS.find(x => x.k === ck); return c ? c.he : ck || ""; })(),
     price: (row.price as string) || "",
     rating: 5,
     city: "",
@@ -22,7 +23,7 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
     area: ((row.area as Area) || "center"),
     imgs: Array.isArray(row.gallery) ? (row.gallery as string[]) : [],
     niche: (row.niche as Record<string, string>) || {},
-    deal: null,
+    deal: (() => { try { const d = row.deal; if (d && typeof d === "object") return d as import("@/types").Deal; } catch { /* */ } return null; })(),
     recommends: [],
     vendorReviews: [],
     whatsapp: (row.whatsapp as string) || undefined,
@@ -34,6 +35,8 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
     waze: (row.waze as string) || undefined,
     catKey: (row.category as CatKey) || undefined,
     isPublished: true,
+    videoUrl: (row.video_url as string) || undefined,
+    observance: (row.observance as string) || undefined,
   };
 }
 
@@ -43,6 +46,19 @@ function dbToVendor(row: Record<string, unknown>): Vendor {
 export async function saveVendorProfile(vendor: Vendor) {
   const sb = createClient();
   const slug = makeSlug(vendor.name);
+
+  if (!slug) return { data: null, error: new Error("Vendor name produces empty slug") };
+
+  // Guard: if a vendor with this slug already exists under a DIFFERENT business name, reject
+  const { data: existing } = await sb
+    .from("vendor_profiles")
+    .select("business_name")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing && existing.business_name !== vendor.name) {
+    return { data: null, error: new Error(`Slug "${slug}" is already taken by "${existing.business_name}"`) };
+  }
+
   const { data, error } = await sb
     .from("vendor_profiles")
     .upsert(
@@ -63,6 +79,9 @@ export async function saveVendorProfile(vendor: Vendor) {
         waze: vendor.waze || null,
         gallery: vendor.imgs,
         niche: vendor.niche,
+        observance: vendor.observance || null,
+        deal: vendor.deal ?? null,
+        video_url: vendor.videoUrl || null,
         published: true,
         updated_at: new Date().toISOString(),
       },
@@ -101,11 +120,87 @@ export async function loadVendorBySlug(slug: string): Promise<Vendor | null> {
 /** Increment view count for a vendor (fire-and-forget) */
 export async function trackVendorView(slug: string, ref?: string) {
   const sb = createClient();
+  // Increment view_count (requires column: alter table vendor_profiles add column if not exists view_count int default 0;)
+  void sb.rpc("increment_vendor_view", { vendor_slug: slug.toLowerCase() });
   if (ref) {
-    await sb.from("referral_visits").insert({
+    void sb.from("referral_visits").insert({
       referrer_slug: ref,
       referrer_type: "vendor_view",
       page_visited: `/v/${slug}`,
     });
   }
 }
+
+/** Increment like count for a vendor */
+export async function trackVendorLike(slug: string) {
+  const sb = createClient();
+  void sb.rpc("increment_vendor_like", { vendor_slug: slug.toLowerCase() });
+}
+
+/** Load stats for a vendor (view_count, like_count) */
+export async function loadVendorStats(slug: string): Promise<{ views: number; likes: number }> {
+  const sb = createClient();
+  const { data } = await sb
+    .from("vendor_profiles")
+    .select("view_count, like_count")
+    .eq("slug", slug.toLowerCase())
+    .single();
+  return { views: (data?.view_count as number) ?? 0, likes: (data?.like_count as number) ?? 0 };
+}
+
+/** Save vendor busy dates to Supabase */
+export async function saveBusyDates(slug: string, dates: string[]): Promise<void> {
+  const sb = createClient();
+  await sb.from("vendor_profiles").update({ busy_dates: dates }).eq("slug", slug.toLowerCase());
+}
+
+/** Load vendor busy dates from Supabase */
+export async function loadBusyDates(slug: string): Promise<string[]> {
+  const sb = createClient();
+  const { data } = await sb
+    .from("vendor_profiles")
+    .select("busy_dates")
+    .eq("slug", slug.toLowerCase())
+    .single();
+  return Array.isArray(data?.busy_dates) ? (data.busy_dates as string[]) : [];
+}
+
+/** Save or remove a user like for a vendor */
+export async function saveUserLike(userName: string, vendorName: string, liked: boolean): Promise<void> {
+  const sb = createClient();
+  if (liked) {
+    await sb.from("user_likes").upsert(
+      { user_name: userName, vendor_slug: vendorName },
+      { onConflict: "user_name,vendor_slug" }
+    );
+  } else {
+    await sb.from("user_likes").delete().eq("user_name", userName).eq("vendor_slug", vendorName);
+  }
+}
+
+/** Load all vendor names liked by a user */
+export async function loadUserLikes(userName: string): Promise<string[]> {
+  const sb = createClient();
+  const { data } = await sb.from("user_likes").select("vendor_slug").eq("user_name", userName);
+  return data?.map((r) => r.vendor_slug as string) ?? [];
+}
+
+/*
+── SQL to run in Supabase (once) ─────────────────────────────────────────────
+alter table vendor_profiles add column if not exists view_count int default 0;
+alter table vendor_profiles add column if not exists like_count  int default 0;
+alter table vendor_profiles add column if not exists busy_dates text[] default '{}';
+alter table vendor_profiles add column if not exists deal jsonb;
+alter table vendor_profiles add column if not exists video_url text;
+
+create or replace function increment_vendor_view(vendor_slug text)
+returns void language sql security definer as $$
+  update vendor_profiles set view_count = view_count + 1 where slug = vendor_slug;
+$$;
+
+create or replace function increment_vendor_like(vendor_slug text)
+returns void language sql security definer as $$
+  update vendor_profiles set like_count = like_count + 1 where slug = vendor_slug;
+$$;
+─────────────────────────────────────────────────────────────────────────────
+*/

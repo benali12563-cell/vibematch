@@ -1,17 +1,19 @@
 import type { CatKey, Area, Vendor, Lang } from "@/types";
 
-export const NICHE_FIELDS: Record<string, { k: string; l: string; type?: string; opts?: string[] }[]> = {
-  venues: [{ k: "capacity", l: "קיבולת מקסימלית", type: "text" }, { k: "kosher", l: "כשרות", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"] }, { k: "indoorOutdoor", l: "פנים/חוץ", opts: ["פנים", "חוץ", "שניהם"] }, { k: "parking", l: "חניה", opts: ["כלולה", "לא כלולה"] }],
-  food: [{ k: "capacity", l: "כמות סועדים", type: "text" }, { k: "kosher", l: "כשרות", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"] }, { k: "servingStyle", l: "סגנון הגשה", opts: ["ישיבה", "עמידה", "סטיישנים", "מעורב"] }, { k: "cuisineType", l: "סוג מטבח", type: "text" }],
-  music: [{ k: "equipment", l: "ציוד", opts: ["כלול", "לא כלול"] }, { k: "style", l: "סגנון", opts: ["מזרחית", "אלקטרונית", "פופ", "שנות 80", "חסידית", "מעורב"] }, { k: "hours", l: "שעות", type: "text" }],
-  lighting: [{ k: "equipment", l: "ציוד", opts: ["מלא", "בסיסי", "לפי בקשה"] }, { k: "includes", l: "כולל", type: "text" }],
-  photo: [{ k: "type", l: "סוג", opts: ["סטילס", "וידאו", "שניהם"] }, { k: "sameDayEdit", l: "Same Day Edit", opts: ["כן", "לא"] }, { k: "album", l: "אלבום", opts: ["כלול", "בתוספת", "לא"] }],
-  beauty: [{ k: "specialty", l: "התמחות", opts: ["כלות", "אירועים", "שניהם"] }, { k: "location", l: "מיקום", opts: ["מגיעה אליכם", "בסטודיו", "שניהם"] }],
-  entertainment: [{ k: "showType", l: "סוג מופע", type: "text" }, { k: "duration", l: "משך", type: "text" }],
-  design: [{ k: "specialty", l: "התמחות", type: "text" }, { k: "includes", l: "כולל", type: "text" }],
-  logistics: [{ k: "vehicleType", l: "סוג רכב", opts: ["מיניבוס", "אוטובוס", "יוקרה", "משולב"] }, { k: "capacity", l: "נוסעים", type: "text" }],
-  ceremony: [{ k: "ceremonyType", l: "סוג טקס", opts: ["אורתודוקסי", "קונסרבטיבי", "רפורמי", "חילוני"] }, { k: "chuppah", l: "חופה", opts: ["כלולה", "לא כלולה"] }],
-  digital: [{ k: "type", l: "סוג", type: "text" }],
+export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibematch-nine.vercel.app";
+
+export const NICHE_FIELDS: Record<string, { k: string; l: string; en: string; type?: string; opts?: string[]; optsEn?: string[] }[]> = {
+  venues: [{ k: "capacity", l: "קיבולת מקסימלית", en: "Max capacity", type: "text" }, { k: "kosher", l: "כשרות", en: "Kashrut", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"], optsEn: ["Kosher", "Non-kosher", "Mehadrin", "Flexible"] }, { k: "indoorOutdoor", l: "פנים/חוץ", en: "Indoor/Outdoor", opts: ["פנים", "חוץ", "שניהם"], optsEn: ["Indoor", "Outdoor", "Both"] }, { k: "parking", l: "חניה", en: "Parking", opts: ["כלולה", "לא כלולה"], optsEn: ["Included", "Not included"] }],
+  food: [{ k: "capacity", l: "כמות סועדים", en: "Capacity", type: "text" }, { k: "kosher", l: "כשרות", en: "Kashrut", opts: ["כשר", "לא כשר", "מהדרין", "גמיש"], optsEn: ["Kosher", "Non-kosher", "Mehadrin", "Flexible"] }, { k: "servingStyle", l: "סגנון הגשה", en: "Serving style", opts: ["ישיבה", "עמידה", "סטיישנים", "מעורב"], optsEn: ["Seated", "Standing", "Stations", "Mixed"] }, { k: "cuisineType", l: "סוג מטבח", en: "Cuisine type", type: "text" }],
+  music: [{ k: "equipment", l: "ציוד", en: "Equipment", opts: ["כלול", "לא כלול"], optsEn: ["Included", "Not included"] }, { k: "style", l: "סגנון", en: "Music style", opts: ["מזרחית", "אלקטרונית", "פופ", "שנות 80", "חסידית", "מעורב"], optsEn: ["Mizrahi", "Electronic", "Pop", "80s", "Hassidic", "Mixed"] }, { k: "hours", l: "שעות", en: "Hours", type: "text" }],
+  lighting: [{ k: "equipment", l: "ציוד", en: "Equipment", opts: ["מלא", "בסיסי", "לפי בקשה"], optsEn: ["Full rig", "Basic", "On request"] }, { k: "includes", l: "כולל", en: "Includes", type: "text" }],
+  photo: [{ k: "type", l: "סוג", en: "Type", opts: ["סטילס", "וידאו", "שניהם"], optsEn: ["Stills", "Video", "Both"] }, { k: "sameDayEdit", l: "Same Day Edit", en: "Same Day Edit", opts: ["כן", "לא"], optsEn: ["Yes", "No"] }, { k: "album", l: "אלבום", en: "Album", opts: ["כלול", "בתוספת", "לא"], optsEn: ["Included", "Add-on", "No"] }],
+  beauty: [{ k: "specialty", l: "התמחות", en: "Specialty", opts: ["כלות", "אירועים", "שניהם"], optsEn: ["Brides", "Events", "Both"] }, { k: "location", l: "מיקום", en: "Location", opts: ["מגיעה אליכם", "בסטודיו", "שניהם"], optsEn: ["On-site", "Studio", "Both"] }],
+  entertainment: [{ k: "showType", l: "סוג מופע", en: "Show type", type: "text" }, { k: "duration", l: "משך", en: "Duration", type: "text" }],
+  design: [{ k: "specialty", l: "התמחות", en: "Specialty", type: "text" }, { k: "includes", l: "כולל", en: "Includes", type: "text" }],
+  logistics: [{ k: "vehicleType", l: "סוג רכב", en: "Vehicle type", opts: ["מיניבוס", "אוטובוס", "יוקרה", "משולב"], optsEn: ["Minibus", "Bus", "Luxury", "Mixed"] }, { k: "capacity", l: "נוסעים", en: "Passengers", type: "text" }],
+  ceremony: [{ k: "ceremonyType", l: "סוג טקס", en: "Ceremony type", opts: ["אורתודוקסי", "קונסרבטיבי", "רפורמי", "חילוני"], optsEn: ["Orthodox", "Conservative", "Reform", "Secular"] }, { k: "chuppah", l: "חופה", en: "Chuppah", opts: ["כלולה", "לא כלולה"], optsEn: ["Included", "Not included"] }],
+  digital: [{ k: "type", l: "סוג", en: "Type", type: "text" }],
 };
 
 export const T: Record<string, Record<string, string>> = {
@@ -49,48 +51,69 @@ export const QF: Record<string, string[]> = {
   digital: ["אורחים?", "תאריך?"],
 };
 
-export const TL_PRESETS = ["קבלת פנים", "חופה", "ארוחה", "ריקוד ראשון", "מסיבה", "סיום"];
+export const QF_EN: Record<string, string[]> = {
+  venues: ["How many guests?", "Date?", "Kosher?", "Decor style?"],
+  food: ["Guests?", "Kosher?", "Serving style?"],
+  music: ["Hours?", "Music style?", "Sound system?"],
+  lighting: ["Indoor/Outdoor?", "Hours?"],
+  photo: ["Hours?", "Photo/Video?", "Album?"],
+  beauty: ["For whom?", "Style?"],
+  entertainment: ["Hours?", "Indoor/Outdoor?"],
+  design: ["Guests?", "Decor style?"],
+  logistics: ["From?", "To?", "Vehicle type?"],
+  ceremony: ["Ceremony type?", "Chuppah?"],
+  digital: ["Guests?", "Date?"],
+};
+
+export const TL_PRESETS: { he: string; en: string }[] = [
+  { he: "קבלת פנים", en: "Reception" },
+  { he: "חופה",       en: "Ceremony" },
+  { he: "ארוחה",      en: "Dinner" },
+  { he: "ריקוד ראשון", en: "First Dance" },
+  { he: "מסיבה",      en: "Party" },
+  { he: "סיום",       en: "Farewell" },
+];
 
 export const EVENT_TYPES = [
-  { k: "wedding", he: "חתונה", emoji: "💍" },
-  { k: "bar_mitzvah", he: "בר/בת מצווה", emoji: "✡️" },
-  { k: "birthday", he: "יום הולדת", emoji: "🎂" },
-  { k: "corporate", he: "אירוע חברה/כנס", emoji: "🏢" },
-  { k: "equipment", he: "השכרת ציוד", emoji: "🎪" },
-  { k: "private_party", he: "מסיבה פרטית", emoji: "🎉" },
+  { k: "wedding", he: "חתונה", en: "Wedding", emoji: "💍" },
+  { k: "bar_mitzvah", he: "בר/בת מצווה", en: "Bar/Bat Mitzvah", emoji: "✡️" },
+  { k: "birthday", he: "יום הולדת", en: "Birthday", emoji: "🎂" },
+  { k: "corporate", he: "אירוע חברה/כנס", en: "Corporate Event", emoji: "🏢" },
+  { k: "equipment", he: "השכרת ציוד", en: "Equipment Rental", emoji: "🎪" },
+  { k: "private_party", he: "מסיבה פרטית", en: "Private Party", emoji: "🎉" },
 ];
 
 export const EVENT_STYLES = [
-  { k: "luxury", he: "יוקרתי", emoji: "👑" },
-  { k: "rustic", he: "כפרי/בוהו", emoji: "🌿" },
-  { k: "modern", he: "מודרני", emoji: "🔲" },
-  { k: "classic", he: "קלאסי", emoji: "🎩" },
-  { k: "colorful", he: "צבעוני/פסטיבלי", emoji: "🌈" },
-  { k: "intimate", he: "אינטימי", emoji: "🕯️" },
+  { k: "luxury",   he: "יוקרתי",         en: "Luxury",    emoji: "👑" },
+  { k: "rustic",   he: "כפרי/בוהו",      en: "Rustic",    emoji: "🌿" },
+  { k: "modern",   he: "מודרני",          en: "Modern",    emoji: "🔲" },
+  { k: "classic",  he: "קלאסי",           en: "Classic",   emoji: "🎩" },
+  { k: "colorful", he: "צבעוני/פסטיבלי", en: "Colorful",  emoji: "🌈" },
+  { k: "intimate", he: "אינטימי",          en: "Intimate",  emoji: "🕯️" },
 ];
 
 export const EVENT_VIBES = [
-  { k: "romantic", he: "רומנטי", emoji: "💕" },
-  { k: "fun", he: "כיפי/מצחיק", emoji: "😂" },
-  { k: "emotional", he: "רגשי/נוגע ללב", emoji: "🥹" },
-  { k: "energetic", he: "אנרגטי/רוקד", emoji: "⚡" },
-  { k: "spiritual", he: "רוחני/מסורתי", emoji: "🌌" },
-  { k: "chill", he: "נינוח/שקט", emoji: "😌" },
+  { k: "romantic",  he: "רומנטי",         en: "Romantic",   emoji: "💕" },
+  { k: "fun",       he: "כיפי/מצחיק",    en: "Fun",         emoji: "😂" },
+  { k: "emotional", he: "רגשי/נוגע ללב", en: "Emotional",   emoji: "🥹" },
+  { k: "energetic", he: "אנרגטי/רוקד",   en: "Energetic",   emoji: "⚡" },
+  { k: "spiritual", he: "רוחני/מסורתי",  en: "Traditional", emoji: "🌌" },
+  { k: "chill",     he: "נינוח/שקט",      en: "Chill",       emoji: "😌" },
 ];
 
 export const BUDGET_RANGES = [
-  { k: "under50k", he: "עד ₪50,000" },
-  { k: "50_100k", he: "₪50,000 – ₪100,000" },
-  { k: "100_200k", he: "₪100,000 – ₪200,000" },
-  { k: "over200k", he: "מעל ₪200,000" },
+  { k: "under50k",  he: "עד ₪50,000",                en: "Under ₪50,000" },
+  { k: "50_100k",   he: "₪50,000 – ₪100,000",        en: "₪50K – ₪100K" },
+  { k: "100_200k",  he: "₪100,000 – ₪200,000",       en: "₪100K – ₪200K" },
+  { k: "over200k",  he: "מעל ₪200,000",              en: "Over ₪200,000" },
 ];
 
 export const BADGES = [
-  { k: "first_like", label: "❤️ לייק ראשון", points: 10 },
-  { k: "five_likes", label: "🔥 5 לייקים", points: 50 },
-  { k: "event_created", label: "🎉 יצרת אירוע", points: 100 },
-  { k: "rsvp_sent", label: "📨 שלחת הזמנות", points: 75 },
-  { k: "profile_complete", label: "✅ פרופיל מלא", points: 25 },
+  { k: "first_like",       he: "❤️ לייק ראשון",      en: "❤️ First Like",         points: 10 },
+  { k: "five_likes",       he: "🔥 5 לייקים",          en: "🔥 5 Likes",            points: 50 },
+  { k: "event_created",   he: "🎉 יצרת אירוע",        en: "🎉 Event Created",       points: 100 },
+  { k: "rsvp_sent",       he: "📨 שלחת הזמנות",       en: "📨 RSVPs Sent",          points: 75 },
+  { k: "profile_complete",he: "✅ פרופיל מלא",         en: "✅ Profile Complete",    points: 25 },
 ];
 
 function mg(n: string, s: string, p: string, r: number, c: string, rv: number, d: string, cp: string, imgs: string[], ni: Record<string, string>, deal: { text: string; endsIn: number } | null, recs: string[], area: Area): Vendor {
@@ -176,16 +199,22 @@ export function catName(k: CatKey, lang: Lang): string {
   return c ? (lang === "en" ? c.en : c.he) : k;
 }
 
-export const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{overflow-x:hidden;background:#000}
-input:focus,textarea:focus{outline:none}
-::-webkit-scrollbar{width:0}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@keyframes scaleIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
-@keyframes toast{0%{opacity:0;transform:translateX(-50%) translateY(8px)}8%{opacity:1;transform:translateX(-50%)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}
-@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(0,206,209,.4)}50%{box-shadow:0 0 0 16px rgba(0,206,209,0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
-@keyframes spin{to{transform:rotate(360deg)}}
-`;
+const HE_NICHE_TO_EN: Record<string, string> = {
+  "כשר": "Kosher", "לא כשר": "Non-kosher", "מהדרין": "Mehadrin", "גמיש": "Flexible",
+  "פנים": "Indoor", "חוץ": "Outdoor", "שניהם": "Both",
+  "כלולה": "Included", "לא כלולה": "Not incl.", "כלול": "Incl.", "לא כלול": "Not incl.",
+  "ישיבה": "Seated", "עמידה": "Standing", "סטיישנים": "Stations", "מעורב": "Mixed",
+  "סטילס": "Stills", "וידאו": "Video", "כן": "Yes", "לא": "No",
+  "מגיעה אליכם": "On-site", "בסטודיו": "Studio",
+  "אורתודוקסי": "Orthodox", "קונסרבטיבי": "Conservative", "רפורמי": "Reform", "חילוני": "Secular",
+  "מלא": "Full rig", "בסיסי": "Basic", "לפי בקשה": "On request",
+  "מיניבוס": "Minibus", "אוטובוס": "Bus", "יוקרה": "Luxury",
+  "כלות": "Brides", "אירועים": "Events",
+  "מזרחית": "Mizrahi", "אלקטרונית": "Electronic", "פופ": "Pop", "חסידית": "Hassidic",
+};
+
+export function translateNicheVal(v: string, lang: Lang): string {
+  if (lang === "he") return v;
+  return HE_NICHE_TO_EN[v] ?? v;
+}
+

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useApp } from "@/lib/context";
-import { T, QF } from "@/lib/constants";
+import { T, QF, QF_EN } from "@/lib/constants";
 import type { Vendor, CatKey } from "@/types";
 import B from "./B";
 import Inp from "./Inp";
@@ -15,14 +15,17 @@ interface Props {
 export default function QuoteSheet({ vendor, catKey, onClose }: Props) {
   const { user, lang } = useApp();
   const t = T[lang];
-  const qs = (catKey ? QF[catKey] : null) ?? ["אורחים?", "תאריך?"];
+  const isHe = lang === "he";
+  const qs = (catKey ? (isHe ? QF[catKey] : QF_EN[catKey]) : null) ?? (isHe ? ["אורחים?", "תאריך?"] : ["Guests?", "Date?"]);
   const [ans, setAns] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
 
   const msg = () =>
-    ["VibeMatch — " + t.quote, "", "שם: " + (user?.name ?? ""), "ספק: " + vendor.name, "",
+    ["VibeMatch — " + t.quote, "",
+      (isHe ? "שם: " : "Name: ") + (user?.name ?? ""),
+      (isHe ? "ספק: " : "Vendor: ") + vendor.name, "",
       ...qs.map((q) => q + " " + (ans[q] ?? "—")),
-      "\nטלפון: " + (user?.phone ?? ""),
+      "\n" + (isHe ? "טלפון: " : "Phone: ") + (user?.phone ?? ""),
     ].join("\n");
 
   return (

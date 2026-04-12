@@ -135,7 +135,10 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
         {/* Trust badges */}
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 28, flexWrap: "wrap", animation: "fadeInUp .7s ease .4s both" }}>
-          {["✓ ללא כרטיס אשראי", "✓ ללא סיסמה", "✓ חינמי לתמיד"].map((b) => (
+          {(isHe
+            ? ["✓ ללא כרטיס אשראי", "✓ ללא סיסמה", "✓ חינמי לתמיד"]
+            : ["✓ No credit card", "✓ No password", "✓ Free forever"]
+          ).map((b) => (
             <span key={b} style={{ fontSize: 11, color: "rgba(255,255,255,.35)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(255,255,255,.06)", background: "rgba(255,255,255,.02)" }}>{b}</span>
           ))}
         </div>

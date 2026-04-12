@@ -3,20 +3,27 @@ import { usePathname, useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 
 const TABS = [
-  { path: "/",        icon: "home",         labelHe: "בית",    labelEn: "Home" },
-  { path: "/manage",  icon: "checklist",    labelHe: "ניהול",  labelEn: "Manage" },
-  { path: "/guests",  icon: "group",        labelHe: "אורחים", labelEn: "Guests" },
-  { path: "/profile", icon: "person",       labelHe: "פרופיל", labelEn: "Profile" },
+  { path: "/",         icon: "home",         labelHe: "בית",      labelEn: "Home" },
+  { path: "/manage",   icon: "checklist",    labelHe: "ניהול",    labelEn: "Manage" },
+  { path: "/messages", icon: "forum",        labelHe: "הודעות",   labelEn: "Chats" },
+  { path: "/guests",   icon: "group",        labelHe: "אורחים",   labelEn: "Guests" },
+  { path: "/profile",  icon: "person",       labelHe: "פרופיל",   labelEn: "Profile" },
 ];
 
 export default function Nav() {
-  const { lang } = useApp();
+  const { lang, chatThreads, user } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const isHe = lang === "he";
 
+  // Total unread messages for the client
+  const totalUnread = user && user.role !== "vendor"
+    ? chatThreads.filter((t) => !user || t.clientName?.toLowerCase() === user.name?.toLowerCase()).reduce((s, t) => s + t.unreadClient, 0)
+    : 0;
+
   const activeIdx = TABS.findIndex((t) =>
-    pathname === t.path || (t.path === "/manage" && ["/manage", "/timeline"].includes(pathname))
+    pathname === t.path ||
+    (t.path === "/manage" && ["/manage", "/timeline"].includes(pathname))
   );
 
   return (
@@ -77,6 +84,8 @@ export default function Nav() {
           <button
             key={tab.path}
             onClick={() => router.push(tab.path)}
+            aria-label={isHe ? tab.labelHe : tab.labelEn}
+            aria-current={active ? "page" : undefined}
             style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
               background: "none", border: "none", cursor: "pointer",
@@ -84,18 +93,25 @@ export default function Nav() {
               transition: "all .15s", position: "relative", zIndex: 1,
             }}
           >
-            <span
-              className="material-symbols-outlined"
-              style={{
-                fontSize: 22,
-                color: active ? "#00e5e8" : "rgba(255,255,255,.3)",
-                fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0",
-                filter: active ? "drop-shadow(0 0 7px rgba(0,206,209,.75))" : "none",
-                transition: "all .2s",
-                transform: active ? "scale(1.08)" : "scale(1)",
-              }}
-            >
-              {tab.icon}
+            <span style={{ position: "relative", display: "inline-flex" }}>
+              <span
+                className="material-symbols-outlined"
+                style={{
+                  fontSize: 22,
+                  color: active ? "#00e5e8" : "rgba(255,255,255,.3)",
+                  fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0",
+                  filter: active ? "drop-shadow(0 0 7px rgba(0,206,209,.75))" : "none",
+                  transition: "all .2s",
+                  transform: active ? "scale(1.08)" : "scale(1)",
+                }}
+              >
+                {tab.icon}
+              </span>
+              {tab.path === "/messages" && totalUnread > 0 && (
+                <span style={{ position: "absolute", top: -3, right: -4, background: "#FF4444", borderRadius: "50%", width: 14, height: 14, fontSize: 8, fontWeight: 900, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 0 2px #000" }}>
+                  {totalUnread > 9 ? "9+" : totalUnread}
+                </span>
+              )}
             </span>
             <span
               style={{

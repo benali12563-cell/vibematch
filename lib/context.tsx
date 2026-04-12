@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry, ChatThread } from "@/types";
 import { createClient } from "@/lib/supabase/client";
+import { loadUserLikes } from "@/lib/supabase/vendors";
 
 const AppCtx = createContext<AppContextType | null>(null);
 
@@ -13,12 +14,10 @@ export function useApp(): AppContextType {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("he");
+  const [lang, setLang] = useState<Lang>(() => ls<Lang>("vm_lang", "he"));
   const [user, setUser] = useState<AppUser | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginMode, setLoginMode] = useState<"owner" | "vendor">("owner");
-  const [activeCat, setActiveCat] = useState<CatKey>("music");
-  const [areaFilter, setAreaFilter] = useState<Area>("allAreas");
+  const [activeCat, setActiveCat] = useState<CatKey>(() => ls<CatKey>("vm_cat", "music"));
+  const [areaFilter, setAreaFilter] = useState<Area>(() => ls<Area>("vm_area", "allAreas"));
 
   // ── Persisted to localStorage ──────────────────────────────────────────────
   function ls<T>(key: string, fallback: T): T {
@@ -34,7 +33,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [eventInfo, setEventInfo] = useState<EventInfo>(() => ls("vm_eventinfo", { address: "", wazeLink: "", date: "", notes: "" }));
   const [vendorAvailability, setVendorAvailability] = useState<Record<string, string[]>>(() => ls("vm_avail", {}));
   const [guests, setGuests] = useState<GuestEntry[]>(() => ls("vm_guests", []));
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>(() => ls("vm_chats", []));
 
+  useEffect(() => { localStorage.setItem("vm_lang",      JSON.stringify(lang));              }, [lang]);
+  useEffect(() => { localStorage.setItem("vm_cat",       JSON.stringify(activeCat));         }, [activeCat]);
+  useEffect(() => { localStorage.setItem("vm_area",      JSON.stringify(areaFilter));        }, [areaFilter]);
   useEffect(() => { localStorage.setItem("vm_likes",     JSON.stringify(likes));             }, [likes]);
   useEffect(() => { localStorage.setItem("vm_archived",  JSON.stringify(archived));          }, [archived]);
   useEffect(() => { localStorage.setItem("vm_budget",    JSON.stringify(budget));            }, [budget]);
@@ -43,6 +46,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { localStorage.setItem("vm_eventinfo", JSON.stringify(eventInfo));         }, [eventInfo]);
   useEffect(() => { localStorage.setItem("vm_avail",     JSON.stringify(vendorAvailability));}, [vendorAvailability]);
   useEffect(() => { localStorage.setItem("vm_guests",    JSON.stringify(guests));            }, [guests]);
+  useEffect(() => { localStorage.setItem("vm_chats",     JSON.stringify(chatThreads));       }, [chatThreads]);
   // ─────────────────────────────────────────────────────────────────────────
   const [onboardingDone, setOnboardingDoneRaw] = useState(
     () => typeof window !== "undefined" && localStorage.getItem("vm_onboarded") === "1"
@@ -56,14 +60,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   const [selectedDate, setSelectedDate] = useState("");
   const [publishedVendors, setPublishedVendors] = useState<Vendor[]>([]);
-  const addGuest = useCallback((g: GuestEntry) => setGuests((p) => [...p, g]), []);
   const [vGallery, setVGallery] = useState<GalleryItem[]>([]);
   const [vPic, setVPic] = useState<string | null>(null);
   const [vAbout, setVAbout] = useState("");
   const [vProfile, setVProfile] = useState<VProfile>({ businessName: "", businessPrice: "", category: "" });
   const [toast, setToast] = useState("");
-  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
-  const [vendorIsPro, setVendorIsPro] = useState(false);
 
   // Restore Supabase session on mount + listen for auth changes
   useEffect(() => {
@@ -93,17 +94,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sync likes from DB when user logs in
+  useEffect(() => {
+    if (!user?.name) return;
+    loadUserLikes(user.name).then((dbLikes) => {
+      if (!dbLikes.length) return;
+      setLikes((prev) => {
+        const combined = new Set([...prev, ...dbLikes]);
+        return Array.from(combined);
+      });
+    }).catch(() => {});
+  }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = useCallback((msg: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast(msg);
-    setTimeout(() => setToast(""), 3000);
+    toastTimer.current = setTimeout(() => setToast(""), 3000);
   }, []);
 
   return (
     <AppCtx.Provider value={{
       lang, setLang,
       user, setUser,
-      showLogin, setShowLogin,
-      loginMode, setLoginMode,
       activeCat, setActiveCat,
       areaFilter, setAreaFilter,
       likes, setLikes,
@@ -121,9 +134,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       vendorAvailability, setVendorAvailability,
       selectedDate, setSelectedDate,
       publishedVendors, setPublishedVendors,
-      guests, addGuest,
+      guests, setGuests,
       chatThreads, setChatThreads,
-      vendorIsPro, setVendorIsPro,
     }}>
       {children}
     </AppCtx.Provider>

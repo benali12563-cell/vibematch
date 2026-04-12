@@ -10,8 +10,10 @@ export default function HomePage() {
   const { onboardingDone, setOnboardingDone, setUser } = useApp();
   const [checking, setChecking] = useState(true);
   const [hasSession, setHasSession] = useState(false);
+  const [seen, setSeen] = useState(false);
 
   useEffect(() => {
+    setSeen(!!localStorage.getItem("vm_seen"));
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -20,9 +22,12 @@ export default function HomePage() {
         localStorage.setItem("vm_onboarded", "1");
         setHasSession(true);
         setOnboardingDone(true);
-        if (session.user.email) {
-          setUser({ name: session.user.email.split("@")[0], role: "owner" });
-        }
+        setUser({
+          name: (session.user.user_metadata?.full_name as string | undefined)
+            ?? session.user.email?.split("@")[0]
+            ?? "User",
+          role: "owner",
+        });
       }
       setChecking(false);
     });
@@ -40,15 +45,12 @@ export default function HomePage() {
   // Authenticated user — go straight to app
   if (hasSession || onboardingDone) return <SwipeHome />;
 
-  // First visit ever → landing page
-  if (typeof window !== "undefined") {
-    const seen = localStorage.getItem("vm_seen");
-    if (!seen) {
-      return <LandingPage onStart={() => {
-        localStorage.setItem("vm_seen", "1");
-        window.location.reload();
-      }} />;
-    }
+  // First visit ever → landing page (use React state, not reload)
+  if (!seen) {
+    return <LandingPage onStart={() => {
+      localStorage.setItem("vm_seen", "1");
+      setSeen(true);
+    }} />;
   }
 
   return <OnboardingFlow />;

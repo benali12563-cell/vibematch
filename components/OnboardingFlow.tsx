@@ -24,7 +24,7 @@ export default function OnboardingFlow() {
   const progress = ((step + 1) / STEPS) * 100;
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", direction: isHe ? "rtl" : "ltr", fontFamily: isHe ? "'Heebo'" : "'Outfit'" }}>
+    <div style={{ minHeight: "100dvh", background: "#000", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", direction: isHe ? "rtl" : "ltr", fontFamily: isHe ? "'Heebo'" : "'Manrope','Heebo',sans-serif" }}>
       {/* Progress bar */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,.05)" }}>
         <div style={{ height: "100%", width: `${progress}%`, background: "linear-gradient(90deg,#00CED1,#0099aa)", transition: "width .4s ease" }} />
@@ -52,7 +52,7 @@ export default function OnboardingFlow() {
                 return (
                   <button key={e.k} onClick={() => setEventType(e.k)} style={{ padding: "18px 12px", borderRadius: 14, border: `1px solid ${sel ? "#00CED1" : "rgba(255,255,255,.06)"}`, background: sel ? "rgba(0,206,209,.08)" : "rgba(255,255,255,.02)", cursor: "pointer", textAlign: "center", transition: "all .2s" }}>
                     <div style={{ fontSize: 28, marginBottom: 6 }}>{e.emoji}</div>
-                    <div style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 13, fontWeight: 600 }}>{e.he}</div>
+                    <div style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 13, fontWeight: 600 }}>{isHe ? e.he : e.en}</div>
                   </button>
                 );
               })}
@@ -80,7 +80,7 @@ export default function OnboardingFlow() {
                 return (
                   <button key={s.k} onClick={() => setStyle(s.k)} style={{ padding: "16px 8px", borderRadius: 12, border: `1px solid ${sel ? "#00CED1" : "rgba(255,255,255,.06)"}`, background: sel ? "rgba(0,206,209,.08)" : "rgba(255,255,255,.02)", cursor: "pointer", textAlign: "center" }}>
                     <div style={{ fontSize: 24, marginBottom: 4 }}>{s.emoji}</div>
-                    <div style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 11, fontWeight: 600 }}>{s.he}</div>
+                    <div style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 11, fontWeight: 600 }}>{isHe ? s.he : s.en}</div>
                   </button>
                 );
               })}
@@ -109,7 +109,7 @@ export default function OnboardingFlow() {
                 return (
                   <button key={v.k} onClick={() => setVibe(v.k)} style={{ padding: "14px 12px", borderRadius: 12, border: `1px solid ${sel ? "#00CED1" : "rgba(255,255,255,.06)"}`, background: sel ? "rgba(0,206,209,.08)" : "rgba(255,255,255,.02)", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ fontSize: 22 }}>{v.emoji}</span>
-                    <span style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 13, fontWeight: 600 }}>{v.he}</span>
+                    <span style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 13, fontWeight: 600 }}>{isHe ? v.he : v.en}</span>
                   </button>
                 );
               })}
@@ -137,7 +137,7 @@ export default function OnboardingFlow() {
                 const sel = budget === b.k;
                 return (
                   <button key={b.k} onClick={() => setBudget(b.k)} style={{ padding: "16px 20px", borderRadius: 12, border: `1px solid ${sel ? "#00CED1" : "rgba(255,255,255,.06)"}`, background: sel ? "rgba(0,206,209,.08)" : "rgba(255,255,255,.02)", cursor: "pointer", textAlign: isHe ? "right" : "left" }}>
-                    <span style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 14, fontWeight: 600 }}>{b.he}</span>
+                    <span style={{ color: sel ? "#00CED1" : "#aaa", fontSize: 14, fontWeight: 600 }}>{isHe ? b.he : b.en}</span>
                   </button>
                 );
               })}

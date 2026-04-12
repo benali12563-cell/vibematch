@@ -11,7 +11,10 @@ interface Props {
   onClose: () => void;
 }
 
-function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function uid() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 function fmtTime(ts: number) {
   const d = new Date(ts);
@@ -79,7 +82,7 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     }
   }, [thread?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function submitLead() {
+  async function submitLead() {
     if (!note.trim() && !date && !guests && !budget) return;
     setSending(true);
     const systemText = [
@@ -91,6 +94,25 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
     ].filter(Boolean).join("\n");
 
     const sysMsg: ChatMessage = { id: uid(), from: "system", text: systemText, ts: Date.now() };
+
+    if (thread) {
+      // Editing existing thread — update lead details, append system message
+      const updated: ChatThread = {
+        ...thread,
+        lead: { date, guests, budget },
+        messages: [...thread.messages, sysMsg],
+        unreadVendor: thread.unreadVendor + 1,
+      };
+      setThread(updated);
+      setChatThreads((p) => p.map((t) => t.id === thread.id ? updated : t));
+      setStep("chat");
+      showToast(isHe ? "✅ הליד עודכן!" : "✅ Lead updated!");
+      saveLeadMessage(thread.id, sysMsg).catch(() => {});
+      setSending(false);
+      return;
+    }
+
+    // New thread
     const newThread: ChatThread = {
       id: uid(),
       vendorName: vendor.name,
@@ -102,23 +124,27 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
       unreadClient: 0,
       unreadVendor: 1,
     };
+    // Optimistic UI
     setChatThreads((p) => [...p, newThread]);
     setThread(newThread);
     setStep("chat");
-    showToast(isHe ? "✅ הליד נשלח!" : "✅ Lead sent!");
     sendLocalNotification(
       vendor.name,
       isHe ? `פנייה חדשה מ-${user?.name ?? "לקוח"}` : `New lead from ${user?.name ?? "a client"}`,
       "/"
     );
-    // Persist to Supabase (fire-and-forget)
-    saveLead(newThread).catch(() => {/* offline — context already has it */});
+    const { error: saveError } = await saveLead(newThread);
     setSending(false);
+    if (saveError) {
+      showToast(isHe ? "⚠️ שגיאת רשת — הפנייה נשמרה זמנית" : "⚠️ Network error — lead saved locally");
+    } else {
+      showToast(isHe ? "✅ הליד נשלח!" : "✅ Lead sent!");
+    }
   }
 
   function sendMsg() {
     if (!msg.trim() || !thread) return;
-    const newMsg: ChatMessage = { id: uid(), from: "client", text: msg.trim(), ts: Date.now(), senderName: user?.name ?? (isHe ? "אתה" : "You") };
+    const newMsg: ChatMessage = { id: uid(), from: "client", text: msg.trim(), ts: Date.now(), senderName: user?.name ?? (isHe ? "אורח" : "Guest") };
     const updated: ChatThread = { ...thread, messages: [...thread.messages, newMsg], unreadVendor: thread.unreadVendor + 1 };
     sendLocalNotification(
       vendor.name,
@@ -154,7 +180,15 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
           <p style={{ color: "rgba(255,255,255,.4)", fontSize: 11, margin: 0 }}>{vendor.sub} · {vendor.city}</p>
         </div>
         {step === "chat" && (
-          <button onClick={() => setStep("form")} style={{ fontSize: 10, padding: "5px 10px", borderRadius: 8, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => {
+            // Prepopulate form with existing lead data
+            if (thread?.lead) {
+              setDate(thread.lead.date ?? "");
+              setGuests(thread.lead.guests ?? "");
+              setBudget(thread.lead.budget ?? "");
+            }
+            setStep("form");
+          }} style={{ fontSize: 10, padding: "5px 10px", borderRadius: 8, background: "rgba(0,206,209,.12)", border: "1px solid rgba(0,206,209,.3)", color: "#00CED1", cursor: "pointer", fontFamily: "inherit" }}>
             {isHe ? "✏️ ערוך ליד" : "✏️ Edit Lead"}
           </button>
         )}
@@ -178,6 +212,7 @@ export default function LeadChatModal({ vendor, existingThread, onClose }: Props
               <input
                 type={type} value={val} onChange={(e) => set(e.target.value)}
                 placeholder={placeholder}
+                min={type === "date" ? new Date().toISOString().split("T")[0] : undefined}
                 style={{ width: "100%", background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, padding: "12px 14px", color: "#fff", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }}
               />
             </div>

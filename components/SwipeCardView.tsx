@@ -1,6 +1,8 @@
 "use client";
 import { useRef, type ReactNode } from "react";
+import { useApp } from "@/lib/context";
 import type { Vendor } from "@/types";
+import { translateNicheVal } from "@/lib/constants";
 import DealBadge from "./DealBadge";
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
 }
 
 export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, showInfo = true }: Props) {
+  const { lang } = useApp();
+  const isHe = lang === "he";
   const imgs = (vendor.imgs ?? []).slice(0, 5);
   const ni = vendor.niche ?? {};
   const isFirst = imgIdx === 0;
@@ -68,9 +72,13 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
         )}
       </div>
 
-      {/* Tap zones — right=next, left=prev (Instagram convention) */}
-      <div onClick={() => setImgIdx((i) => Math.min(imgs.length - 1, i + 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
-      <div onClick={() => setImgIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
+      {/* Tap zones — only when there are multiple images */}
+      {imgs.length > 1 && (
+        <>
+          <div onClick={() => setImgIdx((i) => Math.min(imgs.length - 1, i + 1))} style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
+          <div onClick={() => setImgIdx((i) => Math.max(0, i - 1))} style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", cursor: "pointer", zIndex: 4 }} />
+        </>
+      )}
 
       {/* Dots */}
       {imgs.length > 1 && (
@@ -121,15 +129,15 @@ export default function SwipeCardView({ vendor, imgIdx, setImgIdx, actions, show
               {Object.keys(ni).length > 0 && (
                 <div className="tr-3" style={{ display: "flex", gap: 5, marginTop: 8, flexWrap: "wrap" }}>
                   {Object.entries(ni).slice(0, 3).map(([k, v]) => (
-                    <span key={k} style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.09)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", fontSize: 10, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{v}</span>
+                    <span key={k} style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,.09)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)", fontSize: 10, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}>{translateNicheVal(v, lang)}</span>
                   ))}
                 </div>
               )}
               {/* Trust badges */}
               <div className="tr-3" style={{ display: "flex", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
-                {vendor.reviews >= 50 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(0,206,209,.1)", border: "1px solid rgba(0,206,209,.2)", color: "#00e5e8", fontSize: 9, fontWeight: 700 }}>⚡ עונה מהר</span>}
-                {vendor.reviews > 0 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.6)", fontSize: 9 }}>✅ {vendor.reviews}+ אירועים</span>}
-                {vendor.rating >= 4.8 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(255,215,0,.07)", border: "1px solid rgba(255,215,0,.15)", color: "#FFD700", fontSize: 9, fontWeight: 700 }}>🔒 מאומת</span>}
+                {vendor.reviews >= 50 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(0,206,209,.1)", border: "1px solid rgba(0,206,209,.2)", color: "#00e5e8", fontSize: 9, fontWeight: 700 }}>⚡ {isHe ? "עונה מהר" : "Fast Reply"}</span>}
+                {vendor.reviews > 0 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "rgba(255,255,255,.6)", fontSize: 9 }}>✅ {vendor.reviews}+ {isHe ? "אירועים" : "Events"}</span>}
+                {vendor.rating >= 4.8 && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(255,215,0,.07)", border: "1px solid rgba(255,215,0,.15)", color: "#FFD700", fontSize: 9, fontWeight: 700 }}>🔒 {isHe ? "מאומת" : "Verified"}</span>}
                 {vendor.isPro && <span style={{ padding: "2px 8px", borderRadius: 8, background: "rgba(168,85,247,.12)", border: "1px solid rgba(168,85,247,.3)", color: "#a855f7", fontSize: 9, fontWeight: 700 }}>👑 Pro</span>}
               </div>
             </div>

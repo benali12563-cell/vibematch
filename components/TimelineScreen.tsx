@@ -2,21 +2,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, TL_PRESETS, allVendors } from "@/lib/constants";
+import { T, TL_PRESETS, allVendors, CATS } from "@/lib/constants";
 import Nav from "./Nav";
 import B from "./B";
 import Inp from "./Inp";
 
 export default function TimelineScreen() {
-  const { lang, likes, tlItems, setTlItems } = useApp();
+  const { lang, likes, tlItems, setTlItems, publishedVendors } = useApp();
   const t = T[lang];
-  const dir = lang === "he" ? "rtl" : "ltr";
+  const isHe = lang === "he";
+  const dir = isHe ? "rtl" : "ltr";
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [cL, setCL] = useState("");
   const [cT, setCT] = useState("");
 
-  const team = allVendors().filter((v) => likes.includes(v.name));
+  const seenNames = new Set<string>();
+  const team = [...allVendors(), ...publishedVendors].filter((v) => {
+    if (!likes.includes(v.name) || seenNames.has(v.name)) return false;
+    seenNames.add(v.name);
+    return true;
+  });
 
   return (
     <div style={{ minHeight: "100dvh", background: "#000", fontFamily: "inherit", direction: dir, padding: "52px 14px 64px" }}>
@@ -28,11 +34,14 @@ export default function TimelineScreen() {
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, marginBottom: 14 }}>
-        {TL_PRESETS.filter((p) => !tlItems.some((x) => x.label === p)).map((p) => (
-          <button key={p} onClick={() => setTlItems((prev) => [...prev, { label: p, time: "", id: Date.now() + Math.random() }])} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "transparent", color: "#888", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
-            + {p}
-          </button>
-        ))}
+        {TL_PRESETS.filter((p) => !tlItems.some((x) => x.label === p.he || x.label === p.en)).map((p) => {
+          const label = lang === "he" ? p.he : p.en;
+          return (
+            <button key={p.he} onClick={() => setTlItems((prev) => [...prev, { label, time: "", id: Date.now() + Math.random() }])} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "transparent", color: "#888", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
+              + {label}
+            </button>
+          );
+        })}
         <button onClick={() => setShowAdd(true)} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(0,206,209,.15)", background: "rgba(0,206,209,.04)", color: "#00CED1", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
           {t.addCustom}
         </button>
@@ -40,7 +49,7 @@ export default function TimelineScreen() {
 
       {[...tlItems].sort((a, b) => (a.time || "99").localeCompare(b.time || "99")).map((item) => (
         <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          <input type="time" value={item.time ?? ""} onChange={(e) => setTlItems((p) => p.map((x) => x.id === item.id ? { ...x, time: e.target.value } : x))} style={{ width: 72, padding: "8px 4px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "rgba(255,255,255,.02)", color: "#00CED1", fontSize: 13, fontWeight: 600, textAlign: "center", fontFamily: "'Outfit'" }} />
+          <input type="time" value={item.time ?? ""} onChange={(e) => setTlItems((p) => p.map((x) => x.id === item.id ? { ...x, time: e.target.value } : x))} style={{ width: 72, padding: "8px 4px", borderRadius: 8, border: "1px solid rgba(255,255,255,.06)", background: "rgba(255,255,255,.02)", color: "#00CED1", fontSize: 13, fontWeight: 600, textAlign: "center", fontFamily: "'Manrope','Heebo'" }} />
           <div style={{ background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", flex: 1, border: "1px solid rgba(255,255,255,.03)" }}>
             <span style={{ color: "#fff", fontSize: 13, fontWeight: 500 }}>{item.label}</span>
           </div>
@@ -55,11 +64,11 @@ export default function TimelineScreen() {
             {team.map((v) => (
               <div key={v.name} style={{ flexShrink: 0, background: "rgba(255,255,255,.02)", borderRadius: 10, padding: "10px 14px", textAlign: "center", minWidth: 80, border: "1px solid rgba(255,255,255,.03)" }}>
                 <div style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{v.name}</div>
-                <div style={{ color: "#666", fontSize: 9 }}>{v.sub}</div>
+                <div style={{ color: "#666", fontSize: 9 }}>{v.catKey ? (CATS.find(c => c.k === v.catKey)?.[isHe ? "he" : "en"] ?? v.sub) : v.sub}</div>
               </div>
             ))}
           </div>
-          <B v="ghost" style={{ width: "100%", marginTop: 12 }} onClick={() => { window.open("https://wa.me/?text=" + encodeURIComponent(["Powered by VibeMatch", "", ...team.map((v) => v.name + " — " + v.sub)].join("\n"))); }}>
+          <B v="ghost" style={{ width: "100%", marginTop: 12 }} onClick={() => { window.open("https://wa.me/?text=" + encodeURIComponent(["Powered by VibeMatch", "", ...team.map((v) => v.name + " — " + (v.catKey ? (CATS.find(c => c.k === v.catKey)?.[isHe ? "he" : "en"] ?? v.sub) : v.sub))].join("\n"))); }}>
             {t.credits}
           </B>
         </div>

@@ -25,7 +25,7 @@ export default function Logo({ sz = 22 }: { sz?: number }) {
         onMouseUp={handlePressEnd}
         onTouchStart={handlePressStart}
         onTouchEnd={handlePressEnd}
-        style={{ fontWeight: 800, fontSize: sz, letterSpacing: -0.5, fontFamily: "'Outfit'", cursor: "pointer", userSelect: "none" }}
+        style={{ fontWeight: 800, fontSize: sz, letterSpacing: -0.5, fontFamily: "'Manrope',sans-serif", cursor: "pointer", userSelect: "none" }}
       >
         <span style={{ color: "#00CED1" }}>Vibe</span>
         <span style={{ color: "#fff" }}>Match</span>

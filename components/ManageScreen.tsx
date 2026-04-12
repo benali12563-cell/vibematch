@@ -2,14 +2,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
-import { T, CATS, DV, catName, findCat } from "@/lib/constants";
+import { T, CATS, DV, catName } from "@/lib/constants";
 import type { CatKey, Vendor } from "@/types";
 import Nav from "./Nav";
 import VendorCard from "./VendorCard";
 import QuoteSheet from "./QuoteSheet";
-import ReadinessScore from "./ReadinessScore";
-import CountdownBanner from "./CountdownBanner";
-import ShareCard from "./ShareCard";
 import B from "./B";
 import Inp from "./Inp";
 
@@ -36,13 +33,6 @@ export default function ManageScreen() {
           {lang === "he" ? "→" : "←"}
         </button>
         <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.manage}</span>
-      </div>
-
-      {/* Marketing widgets */}
-      <div style={{ paddingTop: 8 }}>
-        <CountdownBanner />
-        <ReadinessScore />
-        <ShareCard />
       </div>
 
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,.04)" }}>
@@ -81,9 +71,13 @@ export default function ManageScreen() {
                       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                         <input value={priceVal} onChange={(e) => setPriceVal(e.target.value)} type="number" style={{ width: 70, padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(0,206,209,.2)", background: "rgba(255,255,255,.03)", color: "#fff", fontSize: 12, direction: "ltr" }} placeholder="₪" />
                         <B s="sm" onClick={() => {
-                          if (priceVal) {
-                            setVendorPrices((p) => ({ ...p, [v.name]: Number(priceVal) }));
-                            setBudget((p) => ({ ...p, spent: (p.spent ?? 0) + Number(priceVal), items: [...(p.items ?? []).filter((x) => x.name !== v.name), { name: v.name, cat: cat.k, amount: Number(priceVal) }] }));
+                          const num = Number(priceVal);
+                          if (priceVal && !isNaN(num) && num > 0) {
+                            setVendorPrices((p) => ({ ...p, [v.name]: num }));
+                            setBudget((p) => {
+                              const oldAmount = (p.items ?? []).find((x) => x.name === v.name)?.amount ?? 0;
+                              return { ...p, spent: (p.spent ?? 0) - oldAmount + num, items: [...(p.items ?? []).filter((x) => x.name !== v.name), { name: v.name, cat: cat.k, amount: num }] };
+                            });
                           }
                           setPriceEdit(null); setPriceVal("");
                         }} style={{ padding: "4px 8px", fontSize: 10 }}>OK</B>
@@ -144,8 +138,12 @@ export default function ManageScreen() {
             <Inp value={mN} onChange={setMN} placeholder={lang === "he" ? "שם הספק" : "Vendor"} style={{ marginBottom: 8 }} />
             <Inp value={mA} onChange={setMA} type="number" placeholder="₪" dir="ltr" style={{ marginBottom: 8 }} />
             <B style={{ width: "100%" }} onClick={() => {
-              if (mN && mA) {
-                setBudget((p) => ({ ...p, spent: (p.spent ?? 0) + Number(mA), items: [...(p.items ?? []), { name: mN, cat: showManual as CatKey, amount: Number(mA) }] }));
+              const num = Number(mA);
+              if (mN.trim() && !isNaN(num) && num > 0) {
+                setBudget((p) => {
+                  const oldAmount = (p.items ?? []).find((x) => x.name === mN.trim())?.amount ?? 0;
+                  return { ...p, spent: (p.spent ?? 0) - oldAmount + num, items: [...(p.items ?? []).filter((x) => x.name !== mN.trim()), { name: mN.trim(), cat: showManual as CatKey, amount: num }] };
+                });
                 setMN(""); setMA(""); setShowManual("");
               }
             }}>{t.save}</B>

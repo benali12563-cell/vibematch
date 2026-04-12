@@ -38,6 +38,8 @@ export interface Vendor {
   isPublished?: boolean;
   videoUrl?: string;   // Pro feature — 15-30s reel
   isPro?: boolean;
+  eventType?: string;  // e.g. "wedding" | "birthday" — null means serves all types
+  observance?: string; // "חילוני" | "דתי" | "חרדי" | "הכל" — null means serves all
 }
 
 export interface ChatMessage {
@@ -131,10 +133,6 @@ export interface AppContextType {
   setLang: Setter<Lang>;
   user: AppUser | null;
   setUser: Setter<AppUser | null>;
-  showLogin: boolean;
-  setShowLogin: Setter<boolean>;
-  loginMode: "owner" | "vendor";
-  setLoginMode: Setter<"owner" | "vendor">;
   activeCat: CatKey;
   setActiveCat: Setter<CatKey>;
   areaFilter: Area;
@@ -170,9 +168,7 @@ export interface AppContextType {
   publishedVendors: Vendor[];
   setPublishedVendors: Setter<Vendor[]>;
   guests: GuestEntry[];
-  addGuest: (g: GuestEntry) => void;
+  setGuests: Setter<GuestEntry[]>;
   chatThreads: ChatThread[];
   setChatThreads: Setter<ChatThread[]>;
-  vendorIsPro: boolean;
-  setVendorIsPro: Setter<boolean>;
 }

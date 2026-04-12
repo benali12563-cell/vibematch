@@ -6,7 +6,7 @@ export default function LangToggle() {
   return (
     <button
       onClick={() => setLang(lang === "he" ? "en" : "he")}
-      style={{ background: "none", border: "1px solid rgba(255,255,255,.08)", color: "#666", borderRadius: 6, padding: "2px 8px", fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: lang === "he" ? "'Outfit'" : "'Heebo'" }}
+      style={{ background: "none", border: "1px solid rgba(255,255,255,.08)", color: "#666", borderRadius: 6, padding: "2px 8px", fontSize: 10, fontWeight: 600, cursor: "pointer", fontFamily: lang === "he" ? "'Manrope'" : "'Heebo'" }}
     >
       {lang === "he" ? "EN" : "עב"}
     </button>
