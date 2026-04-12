@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry, ChatThread } from "@/types";
 import { createClient } from "@/lib/supabase/client";
+import { loadUserLikes } from "@/lib/supabase/vendors";
 
 const AppCtx = createContext<AppContextType | null>(null);
 
@@ -92,6 +93,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync likes from DB when user logs in
+  useEffect(() => {
+    if (!user?.name) return;
+    loadUserLikes(user.name).then((dbLikes) => {
+      if (!dbLikes.length) return;
+      setLikes((prev) => {
+        const combined = new Set([...prev, ...dbLikes]);
+        return Array.from(combined);
+      });
+    }).catch(() => {});
+  }, [user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);

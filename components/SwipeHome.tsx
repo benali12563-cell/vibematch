@@ -14,7 +14,7 @@ import SwipeTogetherModal from "./SwipeTogetherModal";
 import VendorCard from "./VendorCard";
 import AuroraBg from "./AuroraBg";
 import B from "./B";
-import { loadPublishedVendors, trackVendorLike, makeSlug } from "@/lib/supabase/vendors";
+import { loadPublishedVendors, trackVendorLike, makeSlug, saveUserLike } from "@/lib/supabase/vendors";
 import LeadChatModal, { VideoModal } from "./LeadChatModal";
 import PackageModal from "./PackageModal";
 
@@ -122,14 +122,22 @@ export default function SwipeHome() {
   }
 
   function doLike(v: Vendor) {
-    if (likes.includes(v.name)) return;
-    setLikes((p) => [...p, v.name]);
-    setLikedName(v.name);
-    setTimeout(() => setLikedName(null), 600);
-    showToast("❤️ " + v.name + (isHe ? " נשמר" : " saved"));
-    // Track like in Supabase (fire-and-forget)
-    const slug = makeSlug(v.name);
-    if (slug) void trackVendorLike(slug);
+    const isLiked = likes.includes(v.name);
+    if (isLiked) {
+      // Toggle off — unlike
+      setLikes((p) => p.filter((n) => n !== v.name));
+      showToast("🤍 " + v.name + (isHe ? " הוסר" : " removed"));
+      if (user?.name) void saveUserLike(user.name, v.name, false);
+    } else {
+      // Like
+      setLikes((p) => [...p, v.name]);
+      setLikedName(v.name);
+      setTimeout(() => setLikedName(null), 600);
+      showToast("❤️ " + v.name + (isHe ? " נשמר" : " saved"));
+      if (user?.name) void saveUserLike(user.name, v.name, true);
+      const slug = makeSlug(v.name);
+      if (slug) void trackVendorLike(slug);
+    }
   }
 
   function parsePriceNum(p: string) { const m = p.replace(/,/g, "").match(/\d+/); return m ? parseInt(m[0]) : 0; }

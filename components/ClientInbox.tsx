@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/context";
 import { CATS } from "@/lib/constants";
 import { loadClientLeads, markLeadReadClient } from "@/lib/supabase/leads";
+import { saveReview } from "@/lib/supabase/reviews";
 import LeadChatModal from "./LeadChatModal";
 import Nav from "./Nav";
 import type { ChatThread, Vendor } from "@/types";
@@ -37,7 +38,7 @@ function threadToVendor(ct: ChatThread): Vendor {
 }
 
 export default function ClientInbox() {
-  const { lang, user, chatThreads, setChatThreads } = useApp();
+  const { lang, user, chatThreads, setChatThreads, showToast } = useApp();
   const isHe = lang === "he";
   const router = useRouter();
 
@@ -45,6 +46,10 @@ export default function ClientInbox() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [openThread, setOpenThread] = useState<ChatThread | null>(null);
+  const [reviewThread, setReviewThread] = useState<ChatThread | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSending, setReviewSending] = useState(false);
 
   function fetchLeads() {
     if (!user || user.role === "vendor") return;
@@ -176,10 +181,10 @@ export default function ClientInbox() {
               const hasUnread = ct.unreadClient > 0;
 
               return (
+                <div key={ct.id}>
                 <button
-                  key={ct.id}
                   onClick={() => openChat(ct)}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", marginBottom: 8, borderRadius: 16, border: `1px solid ${hasUnread ? "rgba(0,206,209,.25)" : "rgba(255,255,255,.05)"}`, background: hasUnread ? "rgba(0,206,209,.04)" : "rgba(255,255,255,.015)", cursor: "pointer", textAlign: isHe ? "right" : "left", fontFamily: "inherit" }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", marginBottom: 4, borderRadius: 16, border: `1px solid ${hasUnread ? "rgba(0,206,209,.25)" : "rgba(255,255,255,.05)"}`, background: hasUnread ? "rgba(0,206,209,.04)" : "rgba(255,255,255,.015)", cursor: "pointer", textAlign: isHe ? "right" : "left", fontFamily: "inherit" }}
                 >
                   {/* Avatar */}
                   <div style={{ width: 46, height: 46, borderRadius: "50%", background: `linear-gradient(135deg, #00CED1, #005f61)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 18 }}>
@@ -213,6 +218,15 @@ export default function ClientInbox() {
                     </div>
                   )}
                 </button>
+
+                {/* Write Review button */}
+                <button
+                  onClick={() => { setReviewThread(ct); setReviewRating(5); setReviewText(""); }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 12, padding: "4px 10px", borderRadius: 8, background: "rgba(255,215,0,.05)", border: "1px solid rgba(255,215,0,.15)", color: "#FFD700", fontSize: 10, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginInlineStart: "auto" }}
+                >
+                  ⭐ {isHe ? "כתוב ביקורת" : "Write Review"}
+                </button>
+                </div>
               );
             })}
           </div>
@@ -220,6 +234,53 @@ export default function ClientInbox() {
       </div>
 
       <Nav />
+
+      {/* Review modal */}
+      {reviewThread && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.85)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setReviewThread(null)}>
+          <div style={{ width: "100%", maxWidth: 480, background: "#0a0a0a", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,.08)", padding: "24px 20px 40px", animation: "slideUp .25s ease" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,.15)", margin: "0 auto 20px" }} />
+            <h3 style={{ color: "#fff", fontSize: 16, fontWeight: 800, marginBottom: 4, textAlign: "center" }}>
+              {isHe ? `ביקורת על ${reviewThread.vendorName}` : `Review ${reviewThread.vendorName}`}
+            </h3>
+            <p style={{ color: "#555", fontSize: 11, textAlign: "center", marginBottom: 20 }}>
+              {isHe ? "הביקורת תוצג בפרופיל הספק" : "Your review will appear on the vendor profile"}
+            </p>
+
+            {/* Stars */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 18 }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button key={s} onClick={() => setReviewRating(s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 32, opacity: s <= reviewRating ? 1 : 0.25, transform: s <= reviewRating ? "scale(1.1)" : "scale(1)", transition: "all .15s" }}>⭐</button>
+              ))}
+            </div>
+
+            {/* Text */}
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder={isHe ? "ספרו על החוויה שלכם (אופציונלי)..." : "Tell us about your experience (optional)..."}
+              rows={3}
+              style={{ width: "100%", background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12, color: "#fff", fontSize: 13, padding: "12px 14px", fontFamily: "inherit", resize: "none", outline: "none", boxSizing: "border-box", direction: isHe ? "rtl" : "ltr" }}
+            />
+
+            <button
+              disabled={reviewSending}
+              onClick={async () => {
+                if (!user?.name) return;
+                setReviewSending(true);
+                const { error } = await saveReview(reviewThread.vendorName, user.name, reviewRating, reviewText.trim());
+                setReviewSending(false);
+                if (error) { alert(isHe ? "שגיאה בשמירת הביקורת" : "Failed to save review"); return; }
+                setReviewThread(null);
+                showToast(isHe ? "⭐ ביקורת נשלחה! תודה" : "⭐ Review submitted! Thanks");
+              }}
+              style={{ width: "100%", marginTop: 14, padding: "14px 0", borderRadius: 14, background: reviewSending ? "rgba(255,215,0,.1)" : "linear-gradient(160deg,#FFD700,#FFA500)", border: "none", color: "#000", fontWeight: 800, fontSize: 15, cursor: reviewSending ? "default" : "pointer", fontFamily: "inherit" }}
+            >
+              {reviewSending ? "..." : (isHe ? "שלח ביקורת" : "Submit Review")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Chat modal */}
       {openThread && (

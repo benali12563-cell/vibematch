@@ -11,7 +11,8 @@ import VendorGoLiveModal from "./VendorGoLiveModal";
 import SwipeCardView from "./SwipeCardView";
 import { saveVendorProfile, loadVendorBySlug, makeSlug, loadBusyDates } from "@/lib/supabase/vendors";
 import { loadVendorLeads, markLeadReadVendor, saveLeadMessage } from "@/lib/supabase/leads";
-import type { Vendor, ChatThread, ChatMessage } from "@/types";
+import { loadVendorReviews } from "@/lib/supabase/reviews";
+import type { Vendor, ChatThread, ChatMessage, VendorReview } from "@/types";
 
 function BusyDatesList({ vendorName, isHe }: { vendorName: string; isHe: boolean }) {
   const { vendorAvailability, setVendorAvailability } = useApp();
@@ -52,6 +53,7 @@ export default function VendorDash() {
   const [replyMsgs, setReplyMsgs] = useState<Record<string, string>>({});
   const [wizardLoaded, setWizardLoaded] = useState(false);
   const [showGoLive, setShowGoLive] = useState(false);
+  const [vendorReviews, setVendorReviews] = useState<VendorReview[]>([]);
   const fRef = useRef<HTMLInputElement>(null);
   const pRef = useRef<HTMLInputElement>(null);
 
@@ -127,6 +129,14 @@ export default function VendorDash() {
       });
     }).catch(() => { setDbLeadsError(true); }).finally(() => setDbLeadsLoading(false));
   }, [tab, vname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load reviews when preview tab is active
+  useEffect(() => {
+    if (tab !== "preview") return;
+    const name = vProfile.businessName || user?.name || "";
+    if (!name) return;
+    loadVendorReviews(name).then(setVendorReviews).catch(() => {});
+  }, [tab, vProfile.businessName, user?.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Vendor quick-login (no email needed — bypasses Magic Link rate limit)
   if (!user || user.role !== "vendor") {
@@ -277,8 +287,9 @@ export default function VendorDash() {
         </div>
 
         {tab === "preview" && (
-          /* Full-screen card — exact client feed experience */
-          <div style={{ position: "relative", height: "calc(100dvh - 92px)", overflow: "hidden", animation: "fadeIn .3s" }}>
+          /* Scrollable: full card + reviews section below */
+          <div style={{ height: "calc(100dvh - 92px)", overflowY: "auto", animation: "fadeIn .3s" }}>
+          <div style={{ position: "relative", height: "calc(100dvh - 92px)", overflow: "hidden", flexShrink: 0 }}>
             <SwipeCardView
               vendor={previewVendor}
               imgIdx={pIdx}
@@ -343,6 +354,43 @@ export default function VendorDash() {
                 </span>
               ))}
             </div>
+          </div>
+
+          {/* Reviews section — scrollable below the card */}
+          <div style={{ background: "#000", padding: "20px 16px 32px", borderTop: "1px solid rgba(255,255,255,.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <p style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>
+                {isHe ? "ביקורות לקוחות" : "Customer Reviews"}
+              </p>
+              {vendorReviews.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: "#FFD700", fontSize: 13 }}>⭐</span>
+                  <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>
+                    {(vendorReviews.reduce((s, r) => s + r.rating, 0) / vendorReviews.length).toFixed(1)}
+                  </span>
+                  <span style={{ color: "#555", fontSize: 11 }}>({vendorReviews.length})</span>
+                </div>
+              )}
+            </div>
+            {vendorReviews.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>💬</div>
+                <p style={{ color: "#333", fontSize: 12 }}>{isHe ? "עדיין אין ביקורות" : "No reviews yet"}</p>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {vendorReviews.map((r, i) => (
+                  <div key={i} style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.06)", borderRadius: 14, padding: "12px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: r.text ? 6 : 0 }}>
+                      <span style={{ color: "rgba(255,255,255,.7)", fontSize: 12, fontWeight: 600 }}>{r.user}</span>
+                      <span style={{ color: "#FFD700", fontSize: 12, letterSpacing: 1 }}>{"⭐".repeat(r.rating)}</span>
+                    </div>
+                    {r.text && <p style={{ color: "#999", fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.text}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           </div>
         )}
 

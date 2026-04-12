@@ -165,6 +165,26 @@ export async function loadBusyDates(slug: string): Promise<string[]> {
   return Array.isArray(data?.busy_dates) ? (data.busy_dates as string[]) : [];
 }
 
+/** Save or remove a user like for a vendor */
+export async function saveUserLike(userName: string, vendorName: string, liked: boolean): Promise<void> {
+  const sb = createClient();
+  if (liked) {
+    await sb.from("user_likes").upsert(
+      { user_name: userName, vendor_slug: vendorName },
+      { onConflict: "user_name,vendor_slug" }
+    );
+  } else {
+    await sb.from("user_likes").delete().eq("user_name", userName).eq("vendor_slug", vendorName);
+  }
+}
+
+/** Load all vendor names liked by a user */
+export async function loadUserLikes(userName: string): Promise<string[]> {
+  const sb = createClient();
+  const { data } = await sb.from("user_likes").select("vendor_slug").eq("user_name", userName);
+  return data?.map((r) => r.vendor_slug as string) ?? [];
+}
+
 /*
 ── SQL to run in Supabase (once) ─────────────────────────────────────────────
 alter table vendor_profiles add column if not exists view_count int default 0;
