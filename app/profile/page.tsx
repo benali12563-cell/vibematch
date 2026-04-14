@@ -10,7 +10,7 @@ import AuroraBg from "@/components/AuroraBg";
 import OTPLoginForm from "@/components/OTPLoginForm";
 
 export default function ProfilePage() {
-  const { lang, user, setUser, likes, budget, tlItems, guests, eventInfo, showToast } = useApp();
+  const { lang, user, setUser, likes, budget, tlItems, guests, eventInfo, showToast, a11y, setA11y } = useApp();
   const router = useRouter();
   const isHe = lang === "he";
   const dir = isHe ? "rtl" : "ltr";
@@ -199,6 +199,48 @@ export default function ProfilePage() {
           <button onClick={() => router.push("/vendor")} style={{ flexShrink: 0, padding: "9px 16px", borderRadius: 12, background: "linear-gradient(135deg,rgba(255,215,0,.15),rgba(255,215,0,.08))", border: "1px solid rgba(255,215,0,.3)", color: "#FFD700", fontSize: 12, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
             {isHe ? "כניסה ←" : "Enter →"}
           </button>
+        </div>
+
+        {/* ── ACCESSIBILITY ── */}
+        <div style={{ background: "rgba(255,255,255,.025)", borderRadius: 18, padding: "18px 20px", border: "1px solid rgba(255,255,255,.06)", marginBottom: 18 }}>
+          <p style={{ color: "rgba(255,255,255,.4)", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 14 }}>
+            {isHe ? "נגישות" : "Accessibility"}
+          </p>
+          {[
+            { key: "reducedMotion" as const, icon: "🎞️", label: isHe ? "הפחתת אנימציות" : "Reduce Motion",   sub: isHe ? "מפחית תנועה ומעברים" : "Less movement & transitions" },
+            { key: "largeText"     as const, icon: "🔤", label: isHe ? "גופן גדול"        : "Large Text",       sub: isHe ? "מגדיל את כל הטקסטים" : "Increases all text sizes"   },
+            { key: "highContrast"  as const, icon: "🔆", label: isHe ? "ניגוד גבוה"       : "High Contrast",    sub: isHe ? "מגביר בהירות וניגודיות" : "Boosts brightness & contrast" },
+          ].map(({ key, icon, label, sub }) => {
+            const on = a11y[key];
+            return (
+              <div
+                key={key}
+                onClick={() => setA11y((p) => ({ ...p, [key]: !p[key] }))}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.04)", cursor: "pointer", userSelect: "none" }}
+              >
+                <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: on ? "#fff" : "rgba(255,255,255,.7)", fontSize: 14, fontWeight: 700, margin: 0 }}>{label}</p>
+                  <p style={{ color: "rgba(255,255,255,.35)", fontSize: 11, margin: 0, marginTop: 2 }}>{sub}</p>
+                </div>
+                {/* Toggle pill */}
+                <div style={{
+                  width: 44, height: 26, borderRadius: 13, flexShrink: 0,
+                  background: on ? "#00CED1" : "rgba(255,255,255,.1)",
+                  border: `1.5px solid ${on ? "#00CED1" : "rgba(255,255,255,.15)"}`,
+                  position: "relative", transition: "background .2s, border-color .2s",
+                  boxShadow: on ? "0 0 10px rgba(0,206,209,.4)" : "none",
+                }}>
+                  <div style={{
+                    position: "absolute", top: 2, left: on ? 20 : 2,
+                    width: 18, height: 18, borderRadius: "50%",
+                    background: on ? "#000" : "rgba(255,255,255,.5)",
+                    transition: "left .2s",
+                  }} />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* ── SIGN OUT + LEGAL ── */}

@@ -128,6 +128,12 @@ export interface VProfile {
 
 export type Setter<T> = Dispatch<SetStateAction<T>>;
 
+export interface A11ySettings {
+  reducedMotion: boolean;
+  largeText: boolean;
+  highContrast: boolean;
+}
+
 export interface AppContextType {
   lang: Lang;
   setLang: Setter<Lang>;
@@ -171,4 +177,6 @@ export interface AppContextType {
   setGuests: Setter<GuestEntry[]>;
   chatThreads: ChatThread[];
   setChatThreads: Setter<ChatThread[]>;
+  a11y: A11ySettings;
+  setA11y: Setter<A11ySettings>;
 }

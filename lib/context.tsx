@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry, ChatThread } from "@/types";
+import type { AppContextType, Lang, AppUser, Budget, TimelineItem, GalleryItem, EventInfo, VProfile, CatKey, Area, Vendor, GuestEntry, ChatThread, A11ySettings } from "@/types";
 import { createClient } from "@/lib/supabase/client";
 import { loadUserLikes } from "@/lib/supabase/vendors";
 
@@ -34,6 +34,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [vendorAvailability, setVendorAvailability] = useState<Record<string, string[]>>(() => ls("vm_avail", {}));
   const [guests, setGuests] = useState<GuestEntry[]>(() => ls("vm_guests", []));
   const [chatThreads, setChatThreads] = useState<ChatThread[]>(() => ls("vm_chats", []));
+  const [a11y, setA11y] = useState<A11ySettings>(() => ls("vm_a11y", { reducedMotion: false, largeText: false, highContrast: false }));
 
   useEffect(() => { localStorage.setItem("vm_lang",      JSON.stringify(lang));              }, [lang]);
   useEffect(() => { localStorage.setItem("vm_cat",       JSON.stringify(activeCat));         }, [activeCat]);
@@ -47,6 +48,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => { localStorage.setItem("vm_avail",     JSON.stringify(vendorAvailability));}, [vendorAvailability]);
   useEffect(() => { localStorage.setItem("vm_guests",    JSON.stringify(guests));            }, [guests]);
   useEffect(() => { localStorage.setItem("vm_chats",     JSON.stringify(chatThreads));       }, [chatThreads]);
+  useEffect(() => { localStorage.setItem("vm_a11y",      JSON.stringify(a11y));              }, [a11y]);
+
+  // Apply a11y CSS classes to <html> element
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("a11y-motion",   a11y.reducedMotion);
+    root.classList.toggle("a11y-text",     a11y.largeText);
+    root.classList.toggle("a11y-contrast", a11y.highContrast);
+  }, [a11y]);
   // ─────────────────────────────────────────────────────────────────────────
   const [onboardingDone, setOnboardingDoneRaw] = useState(
     () => typeof window !== "undefined" && localStorage.getItem("vm_onboarded") === "1"
@@ -136,6 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       publishedVendors, setPublishedVendors,
       guests, setGuests,
       chatThreads, setChatThreads,
+      a11y, setA11y,
     }}>
       {children}
     </AppCtx.Provider>

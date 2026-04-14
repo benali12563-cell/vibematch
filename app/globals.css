@@ -232,3 +232,28 @@ input::placeholder                          { color: rgba(255,255,255,.25); }
 }
 .teal-pulse { animation: teal-pulse 2.5s ease-in-out infinite; }
 
+/* ══════════════════════════════════════════
+   ACCESSIBILITY
+══════════════════════════════════════════ */
+
+/* Reduced Motion — disable all animations/transitions */
+.a11y-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Large Text — scale up all font sizes */
+.a11y-text {
+  font-size: 115% !important;
+}
+.a11y-text * {
+  line-height: 1.6 !important;
+}
+
+/* High Contrast — boost contrast & brightness */
+.a11y-contrast {
+  filter: contrast(1.35) brightness(1.12);
+}
+
